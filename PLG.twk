@@ -532,18 +532,11 @@ singleQuote  = getSet("singleQuote","'");
     currentRule.alternatives += currentAlt;
     
     currentRule = getRule("QuotedString");
-    currentSet = singleQuote;
-    currentSet = singleQuote;
-    //currentRule.next = getRule("QuotedString2");
-    
+
     currentAlt = new Alternative();
-    
-    addTest(3, "0-9", "", 1, 1, "defaultSKIP");
-    
+    addTest(3, "'", "", 1, 1, "defaultSKIP");
     addTest(6, "QuotedStringBlock1", "text", 1, 1, "defaultSKIP");
-    
-    addTest(3, "0-9", "", 1, 1, "defaultSKIP");
-    
+    addTest(3, "'", "", 1, 1, "defaultSKIP");
     currentRule.alternatives += currentAlt;
     currentAlt = new Alternative();
     

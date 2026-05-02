@@ -2,12 +2,12 @@
 #include <stdio.h>
 #include "DoubleLinkList.h"
 #include "DoubleLink.h"
-#include "PLGitem.h"
 #include "PLGset.h"
 #include "BaseHash.h"
 #include "Element.h"
 #include "Buffer.h"
 #include "PLGparse.h"
+#include "PLGitem.h"
 #include "Alternative.h"
 
 /*******************************************************************************
@@ -50,9 +50,13 @@ int 		result = 1;
 		if ( !item )
 			{
 			if ( elem->minimum > 0 )
+				{
 				result = 0;
-			break;
+				break;
+				}
+			// optional element didn't match — keep going, cursor unchanged
 			}
+		else
 		if ( item->itemLabel )
 			{
 			if ( !collected->children )

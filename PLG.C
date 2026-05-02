@@ -352,13 +352,10 @@ void PLG::setRules()
 	parser->addTest(1,"=","",1,1,"defaultSKIP");
 	parser->currentRule->alternatives->add(parser->currentAlt);
 	parser->currentRule = parser->getRule("QuotedString");
-	parser->currentSet = singleQuote;
-	parser->currentSet = singleQuote;
-	//currentRule.next = getRule("QuotedString2");
 	parser->currentAlt = new Alternative();
-	parser->addTest(3,"0-9","",1,1,"defaultSKIP");
+	parser->addTest(3,"'","",1,1,"defaultSKIP");
 	parser->addTest(6,"QuotedStringBlock1","text",1,1,"defaultSKIP");
-	parser->addTest(3,"0-9","",1,1,"defaultSKIP");
+	parser->addTest(3,"'","",1,1,"defaultSKIP");
 	parser->currentRule->alternatives->add(parser->currentAlt);
 	parser->currentAlt = new Alternative();
 	parser->addTest(3,".$","text",1,1,"defaultSKIP");

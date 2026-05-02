@@ -45,13 +45,21 @@ cout "Alternative match elements: " elements.length():;
         elem = link.value;
 cout `"element kind:",elem.kind:;
         PLGitem item = elem.match(state);
-        if !item {
+        if !item
+            {
             if elem.minimum > 0
+                {
                 result = false;
-            break; }
-        if item.label {
+                break;
+                }
+            // optional element didn't match — keep going, cursor unchanged
+            }
+        else if item.label
+            {
             if !collected.children  collected.children = new;
-            collected.children[item.label] = item; }}
+            collected.children[item.label] = item;
+            }
+        }
     if result {
         collected.length = state.cursor - collected.start;
         out = collected; }
