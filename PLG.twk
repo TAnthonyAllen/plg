@@ -132,12 +132,16 @@ PLGitem result = parse("Max");
 
 /*******************************************************************************
 	process — load a grammar file, run it through the parser starting at the
-	"Start" rule, and report the result.
+	"Start" rule, then emit a .twk file (foo.g -> foo.twk) containing the
+	generated setRules().
 *******************************************************************************/
 void process(String filename)
 {
 String  content;
 PLGitem result;
+Buffer  twkOut;
+String  outFile;
+String  dot;
     setRules();
     initialize();
     content = getStringFromFile(filename);
@@ -151,6 +155,21 @@ PLGitem result;
     if result
         cout "parsed " result.itemLength " chars from " filename:;
     else cout "parse failed on " filename:;
+
+    // Build output path: foo.g -> foo.twk
+    outFile = malloc(strlen(filename) + 8);
+    strcpy(outFile, filename);
+    dot = strrchr(outFile, '.');
+    if dot
+        { *dot = '\0'; }
+    strcat(outFile, ".twk");
+
+    twkOut = new("twk-output", 50000);
+    parser.generateRules(twkOut);
+    twkOut.setFile(outFile);
+    twkOut.flush();
+    cout "wrote " outFile:;
+    free(outFile);
 }
 
 /*******************************************************************************
@@ -239,10 +258,6 @@ singleQuote  = getSet("singleQuote","'");
     addTest(6, "SetAssignment", "set", 0, 1, "defaultSKIP");
     
     currentRule.alternatives += currentAlt;
-    
-    currentRule = getRule("Command2");
-    //currentRule.immediate = Command2plgNow;
-    
     currentAlt = new Alternative();
     
     addTest(1, "dEBUG", "", 1, 1, "defaultSKIP");
@@ -265,25 +280,6 @@ singleQuote  = getSet("singleQuote","'");
     
     
     addTest(1, ".g", "", 1, 1, "defaultSKIP");
-    
-    currentRule.alternatives += currentAlt;
-    
-    currentRule = getRule("SetVariable6");
-    //currentRule.immediate = SetVariable6plgNow;
-    currentSet = excludeSet;
-    
-    currentAlt = new Alternative();
-    
-    addTest(1, "Debug", "", 1, 1, "defaultSKIP");
-    
-    
-    addTest(3, "A-Za-z0-9_", "", -1, 1, "");
-    
-    
-    addTest(6, "DebugRule", "rulename", 0, 999999, "defaultSKIP");
-    
-    
-    addTest(1, ";", "", 1, 1, "defaultSKIP");
     
     currentRule.alternatives += currentAlt;
     
@@ -362,14 +358,12 @@ singleQuote  = getSet("singleQuote","'");
     addTest(6, "CommentPartBalancE", "", 1, 1, "defaultSKIP");
     
     currentRule.alternatives += currentAlt;
-    
-    currentRule = getRule("Body7");
-    //currentRule.immediate = Body7plgNow;
-    currentRule.doNotGuard = true;
-    
     currentAlt = new Alternative();
     
-    addTest(1, "\n", "error", 0, 1, "");
+    addTest(1, "//", "", 1, 1, "defaultSKIP");
+    
+    
+    addTest(1, "\n", "", 0, 1, "");
     
     currentRule.alternatives += currentAlt;
     
@@ -417,33 +411,6 @@ singleQuote  = getSet("singleQuote","'");
     addTest(1, "*/", "end", 0, 1, "");
     
     currentRule.alternatives += currentAlt;
-    
-    currentRule = getRule("SetVariable4");
-    //currentRule.immediate = SetVariable4plgNow;
-    currentSet = excludeSet;
-    //currentRule.next = getRule("SetVariable5");
-    
-    currentAlt = new Alternative();
-    
-    addTest(1, "Set", "", 1, 1, "defaultSKIP");
-    
-    
-    addTest(3, "t", "", -1, 1, "");
-    
-    
-    addTest(6, "Name", "name", 1, 1, "defaultSKIP");
-    
-    
-    addTest(6, "StringSet", "set", 0, 1, "defaultSKIP");
-    
-    
-    addTest(1, ";", "", 0, 1, "defaultSKIP");
-    
-    currentRule.alternatives += currentAlt;
-    
-    currentRule = getRule("CommentPartAny");
-    //currentRule.immediate = balancEbail;
-    
     currentAlt = new Alternative();
     
     addTest(4, "", "", 1, 1, "");
@@ -462,26 +429,6 @@ singleQuote  = getSet("singleQuote","'");
     
     currentRule.alternatives += currentAlt;
     
-    currentRule = getRule("CommentPart2");
-    
-    currentAlt = new Alternative();
-    
-    addTest(1, "//", "", 1, 1, "defaultSKIP");
-    
-    
-    addTest(1, "\n", "", 0, 1, "");
-    
-    currentRule.alternatives += currentAlt;
-    
-    currentRule = getRule("DebugText2");
-    currentSet = getSet("a-zA-Z0-9");
-    
-    currentAlt = new Alternative();
-    
-    addTest(3, "a-zA-Z0-9", "text", 1, 999999, "defaultSKIP");
-    
-    currentRule.alternatives += currentAlt;
-    
     currentRule = getRule("Comment");
     currentSet = getSet("/");
     currentRule.guardSet = currentSet;
@@ -490,6 +437,11 @@ singleQuote  = getSet("singleQuote","'");
     currentAlt = new Alternative();
     
     addTest(6, "CommentPart", "", 1, 1, "defaultSKIP");
+    
+    currentRule.alternatives += currentAlt;
+    currentAlt = new Alternative();
+    
+    addTest(6, "Command", "", 1, 1, "defaultSKIP");
     
     currentRule.alternatives += currentAlt;
     
@@ -508,14 +460,6 @@ singleQuote  = getSet("singleQuote","'");
     
     
     addTest(6, "BalanceRight", "right", 0, 1, "defaultSKIP");
-    
-    currentRule.alternatives += currentAlt;
-    
-    currentRule = getRule("Comment2");
-    
-    currentAlt = new Alternative();
-    
-    addTest(6, "Command", "", 1, 1, "defaultSKIP");
     
     currentRule.alternatives += currentAlt;
     
@@ -576,15 +520,6 @@ singleQuote  = getSet("singleQuote","'");
     
     currentRule.alternatives += currentAlt;
     
-    currentRule = getRule("Body6");
-    //currentRule.next = getRule("Body7");
-    
-    currentAlt = new Alternative();
-    
-    addTest(6, "ActionRule", "", 1, 1, "defaultSKIP");
-    
-    currentRule.alternatives += currentAlt;
-    
     currentRule = getRule("Label");
     
     currentAlt = new Alternative();
@@ -610,6 +545,11 @@ singleQuote  = getSet("singleQuote","'");
     addTest(3, "0-9", "", 1, 1, "defaultSKIP");
     
     currentRule.alternatives += currentAlt;
+    currentAlt = new Alternative();
+    
+    addTest(3, ".$", "text", 1, 1, "defaultSKIP");
+    
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("QuotedStringBlock1");
     
@@ -627,15 +567,6 @@ singleQuote  = getSet("singleQuote","'");
     
     
     addTest(4, "", "", 1, 1, "defaultSKIP");
-    
-    currentRule.alternatives += currentAlt;
-    
-    currentRule = getRule("QuotedString2");
-    currentSet = getSet(".$");
-    
-    currentAlt = new Alternative();
-    
-    addTest(3, ".$", "text", 1, 1, "defaultSKIP");
     
     currentRule.alternatives += currentAlt;
     
@@ -657,10 +588,6 @@ singleQuote  = getSet("singleQuote","'");
     addTest(1, "|", "option", 1, 999999, "defaultSKIP");
     
     currentRule.alternatives += currentAlt;
-    
-    currentRule = getRule("ActionOption2");
-    //currentRule.defer = ActionOption2plgAct;
-    
     currentAlt = new Alternative();
     
     addTest(1, ".", "immediate", 0, 1, "");
@@ -691,24 +618,6 @@ singleQuote  = getSet("singleQuote","'");
     
     currentRule.alternatives += currentAlt;
     
-    currentRule = getRule("Alternative2");
-    //currentRule.defer = Alternative2plgAct;
-    currentSet = getSet(")|");
-    currentRule.guardSet = currentSet;
-    //currentRule.next = getRule("Alternative3");
-    
-    currentAlt = new Alternative();
-    
-    addTest(6, "Guard", "guard", 0, 1, "defaultSKIP");
-    
-    
-    addTest(6, "Label", "atLabel", 0, 1, "defaultSKIP");
-    
-    
-    addTest(6, "Alternative2Block5", "atElement", 1, 1, "defaultSKIP");
-    
-    currentRule.alternatives += currentAlt;
-    
     currentRule = getRule("ActionBody");
     
     currentAlt = new Alternative();
@@ -730,6 +639,22 @@ singleQuote  = getSet("singleQuote","'");
     
     
     addTest(6, "AlternativeBlock4", "exception", 1, 1, "defaultSKIP");
+    
+    currentRule.alternatives += currentAlt;
+    currentAlt = new Alternative();
+    
+    addTest(6, "Guard", "guard", 0, 1, "defaultSKIP");
+    
+    
+    addTest(6, "Label", "atLabel", 0, 1, "defaultSKIP");
+    
+    
+    addTest(6, "Alternative2Block5", "atElement", 1, 1, "defaultSKIP");
+    
+    currentRule.alternatives += currentAlt;
+    currentAlt = new Alternative();
+    
+    addTest(6, "Comment", "", 1, 1, "defaultSKIP");
     
     currentRule.alternatives += currentAlt;
     
@@ -782,64 +707,22 @@ singleQuote  = getSet("singleQuote","'");
     addTest(6, "Name", "atElement", 1, 1, "defaultSKIP");
     
     currentRule.alternatives += currentAlt;
-    
-    currentRule = getRule("Element2");
-    //currentRule.defer = Element2plgAct;
-    //currentRule.next = getRule("Element3");
-    
     currentAlt = new Alternative();
     
     addTest(6, "QuotedString", "atElement", 1, 1, "defaultSKIP");
     
     currentRule.alternatives += currentAlt;
-    
-    currentRule = getRule("Body2");
-    //currentRule.next = getRule("Body3");
-    
-    currentAlt = new Alternative();
-    
-    addTest(6, "SetVariable", "", 1, 1, "defaultSKIP");
-    
-    currentRule.alternatives += currentAlt;
-    
-    currentRule = getRule("Element3");
-    //currentRule.defer = Element3plgAct;
-    //currentRule.next = getRule("Element4");
-    
     currentAlt = new Alternative();
     
     addTest(6, "StringSet", "atElement", 1, 1, "defaultSKIP");
     
     currentRule.alternatives += currentAlt;
-    
-    currentRule = getRule("Body3");
-    //currentRule.next = getRule("Body4");
-    
-    currentAlt = new Alternative();
-    
-    addTest(6, "Include", "", 1, 1, "defaultSKIP");
-    
-    currentRule.alternatives += currentAlt;
-    
-    currentRule = getRule("Element4");
-    //currentRule.defer = Element4plgAct;
-    currentSet = getSet(".$");
-    
     currentAlt = new Alternative();
     
     addTest(1, "~", "", 1, 1, "defaultSKIP");
     
     
     addTest(3, ".$", "atElement", 1, 1, "defaultSKIP");
-    
-    currentRule.alternatives += currentAlt;
-    
-    currentRule = getRule("Body4");
-    //currentRule.next = getRule("Body5");
-    
-    currentAlt = new Alternative();
-    
-    addTest(6, "Tail", "", 1, 1, "defaultSKIP");
     
     currentRule.alternatives += currentAlt;
     
@@ -861,11 +744,6 @@ singleQuote  = getSet("singleQuote","'");
     addTest(1, "", "", 1, 1, "defaultSKIP");
     
     currentRule.alternatives += currentAlt;
-    
-    currentRule = getRule("ElementType2");
-    //currentRule.defer = ElementType2plgAct;
-    currentSet = getSet("*+?!%");
-    
     currentAlt = new Alternative();
     
     addTest(3, "*+?!%", "option", 1, 1, "defaultSKIP");
@@ -893,10 +771,6 @@ singleQuote  = getSet("singleQuote","'");
     addTest(6, "StringSet", "set", 1, 1, "defaultSKIP");
     
     currentRule.alternatives += currentAlt;
-    
-    currentRule = getRule("Guard2");
-    //currentRule.defer = Guard2plgAct;
-    
     currentAlt = new Alternative();
     
     addTest(1, "#doNotGuard", "", 1, 1, "defaultSKIP");
@@ -915,25 +789,28 @@ singleQuote  = getSet("singleQuote","'");
     addTest(1, ")", "file", 0, 1, "");
     
     currentRule.alternatives += currentAlt;
-    
-    currentRule = getRule("ParseInclude");
-    
-    currentAlt = new Alternative();
-    
-    addTest(6, "Body", "", 1, 999999, "defaultSKIP");
-    
-    currentRule.alternatives += currentAlt;
-    
-    currentRule = getRule("Include2");
-    //currentRule.immediate = Include2plgNow;
-    //currentRule.next = getRule("Include3");
-    
     currentAlt = new Alternative();
     
     addTest(1, "insert(", "", 1, 1, "defaultSKIP");
     
     
     addTest(1, ")", "file", 0, 1, "");
+    
+    currentRule.alternatives += currentAlt;
+    currentAlt = new Alternative();
+    
+    addTest(1, "-%", "", 1, 1, "defaultSKIP");
+    
+    
+    addTest(1, "%-", "code", 0, 1, "");
+    
+    currentRule.alternatives += currentAlt;
+    
+    currentRule = getRule("ParseInclude");
+    
+    currentAlt = new Alternative();
+    
+    addTest(6, "Body", "", 1, 999999, "defaultSKIP");
     
     currentRule.alternatives += currentAlt;
     
@@ -951,16 +828,9 @@ singleQuote  = getSet("singleQuote","'");
     addTest(3, "*+?!%", "end", 0, 1, "");
     
     currentRule.alternatives += currentAlt;
-    
-    currentRule = getRule("Include3");
-    //currentRule.immediate = Include3plgNow;
-    
     currentAlt = new Alternative();
     
-    addTest(1, "-%", "", 1, 1, "defaultSKIP");
-    
-    
-    addTest(1, "%-", "code", 0, 1, "");
+    addTest(4, "", "", 1, 1, "");
     
     currentRule.alternatives += currentAlt;
     
@@ -1023,12 +893,20 @@ singleQuote  = getSet("singleQuote","'");
     addTest(1, ";", "", 1, 1, "defaultSKIP");
     
     currentRule.alternatives += currentAlt;
+    currentAlt = new Alternative();
     
-    currentRule = getRule("SetVariable3");
-    //currentRule.immediate = SetVariable3plgNow;
-    currentSet = excludeSet;
-    //currentRule.next = getRule("SetVariable4");
+    addTest(1, "Rules", "", 1, 1, "defaultSKIP");
     
+    
+    addTest(3, "*+?!%", "", -1, 1, "");
+    
+    
+    addTest(6, "ForwardReference", "", 1, 999999, "defaultSKIP");
+    
+    
+    addTest(1, ";", "", 1, 1, "defaultSKIP");
+    
+    currentRule.alternatives += currentAlt;
     currentAlt = new Alternative();
     
     addTest(1, "KeyWord", "", 1, 1, "defaultSKIP");
@@ -1046,12 +924,23 @@ singleQuote  = getSet("singleQuote","'");
     addTest(1, ";", "", 1, 1, "defaultSKIP");
     
     currentRule.alternatives += currentAlt;
+    currentAlt = new Alternative();
     
-    currentRule = getRule("SetVariable5");
-    //currentRule.immediate = SetVariable5plgNow;
-    currentSet = excludeSet;
-    //currentRule.next = getRule("SetVariable6");
+    addTest(1, "Set", "", 1, 1, "defaultSKIP");
     
+    
+    addTest(3, "t", "", -1, 1, "");
+    
+    
+    addTest(6, "Name", "name", 1, 1, "defaultSKIP");
+    
+    
+    addTest(6, "StringSet", "set", 0, 1, "defaultSKIP");
+    
+    
+    addTest(1, ";", "", 0, 1, "defaultSKIP");
+    
+    currentRule.alternatives += currentAlt;
     currentAlt = new Alternative();
     
     addTest(1, "Condition", "", 1, 1, "defaultSKIP");
@@ -1061,6 +950,20 @@ singleQuote  = getSet("singleQuote","'");
     
     
     addTest(6, "Name", "condishun", 1, 999999, "defaultSKIP");
+    
+    
+    addTest(1, ";", "", 1, 1, "defaultSKIP");
+    
+    currentRule.alternatives += currentAlt;
+    currentAlt = new Alternative();
+    
+    addTest(1, "Debug", "", 1, 1, "defaultSKIP");
+    
+    
+    addTest(3, "A-Za-z0-9_", "", -1, 1, "");
+    
+    
+    addTest(6, "DebugRule", "rulename", 0, 999999, "defaultSKIP");
     
     
     addTest(1, ";", "", 1, 1, "defaultSKIP");
@@ -1079,6 +982,11 @@ singleQuote  = getSet("singleQuote","'");
     addTest(6, "Body", "", 1, 999999, "defaultSKIP");
     
     currentRule.alternatives += currentAlt;
+    currentAlt = new Alternative();
+    
+    addTest(6, "Start2Block6", "error", 1, 1, "defaultSKIP");
+    
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("StringSet");
     //currentRule.defer = StringSetplgAct;
@@ -1092,11 +1000,6 @@ singleQuote  = getSet("singleQuote","'");
     addTest(1, "]", "text", 0, 1, "");
     
     currentRule.alternatives += currentAlt;
-    
-    currentRule = getRule("StringSet2");
-    //currentRule.immediate = StringSet2plgNow;
-    //currentRule.defer = StringSet2plgAct;
-    
     currentAlt = new Alternative();
     
     addTest(6, "Name", "name", 1, 1, "defaultSKIP");
@@ -1125,16 +1028,6 @@ singleQuote  = getSet("singleQuote","'");
     
     currentRule.alternatives += currentAlt;
     
-    currentRule = getRule("Alternative3");
-    currentSet = commentSet;
-    currentRule.guardSet = currentSet;
-    
-    currentAlt = new Alternative();
-    
-    addTest(6, "Comment", "", 1, 1, "defaultSKIP");
-    
-    currentRule.alternatives += currentAlt;
-    
     currentRule = getRule("Body");
     currentSet = commentSet;
     currentRule.guardSet = currentSet;
@@ -1145,13 +1038,34 @@ singleQuote  = getSet("singleQuote","'");
     addTest(6, "Comment", "comment", 1, 1, "defaultSKIP");
     
     currentRule.alternatives += currentAlt;
+    currentAlt = new Alternative();
     
-    currentRule = getRule("Body5");
-    //currentRule.next = getRule("Body6");
+    addTest(6, "SetVariable", "", 1, 1, "defaultSKIP");
     
+    currentRule.alternatives += currentAlt;
+    currentAlt = new Alternative();
+    
+    addTest(6, "Include", "", 1, 1, "defaultSKIP");
+    
+    currentRule.alternatives += currentAlt;
+    currentAlt = new Alternative();
+    
+    addTest(6, "Tail", "", 1, 1, "defaultSKIP");
+    
+    currentRule.alternatives += currentAlt;
     currentAlt = new Alternative();
     
     addTest(6, "Rule", "atRule", 1, 1, "defaultSKIP");
+    
+    currentRule.alternatives += currentAlt;
+    currentAlt = new Alternative();
+    
+    addTest(6, "ActionRule", "", 1, 1, "defaultSKIP");
+    
+    currentRule.alternatives += currentAlt;
+    currentAlt = new Alternative();
+    
+    addTest(1, "\n", "error", 0, 1, "");
     
     currentRule.alternatives += currentAlt;
     
@@ -1163,13 +1077,9 @@ singleQuote  = getSet("singleQuote","'");
     addTest(6, "DebugTextBalancE", "text", 1, 1, "defaultSKIP");
     
     currentRule.alternatives += currentAlt;
-    
-    currentRule = getRule("DebugTextAny");
-    //currentRule.immediate = balancEbail;
-    
     currentAlt = new Alternative();
     
-    addTest(4, "", "", 1, 1, "");
+    addTest(3, "a-zA-Z0-9", "text", 1, 999999, "defaultSKIP");
     
     currentRule.alternatives += currentAlt;
     
@@ -1181,33 +1091,6 @@ singleQuote  = getSet("singleQuote","'");
     
     
     addTest(6, "DebugText", "option", 1, 1, "defaultSKIP");
-    
-    currentRule.alternatives += currentAlt;
-    
-    currentRule = getRule("SetVariable2");
-    currentSet = excludeSet;
-    //currentRule.next = getRule("SetVariable3");
-    
-    currentAlt = new Alternative();
-    
-    addTest(1, "Rules", "", 1, 1, "defaultSKIP");
-    
-    
-    addTest(3, "*+?!%", "", -1, 1, "");
-    
-    
-    addTest(6, "ForwardReference", "", 1, 999999, "defaultSKIP");
-    
-    
-    addTest(1, ";", "", 1, 1, "defaultSKIP");
-    
-    currentRule.alternatives += currentAlt;
-    
-    currentRule = getRule("Start2");
-    
-    currentAlt = new Alternative();
-    
-    addTest(6, "Start2Block6", "error", 1, 1, "defaultSKIP");
     
     currentRule.alternatives += currentAlt;
     

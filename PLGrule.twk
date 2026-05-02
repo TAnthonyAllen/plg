@@ -92,10 +92,23 @@ PLGitem match(PLGparse state)
 DoubleLink  link = null;
 Alternative alt;
 PLGitem     result;
-    cout "PLGrule: " name " at: " state.cursor:;
+int         altNum = 0;
+int         altCount = alternatives.length();
+String      saved;
+    cout "PLGrule: " name " (" altCount " alts) at offset " (state.cursor - state.buffer.start):;
     for link = alternatives.first {
         alt = link.value;
-        if alt.match(state, result)  return result; }
+        altNum++;
+        saved = state.cursor;
+        cout "  " name " try alt " altNum "/" altCount " at offset " (saved - state.buffer.start):;
+        if alt.match(state, result)
+            {
+            cout "  " name " alt " altNum " SUCCEEDED -> offset " (state.cursor - state.buffer.start):;
+            return result;
+            }
+        cout "  " name " alt " altNum " FAILED at offset " (state.cursor - state.buffer.start) " (was " (saved - state.buffer.start) ")":;
+        }
+    cout "  " name " ALL " altCount " alts failed":;
     return null;
 }
 

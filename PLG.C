@@ -1,5 +1,6 @@
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include "StringRoutines.h"
 #include "DoubleLinkList.h"
 #include "PLGrule.h"
@@ -107,12 +108,16 @@ void PLG::init()
 
 /*******************************************************************************
 	process — load a grammar file, run it through the parser starting at the
-	"Start" rule, and report the result.
+	"Start" rule, then emit a .twk file (foo.g -> foo.twk) containing the
+	generated setRules().
 *******************************************************************************/
 void PLG::process(char *filename)
 {
 char 		*content = 0;
 PLGitem 	*result = 0;
+Buffer 		*twkOut = 0;
+char 		*outFile = 0;
+char 		*dot = 0;
 	setRules();
 	parser->initialize();
 	content = ::getStringFromFile(filename);
@@ -126,6 +131,21 @@ PLGitem 	*result = 0;
 	if ( result )
 		::printf("parsed %ld chars from %s\n",result->itemLength,filename);
 	else	::printf("parse failed on %s\n",filename);
+	// Build output path: foo.g -> foo.twk
+	outFile = (char*)::malloc(::strlen(filename) + 8);
+	::strcpy(outFile,filename);
+	dot = strrchr(outFile,'.');
+	if ( dot )
+		{
+		*dot = '\0';
+		}
+	::strcat(outFile,".twk");
+	twkOut = ::bufferFactory3("twk-output",50000);
+	parser->generateRules(twkOut);
+	twkOut->setFile(outFile);
+	twkOut->flush();
+	::printf("wrote %s\n",outFile);
+	::free(outFile);
 }
 
 /*******************************************************************************
@@ -193,8 +213,6 @@ void PLG::setRules()
 	parser->addTest(1,"setSKIP","",1,1,"defaultSKIP");
 	parser->addTest(6,"SetAssignment","set",0,1,"defaultSKIP");
 	parser->currentRule->alternatives->add(parser->currentAlt);
-	parser->currentRule = parser->getRule("Command2");
-	//currentRule.immediate = Command2plgNow;
 	parser->currentAlt = new Alternative();
 	parser->addTest(1,"dEBUG","",1,1,"defaultSKIP");
 	parser->currentRule->alternatives->add(parser->currentAlt);
@@ -206,15 +224,6 @@ void PLG::setRules()
 	parser->addTest(6,"FileNameBlock0","",0,999999,"defaultSKIP");
 	parser->addTest(3,"A-Za-z0-9_","name",1,999999,"defaultSKIP");
 	parser->addTest(1,".g","",1,1,"defaultSKIP");
-	parser->currentRule->alternatives->add(parser->currentAlt);
-	parser->currentRule = parser->getRule("SetVariable6");
-	//currentRule.immediate = SetVariable6plgNow;
-	parser->currentSet = excludeSet;
-	parser->currentAlt = new Alternative();
-	parser->addTest(1,"Debug","",1,1,"defaultSKIP");
-	parser->addTest(3,"A-Za-z0-9_","",-1,1,"");
-	parser->addTest(6,"DebugRule","rulename",0,999999,"defaultSKIP");
-	parser->addTest(1,";","",1,1,"defaultSKIP");
 	parser->currentRule->alternatives->add(parser->currentAlt);
 	parser->currentRule = parser->getRule("Header");
 	//currentRule.immediate = HeaderplgNow;
@@ -256,11 +265,9 @@ void PLG::setRules()
 	parser->currentAlt = new Alternative();
 	parser->addTest(6,"CommentPartBalancE","",1,1,"defaultSKIP");
 	parser->currentRule->alternatives->add(parser->currentAlt);
-	parser->currentRule = parser->getRule("Body7");
-	//currentRule.immediate = Body7plgNow;
-	parser->currentRule->doNotGuard = 1;
 	parser->currentAlt = new Alternative();
-	parser->addTest(1,"\n","error",0,1,"");
+	parser->addTest(1,"//","",1,1,"defaultSKIP");
+	parser->addTest(1,"\n","",0,1,"");
 	parser->currentRule->alternatives->add(parser->currentAlt);
 	parser->currentRule = parser->getRule("CommentPartBalancE");
 	//currentRule.immediate = balancE;
@@ -285,19 +292,6 @@ void PLG::setRules()
 	parser->addTest(1,"/*","begin",0,1,"");
 	parser->addTest(1,"*/","end",0,1,"");
 	parser->currentRule->alternatives->add(parser->currentAlt);
-	parser->currentRule = parser->getRule("SetVariable4");
-	//currentRule.immediate = SetVariable4plgNow;
-	parser->currentSet = excludeSet;
-	//currentRule.next = getRule("SetVariable5");
-	parser->currentAlt = new Alternative();
-	parser->addTest(1,"Set","",1,1,"defaultSKIP");
-	parser->addTest(3,"t","",-1,1,"");
-	parser->addTest(6,"Name","name",1,1,"defaultSKIP");
-	parser->addTest(6,"StringSet","set",0,1,"defaultSKIP");
-	parser->addTest(1,";","",0,1,"defaultSKIP");
-	parser->currentRule->alternatives->add(parser->currentAlt);
-	parser->currentRule = parser->getRule("CommentPartAny");
-	//currentRule.immediate = balancEbail;
 	parser->currentAlt = new Alternative();
 	parser->addTest(4,"","",1,1,"");
 	parser->currentRule->alternatives->add(parser->currentAlt);
@@ -307,22 +301,15 @@ void PLG::setRules()
 	parser->addTest(6,"QuotedStringBlock1Block3","",1,1,"defaultSKIP");
 	parser->addTest(3,"'","",1,1,"defaultSKIP");
 	parser->currentRule->alternatives->add(parser->currentAlt);
-	parser->currentRule = parser->getRule("CommentPart2");
-	parser->currentAlt = new Alternative();
-	parser->addTest(1,"//","",1,1,"defaultSKIP");
-	parser->addTest(1,"\n","",0,1,"");
-	parser->currentRule->alternatives->add(parser->currentAlt);
-	parser->currentRule = parser->getRule("DebugText2");
-	parser->currentSet = parser->getSet("a-zA-Z0-9");
-	parser->currentAlt = new Alternative();
-	parser->addTest(3,"a-zA-Z0-9","text",1,999999,"defaultSKIP");
-	parser->currentRule->alternatives->add(parser->currentAlt);
 	parser->currentRule = parser->getRule("Comment");
 	parser->currentSet = parser->getSet("/");
 	parser->currentRule->guardSet = parser->currentSet;
 	//currentRule.next = getRule("Comment2");
 	parser->currentAlt = new Alternative();
 	parser->addTest(6,"CommentPart","",1,1,"defaultSKIP");
+	parser->currentRule->alternatives->add(parser->currentAlt);
+	parser->currentAlt = new Alternative();
+	parser->addTest(6,"Command","",1,1,"defaultSKIP");
 	parser->currentRule->alternatives->add(parser->currentAlt);
 	parser->currentRule = parser->getRule("Balanced");
 	//currentRule.defer = BalancedplgAct;
@@ -331,10 +318,6 @@ void PLG::setRules()
 	parser->addTest(6,"ElementType","type",0,1,"defaultSKIP");
 	parser->addTest(1,"&","noSkip",0,1,"defaultSKIP");
 	parser->addTest(6,"BalanceRight","right",0,1,"defaultSKIP");
-	parser->currentRule->alternatives->add(parser->currentAlt);
-	parser->currentRule = parser->getRule("Comment2");
-	parser->currentAlt = new Alternative();
-	parser->addTest(6,"Command","",1,1,"defaultSKIP");
 	parser->currentRule->alternatives->add(parser->currentAlt);
 	parser->currentRule = parser->getRule("Extender");
 	parser->currentAlt = new Alternative();
@@ -363,11 +346,6 @@ void PLG::setRules()
 	parser->addTest(6,"Name","name",1,1,"defaultSKIP");
 	parser->addTest(6,"DebugOption","option",0,1,"defaultSKIP");
 	parser->currentRule->alternatives->add(parser->currentAlt);
-	parser->currentRule = parser->getRule("Body6");
-	//currentRule.next = getRule("Body7");
-	parser->currentAlt = new Alternative();
-	parser->addTest(6,"ActionRule","",1,1,"defaultSKIP");
-	parser->currentRule->alternatives->add(parser->currentAlt);
 	parser->currentRule = parser->getRule("Label");
 	parser->currentAlt = new Alternative();
 	parser->addTest(6,"Name","atLabel",1,1,"defaultSKIP");
@@ -382,6 +360,9 @@ void PLG::setRules()
 	parser->addTest(6,"QuotedStringBlock1","text",1,1,"defaultSKIP");
 	parser->addTest(3,"0-9","",1,1,"defaultSKIP");
 	parser->currentRule->alternatives->add(parser->currentAlt);
+	parser->currentAlt = new Alternative();
+	parser->addTest(3,".$","text",1,1,"defaultSKIP");
+	parser->currentRule->alternatives->add(parser->currentAlt);
 	parser->currentRule = parser->getRule("QuotedStringBlock1");
 	parser->currentAlt = new Alternative();
 	parser->addTest(6,"QuotedStringBlock1Block2","",1,999999,"defaultSKIP");
@@ -390,11 +371,6 @@ void PLG::setRules()
 	parser->currentAlt = new Alternative();
 	parser->addTest(1,"\\","",1,1,"defaultSKIP");
 	parser->addTest(4,"","",1,1,"defaultSKIP");
-	parser->currentRule->alternatives->add(parser->currentAlt);
-	parser->currentRule = parser->getRule("QuotedString2");
-	parser->currentSet = parser->getSet(".$");
-	parser->currentAlt = new Alternative();
-	parser->addTest(3,".$","text",1,1,"defaultSKIP");
 	parser->currentRule->alternatives->add(parser->currentAlt);
 	parser->currentRule = parser->getRule("Word");
 	parser->currentSet = parser->getSet("n;");
@@ -407,8 +383,6 @@ void PLG::setRules()
 	parser->currentAlt = new Alternative();
 	parser->addTest(1,"|","option",1,999999,"defaultSKIP");
 	parser->currentRule->alternatives->add(parser->currentAlt);
-	parser->currentRule = parser->getRule("ActionOption2");
-	//currentRule.defer = ActionOption2plgAct;
 	parser->currentAlt = new Alternative();
 	parser->addTest(1,".","immediate",0,1,"");
 	parser->addTest(1,";","",-1,1,"");
@@ -422,16 +396,6 @@ void PLG::setRules()
 	parser->addTest(6,"ActionOption","list",1,999999,"defaultSKIP");
 	parser->addTest(1,";","",1,1,"defaultSKIP");
 	parser->currentRule->alternatives->add(parser->currentAlt);
-	parser->currentRule = parser->getRule("Alternative2");
-	//currentRule.defer = Alternative2plgAct;
-	parser->currentSet = parser->getSet(")|");
-	parser->currentRule->guardSet = parser->currentSet;
-	//currentRule.next = getRule("Alternative3");
-	parser->currentAlt = new Alternative();
-	parser->addTest(6,"Guard","guard",0,1,"defaultSKIP");
-	parser->addTest(6,"Label","atLabel",0,1,"defaultSKIP");
-	parser->addTest(6,"Alternative2Block5","atElement",1,1,"defaultSKIP");
-	parser->currentRule->alternatives->add(parser->currentAlt);
 	parser->currentRule = parser->getRule("ActionBody");
 	parser->currentAlt = new Alternative();
 	parser->addTest(6,"ActionEnd","",-1,1,"");
@@ -443,6 +407,14 @@ void PLG::setRules()
 	parser->currentAlt = new Alternative();
 	parser->addTest(1,"FAIL","",1,1,"defaultSKIP");
 	parser->addTest(6,"AlternativeBlock4","exception",1,1,"defaultSKIP");
+	parser->currentRule->alternatives->add(parser->currentAlt);
+	parser->currentAlt = new Alternative();
+	parser->addTest(6,"Guard","guard",0,1,"defaultSKIP");
+	parser->addTest(6,"Label","atLabel",0,1,"defaultSKIP");
+	parser->addTest(6,"Alternative2Block5","atElement",1,1,"defaultSKIP");
+	parser->currentRule->alternatives->add(parser->currentAlt);
+	parser->currentAlt = new Alternative();
+	parser->addTest(6,"Comment","",1,1,"defaultSKIP");
 	parser->currentRule->alternatives->add(parser->currentAlt);
 	parser->currentRule = parser->getRule("Block");
 	//currentRule.defer = BlockplgAct;
@@ -468,39 +440,15 @@ void PLG::setRules()
 	parser->addTest(6,"Command","",-1,1,"defaultSKIP");
 	parser->addTest(6,"Name","atElement",1,1,"defaultSKIP");
 	parser->currentRule->alternatives->add(parser->currentAlt);
-	parser->currentRule = parser->getRule("Element2");
-	//currentRule.defer = Element2plgAct;
-	//currentRule.next = getRule("Element3");
 	parser->currentAlt = new Alternative();
 	parser->addTest(6,"QuotedString","atElement",1,1,"defaultSKIP");
 	parser->currentRule->alternatives->add(parser->currentAlt);
-	parser->currentRule = parser->getRule("Body2");
-	//currentRule.next = getRule("Body3");
-	parser->currentAlt = new Alternative();
-	parser->addTest(6,"SetVariable","",1,1,"defaultSKIP");
-	parser->currentRule->alternatives->add(parser->currentAlt);
-	parser->currentRule = parser->getRule("Element3");
-	//currentRule.defer = Element3plgAct;
-	//currentRule.next = getRule("Element4");
 	parser->currentAlt = new Alternative();
 	parser->addTest(6,"StringSet","atElement",1,1,"defaultSKIP");
 	parser->currentRule->alternatives->add(parser->currentAlt);
-	parser->currentRule = parser->getRule("Body3");
-	//currentRule.next = getRule("Body4");
-	parser->currentAlt = new Alternative();
-	parser->addTest(6,"Include","",1,1,"defaultSKIP");
-	parser->currentRule->alternatives->add(parser->currentAlt);
-	parser->currentRule = parser->getRule("Element4");
-	//currentRule.defer = Element4plgAct;
-	parser->currentSet = parser->getSet(".$");
 	parser->currentAlt = new Alternative();
 	parser->addTest(1,"~","",1,1,"defaultSKIP");
 	parser->addTest(3,".$","atElement",1,1,"defaultSKIP");
-	parser->currentRule->alternatives->add(parser->currentAlt);
-	parser->currentRule = parser->getRule("Body4");
-	//currentRule.next = getRule("Body5");
-	parser->currentAlt = new Alternative();
-	parser->addTest(6,"Tail","",1,1,"defaultSKIP");
 	parser->currentRule->alternatives->add(parser->currentAlt);
 	parser->currentRule = parser->getRule("ElementType");
 	//currentRule.defer = ElementTypeplgAct;
@@ -511,9 +459,6 @@ void PLG::setRules()
 	parser->addTest(6,"Max","maximum",0,1,"defaultSKIP");
 	parser->addTest(1,"","",1,1,"defaultSKIP");
 	parser->currentRule->alternatives->add(parser->currentAlt);
-	parser->currentRule = parser->getRule("ElementType2");
-	//currentRule.defer = ElementType2plgAct;
-	parser->currentSet = parser->getSet("*+?!%");
 	parser->currentAlt = new Alternative();
 	parser->addTest(3,"*+?!%","option",1,1,"defaultSKIP");
 	parser->currentRule->alternatives->add(parser->currentAlt);
@@ -529,8 +474,6 @@ void PLG::setRules()
 	parser->addTest(1,"#","",1,1,"defaultSKIP");
 	parser->addTest(6,"StringSet","set",1,1,"defaultSKIP");
 	parser->currentRule->alternatives->add(parser->currentAlt);
-	parser->currentRule = parser->getRule("Guard2");
-	//currentRule.defer = Guard2plgAct;
 	parser->currentAlt = new Alternative();
 	parser->addTest(1,"#doNotGuard","",1,1,"defaultSKIP");
 	parser->currentRule->alternatives->add(parser->currentAlt);
@@ -541,16 +484,17 @@ void PLG::setRules()
 	parser->addTest(1,"include(","",1,1,"defaultSKIP");
 	parser->addTest(1,")","file",0,1,"");
 	parser->currentRule->alternatives->add(parser->currentAlt);
-	parser->currentRule = parser->getRule("ParseInclude");
-	parser->currentAlt = new Alternative();
-	parser->addTest(6,"Body","",1,999999,"defaultSKIP");
-	parser->currentRule->alternatives->add(parser->currentAlt);
-	parser->currentRule = parser->getRule("Include2");
-	//currentRule.immediate = Include2plgNow;
-	//currentRule.next = getRule("Include3");
 	parser->currentAlt = new Alternative();
 	parser->addTest(1,"insert(","",1,1,"defaultSKIP");
 	parser->addTest(1,")","file",0,1,"");
+	parser->currentRule->alternatives->add(parser->currentAlt);
+	parser->currentAlt = new Alternative();
+	parser->addTest(1,"-%","",1,1,"defaultSKIP");
+	parser->addTest(1,"%-","code",0,1,"");
+	parser->currentRule->alternatives->add(parser->currentAlt);
+	parser->currentRule = parser->getRule("ParseInclude");
+	parser->currentAlt = new Alternative();
+	parser->addTest(6,"Body","",1,999999,"defaultSKIP");
 	parser->currentRule->alternatives->add(parser->currentAlt);
 	parser->currentRule = parser->getRule("DebugTextBoDY");
 	//currentRule.immediate = balancEbody;
@@ -561,11 +505,8 @@ void PLG::setRules()
 	parser->addTest(3,"*+?!%","begin",0,1,"");
 	parser->addTest(3,"*+?!%","end",0,1,"");
 	parser->currentRule->alternatives->add(parser->currentAlt);
-	parser->currentRule = parser->getRule("Include3");
-	//currentRule.immediate = Include3plgNow;
 	parser->currentAlt = new Alternative();
-	parser->addTest(1,"-%","",1,1,"defaultSKIP");
-	parser->addTest(1,"%-","code",0,1,"");
+	parser->addTest(4,"","",1,1,"");
 	parser->currentRule->alternatives->add(parser->currentAlt);
 	parser->currentRule = parser->getRule("Rule");
 	//currentRule.immediate = RuleplgNow;
@@ -597,10 +538,12 @@ void PLG::setRules()
 	parser->addTest(6,"Name","variable",1,999999,"defaultSKIP");
 	parser->addTest(1,";","",1,1,"defaultSKIP");
 	parser->currentRule->alternatives->add(parser->currentAlt);
-	parser->currentRule = parser->getRule("SetVariable3");
-	//currentRule.immediate = SetVariable3plgNow;
-	parser->currentSet = excludeSet;
-	//currentRule.next = getRule("SetVariable4");
+	parser->currentAlt = new Alternative();
+	parser->addTest(1,"Rules","",1,1,"defaultSKIP");
+	parser->addTest(3,"*+?!%","",-1,1,"");
+	parser->addTest(6,"ForwardReference","",1,999999,"defaultSKIP");
+	parser->addTest(1,";","",1,1,"defaultSKIP");
+	parser->currentRule->alternatives->add(parser->currentAlt);
 	parser->currentAlt = new Alternative();
 	parser->addTest(1,"KeyWord","",1,1,"defaultSKIP");
 	parser->addTest(3,"*+?!%","",-1,1,"");
@@ -608,14 +551,23 @@ void PLG::setRules()
 	parser->addTest(6,"Word","list",0,999999,"defaultSKIP");
 	parser->addTest(1,";","",1,1,"defaultSKIP");
 	parser->currentRule->alternatives->add(parser->currentAlt);
-	parser->currentRule = parser->getRule("SetVariable5");
-	//currentRule.immediate = SetVariable5plgNow;
-	parser->currentSet = excludeSet;
-	//currentRule.next = getRule("SetVariable6");
+	parser->currentAlt = new Alternative();
+	parser->addTest(1,"Set","",1,1,"defaultSKIP");
+	parser->addTest(3,"t","",-1,1,"");
+	parser->addTest(6,"Name","name",1,1,"defaultSKIP");
+	parser->addTest(6,"StringSet","set",0,1,"defaultSKIP");
+	parser->addTest(1,";","",0,1,"defaultSKIP");
+	parser->currentRule->alternatives->add(parser->currentAlt);
 	parser->currentAlt = new Alternative();
 	parser->addTest(1,"Condition","",1,1,"defaultSKIP");
 	parser->addTest(3,"*+?!%","",-1,1,"");
 	parser->addTest(6,"Name","condishun",1,999999,"defaultSKIP");
+	parser->addTest(1,";","",1,1,"defaultSKIP");
+	parser->currentRule->alternatives->add(parser->currentAlt);
+	parser->currentAlt = new Alternative();
+	parser->addTest(1,"Debug","",1,1,"defaultSKIP");
+	parser->addTest(3,"A-Za-z0-9_","",-1,1,"");
+	parser->addTest(6,"DebugRule","rulename",0,999999,"defaultSKIP");
 	parser->addTest(1,";","",1,1,"defaultSKIP");
 	parser->currentRule->alternatives->add(parser->currentAlt);
 	parser->currentRule = parser->getRule("Start");
@@ -625,6 +577,9 @@ void PLG::setRules()
 	parser->addTest(6,"Header","",0,1,"defaultSKIP");
 	parser->addTest(6,"Body","",1,999999,"defaultSKIP");
 	parser->currentRule->alternatives->add(parser->currentAlt);
+	parser->currentAlt = new Alternative();
+	parser->addTest(6,"Start2Block6","error",1,1,"defaultSKIP");
+	parser->currentRule->alternatives->add(parser->currentAlt);
 	parser->currentRule = parser->getRule("StringSet");
 	//currentRule.defer = StringSetplgAct;
 	//currentRule.next = getRule("StringSet2");
@@ -632,9 +587,6 @@ void PLG::setRules()
 	parser->addTest(1,"[","",1,1,"defaultSKIP");
 	parser->addTest(1,"]","text",0,1,"");
 	parser->currentRule->alternatives->add(parser->currentAlt);
-	parser->currentRule = parser->getRule("StringSet2");
-	//currentRule.immediate = StringSet2plgNow;
-	//currentRule.defer = StringSet2plgAct;
 	parser->currentAlt = new Alternative();
 	parser->addTest(6,"Name","name",1,1,"defaultSKIP");
 	parser->currentRule->alternatives->add(parser->currentAlt);
@@ -648,12 +600,6 @@ void PLG::setRules()
 	parser->addTest(6,"Balanced","atElement",1,1,"defaultSKIP");
 	parser->addTest(6,"Block","atElement",1,1,"defaultSKIP");
 	parser->currentRule->alternatives->add(parser->currentAlt);
-	parser->currentRule = parser->getRule("Alternative3");
-	parser->currentSet = commentSet;
-	parser->currentRule->guardSet = parser->currentSet;
-	parser->currentAlt = new Alternative();
-	parser->addTest(6,"Comment","",1,1,"defaultSKIP");
-	parser->currentRule->alternatives->add(parser->currentAlt);
 	parser->currentRule = parser->getRule("Body");
 	parser->currentSet = commentSet;
 	parser->currentRule->guardSet = parser->currentSet;
@@ -661,38 +607,36 @@ void PLG::setRules()
 	parser->currentAlt = new Alternative();
 	parser->addTest(6,"Comment","comment",1,1,"defaultSKIP");
 	parser->currentRule->alternatives->add(parser->currentAlt);
-	parser->currentRule = parser->getRule("Body5");
-	//currentRule.next = getRule("Body6");
+	parser->currentAlt = new Alternative();
+	parser->addTest(6,"SetVariable","",1,1,"defaultSKIP");
+	parser->currentRule->alternatives->add(parser->currentAlt);
+	parser->currentAlt = new Alternative();
+	parser->addTest(6,"Include","",1,1,"defaultSKIP");
+	parser->currentRule->alternatives->add(parser->currentAlt);
+	parser->currentAlt = new Alternative();
+	parser->addTest(6,"Tail","",1,1,"defaultSKIP");
+	parser->currentRule->alternatives->add(parser->currentAlt);
 	parser->currentAlt = new Alternative();
 	parser->addTest(6,"Rule","atRule",1,1,"defaultSKIP");
+	parser->currentRule->alternatives->add(parser->currentAlt);
+	parser->currentAlt = new Alternative();
+	parser->addTest(6,"ActionRule","",1,1,"defaultSKIP");
+	parser->currentRule->alternatives->add(parser->currentAlt);
+	parser->currentAlt = new Alternative();
+	parser->addTest(1,"\n","error",0,1,"");
 	parser->currentRule->alternatives->add(parser->currentAlt);
 	parser->currentRule = parser->getRule("DebugText");
 	//currentRule.next = getRule("DebugText2");
 	parser->currentAlt = new Alternative();
 	parser->addTest(6,"DebugTextBalancE","text",1,1,"defaultSKIP");
 	parser->currentRule->alternatives->add(parser->currentAlt);
-	parser->currentRule = parser->getRule("DebugTextAny");
-	//currentRule.immediate = balancEbail;
 	parser->currentAlt = new Alternative();
-	parser->addTest(4,"","",1,1,"");
+	parser->addTest(3,"a-zA-Z0-9","text",1,999999,"defaultSKIP");
 	parser->currentRule->alternatives->add(parser->currentAlt);
 	parser->currentRule = parser->getRule("DebugOption");
 	parser->currentAlt = new Alternative();
 	parser->addTest(1,"=","",1,1,"defaultSKIP");
 	parser->addTest(6,"DebugText","option",1,1,"defaultSKIP");
-	parser->currentRule->alternatives->add(parser->currentAlt);
-	parser->currentRule = parser->getRule("SetVariable2");
-	parser->currentSet = excludeSet;
-	//currentRule.next = getRule("SetVariable3");
-	parser->currentAlt = new Alternative();
-	parser->addTest(1,"Rules","",1,1,"defaultSKIP");
-	parser->addTest(3,"*+?!%","",-1,1,"");
-	parser->addTest(6,"ForwardReference","",1,999999,"defaultSKIP");
-	parser->addTest(1,";","",1,1,"defaultSKIP");
-	parser->currentRule->alternatives->add(parser->currentAlt);
-	parser->currentRule = parser->getRule("Start2");
-	parser->currentAlt = new Alternative();
-	parser->addTest(6,"Start2Block6","error",1,1,"defaultSKIP");
 	parser->currentRule->alternatives->add(parser->currentAlt);
 	parser->currentRule = parser->getRule("Start2Block6");
 	parser->currentSet = parser->getSet("\n");
@@ -703,3 +647,6 @@ void PLG::setRules()
 }
 // Ignoring declaration of unused variable alt in method: setRules()
 // Ignoring declaration of unused variable elem in method: setRules()
+/*	Warning: the following methods were referenced but not declared
+	strrchr(char*,char)
+*/

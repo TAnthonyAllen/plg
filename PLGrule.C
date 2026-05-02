@@ -3,10 +3,10 @@
 #include "DoubleLinkList.h"
 #include "Alternative.h"
 #include "DoubleLink.h"
-#include "PLGitem.h"
 #include "PLGset.h"
 #include "Buffer.h"
 #include "PLGparse.h"
+#include "PLGitem.h"
 #include "PLGrule.h"
 
 /*******************************************************************************
@@ -131,13 +131,24 @@ PLGitem *PLGrule::match(PLGparse *state)
 DoubleLink 		*link = 0;
 Alternative 	*alt = 0;
 PLGitem 		*result = 0;
-	::printf("PLGrule: %s at: %s\n",name,state->cursor);
+int 			altNum = 0;
+int 			altCount = alternatives->length;
+char 			*saved = 0;
+	::printf("PLGrule: %s (%d alts) at offset %lu\n",name,altCount,(state->cursor - state->buffer->start));
 	for ( link = alternatives->first; link; link = link->next )
 		{
 		alt = (Alternative*)link->value;
+		altNum++;
+		saved = state->cursor;
+		::printf("  %s try alt %d/%d at offset %lu\n",name,altNum,altCount,(saved - state->buffer->start));
 		if ( alt->match(state,result) )
+			{
+			::printf("  %s alt %d SUCCEEDED -> offset %lu\n",name,altNum,(state->cursor - state->buffer->start));
 			return result;
+			}
+		::printf("  %s alt %d FAILED at offset %lu (was %lu)\n",name,altNum,(state->cursor - state->buffer->start),(saved - state->buffer->start));
 		}
+	::printf("  %s ALL %d alts failed\n",name,altCount);
 	return 0;
 }
 
