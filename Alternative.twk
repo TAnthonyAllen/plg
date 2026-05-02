@@ -1,0 +1,60 @@
+include /Users/anthony/Dropbox/data/InProcess/Include/globals
+include /Users/anthony/Dropbox/data/InProcess/Include/frame
+include PLGrevision
+
+/*******************************************************************************
+	Class that embodies the Alternative rule in plg
+*******************************************************************************/
+class Alternative
+{
+DoubleLinkList  elements;
+PLGset          guardSet;
+
+int match(PLGparse state, PLGitem *out);
+
+/*******************************************************************************
+	Alternative constructor
+*******************************************************************************/
+Alternative()
+{
+    elements = new;
+}
+
+/*******************************************************************************
+	Just a stub for now
+*******************************************************************************/
+void generate(Buffer output)
+{
+Element elem;
+    print(output) "{\nAlternative *alt = new Alternative();":;
+    elements.resetIterator();
+    while elem = elements.next()
+        elem.generate(output);
+    print "currentRule->addAlternative(alt);\n}":;
+}
+
+int match(PLGparse state, PLGitem &out)
+{
+PLGitem     collected = new;
+DoubleLink  link = null;
+Element     elem;
+int         result = true;
+cout "Alternative match elements: " elements.length():;
+    collected.start = state.cursor;
+    for link = elements.first {
+        elem = link.value;
+cout `"element kind:",elem.kind:;
+        PLGitem item = elem.match(state);
+        if !item {
+            if elem.minimum > 0
+                result = false;
+            break; }
+        if item.label {
+            if !collected.children  collected.children = new;
+            collected.children[item.label] = item; }}
+    if result {
+        collected.length = state.cursor - collected.start;
+        out = collected; }
+    return result;
+}
+}

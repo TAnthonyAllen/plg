@@ -1,0 +1,301 @@
+include /Users/anthony/Dropbox/data/InProcess/Include/globals
+include /Users/anthony/Dropbox/data/InProcess/Include/frame
+include PLGrevision
+
+/*******************************************************************************
+	Class that embodies the Element rule in plg
+*******************************************************************************/
+class Element
+{
+String          label;
+int             minimum;
+int             maximum;
+String          errorMessage;
+PLGset          skipSet;
+PLGset          guardSet;           // FIRST set, computed once
+boolean         banged
+                isIgnored
+                noSkip
+                kind:4[kLit kChr kSet kAny kEof kRuleRef kKeyTable kCondition kVariable kUpTo kBalanced]
+                ;
+// Kind-specific data — only one of these is meaningful, depending on kind
+String          litText;            // for Lit
+char            chrChar;            // for Chr
+PLGset          setRef;             // for Set
+PLGrule         ruleRef;            // for RuleRef
+KeyTable        tableRef;           // for KeyTable
+void            *condFunc;          // for Condition
+char            **varPtr;           // for Variable
+Element         terminator;         // for UpTo
+boolean         consumeTerminator;  // for UpTo
+Element         openElement;        // for Balanced
+Element         closeElement;       // for Balanced
+
+PLGitem match(PLGparse state);
+PLGitem matchByKind(PLGparse state);    // the kind dispatch
+PLGitem applyRepetition(PLGparse state, PLGitem firstResult);
+
+/*******************************************************************************
+	Generate an element
+*******************************************************************************/
+void generate(Buffer output)
+{
+    print(output) "{\nElement *elem = new Element();":;
+    print "elem->minimum = " minimum ";":;
+    print "elem->maximum = " maximum ";":;
+    switch(kind) {
+        case kLit:
+            print "elem->kind = kLit;":;
+            print "elem->litText = \"":;
+            PLGset.printText(litText, output);
+            print "\";\n":;
+            break;
+        case kChr:
+            print "elem->kind = kChr;":;
+            print "elem->chrChar = '" chrChar "';\n":;
+            break;
+        case kSet:
+            setRef.generate(output);
+            print "elem->kind = kSet;":;
+            print "elem->setRef = currentSet;":;
+            break;
+        case kAny:
+            print "elem->kind = kAny;":;
+            break;
+        case kEof:
+            print "elem->kind = kEof;":;
+            break;
+        case kRuleRef:
+            print "elem->kind = kRuleRef;":;
+            print "elem->ruleRef = getRule(\"" ruleRef.name "\");\n":;
+            break;
+        case kKeyTable:
+            print "elem->kind = kKeyTable;":;
+            print "elem->tableRef = getTable(\"" tableRef.name "\");\n":;
+            break;
+        case kCondition:
+            print "elem->kind = kCondition;":;
+            //print "elem->condFunc = &" condFunc ";\n":;
+            break;
+        default:
+            cerr "Element.generate: unknown kind " kind:;
+            break;
+        }
+    if label        print "elem->label = \"" label "\";":;
+    if skipSet      { skipSet.generate(output); print "elem->skipSet = currentSet;":; }
+    if banged       print "elem->banged = true;":;
+    if isIgnored    print "elem->isIgnored = true;":;
+    if noSkip       print "elem->noSkip = true;":;
+    print "alt->addElement(elem);\n}":;
+}
+
+PLGitem match(PLGparse state)
+{
+cout "Element match":;
+    //trace?.enterElement(this, state);
+
+    // Skip-set handling — done once, per element, before the kind-specific match
+    if !noSkip  skip();
+
+    // Guard check — fail fast if next char isn't in the FIRST set
+    if guardSet && cursor < eof && !guardSet.contains(*cursor) {
+        //trace?.exitElement(this, state, null, "guarded");
+        return null; }
+
+    PLGitem result = matchByKind(state);
+
+    // Apply repetition
+    if minimum > 1 || maximum > 1
+        result = applyRepetition(state, result);
+
+    // Apply banged inversion
+    if banged
+        result = (result == null) ? itemEmpty : null;
+
+    // Apply isIgnored — match succeeded but discard the result
+    if result && isIgnored
+        result = itemEmpty;
+
+    // Apply label
+    if result && label
+        result.label = label;
+
+    //trace?.exitElement(this, state, result);
+    return result;
+}
+
+PLGitem applyRepetition(PLGparse state, PLGitem firstResult)
+{
+    if !firstResult {
+        if minimum == 0 || minimum == -1   return itemEmpty;
+        return null; }
+
+PLGitem head = firstResult;
+PLGitem tail = head;
+int count = 1;
+cout "Element applyRepetition":;
+    while count < maximum {
+        String saved = snapshot();
+        // Re-run the element's kind-specific matcher
+cout `"applyRepetition matchByKind kind=" kind " cursor=" state.cursor:;
+        PLGitem nextItem = matchByKind(state);
+        if !nextItem
+            { restore(saved); break; }
+        tail.next = nextItem;
+        tail = nextItem;
+        count++; }
+    head.length = state.cursor - head.start;
+    if count < minimum
+        return null;
+    return head;
+}
+
+PLGitem matchByKind(PLGparse state)
+{
+    switch(kind) {
+        case kLit:        return matchLit(state);
+        case kChr:        return matchChr(state);
+        case kSet:        return matchSet(state);
+        case kAny:        return matchAny(state);
+        case kEof:        return matchEof(state);
+        case kRuleRef:    return matchRuleRef(state);
+        case kKeyTable:   return matchKeyTable(state);
+        case kCondition:  return matchCondition(state);
+        case kVariable:   return matchVariable(state);
+        case kUpTo:       return matchUpTo(state);
+        case kBalanced:   return matchBalanced(state);
+        default:
+            cerr "ERROR: unknown Element kind: " kind:;
+            return null; }
+}
+
+PLGitem matchAny(PLGparse state)
+{
+    if cursor >= eof  return null;
+PLGitem result = new PLGitem(cursor, 1);
+    cursor++;
+    return result;
+}
+
+PLGitem matchBalanced(PLGparse state)
+{
+PLGitem open = openElement.match(state);
+    if !open  return null;
+String bodyStart = cursor;
+int depth = 1;
+    while cursor < eof && depth > 0 {
+        String saved = snapshot();
+        PLGitem nested = openElement.match(state);
+        if nested  { depth++; continue; }
+        restore(saved);
+        PLGitem close = closeElement.match(state);
+        if close {
+            depth--;
+            if depth == 0 {
+                PLGitem result = new PLGitem(bodyStart, (int)(saved - bodyStart));
+                result.terminator = close;
+                return result; }
+            continue; }
+        restore(saved);
+        cursor++; }    // ordinary char inside body
+    return null;       // unbalanced
+}
+
+PLGitem matchChr(PLGparse state)
+{
+    if cursor >= eof || *cursor != chrChar  return null;
+PLGitem result = new PLGitem(cursor, 1);
+    cursor++;
+    return result;
+}
+
+PLGitem matchCondition(PLGparse state)
+{
+PLGitem result = itemEmpty;
+    cout "Warning: matchCondition is just a stub at this point":;
+    /*
+int ok = condFunc();
+PLGitem result = itemEmpty;
+    result.conditionResult = ok;
+    */
+    return result;       // always "succeeds"; caller checks conditionResult
+}
+
+PLGitem matchEof(PLGparse state)
+{
+    if cursor < eof  return null;
+    return itemEmpty;
+}
+
+PLGitem matchKeyTable(PLGparse state)
+{
+KeyTableItem hit = tableRef.matches(cursor);
+    if !hit  return null;
+long    len = strlen(hit.key);
+PLGitem    result = new PLGitem(cursor, len);
+    result.value = hit;
+    cursor += len;
+    return result;
+}
+
+PLGitem matchLit(PLGparse state)
+{
+String at = cursor;
+String want = litText;
+    while *want && at < eof && *at == *want
+        { at++; want++; }
+    if *want   return null;       // didn't match the full literal
+    PLGitem result = new PLGitem(cursor, at - cursor);
+    cursor = at;
+    return result;
+}
+
+PLGitem matchRuleRef(PLGparse state)
+{
+cout "matchRuleRef: cursor: " cursor:;
+    return ruleRef.match(state);
+}
+
+PLGitem matchSet(PLGparse state)
+{
+    if cursor >= eof  return null;
+    if !setRef.contains(*cursor)  return null;
+PLGitem result = new PLGitem(cursor, 1);
+    cursor++;
+    return result;
+}
+
+PLGitem matchVariable(PLGparse state)
+{
+String want = *varPtr;
+    if !want  return null;
+String at = cursor;
+    while *want && at < eof && *at == *want
+        { at++; want++; }
+    if *want  return null;
+PLGitem result = new PLGitem(cursor, at - cursor);
+    cursor = at;
+    return result;
+}
+
+PLGitem matchUpTo(PLGparse state)
+{
+String saveStart = cursor;
+    while cursor < eof {
+        // Handle escape: '\' followed by any char skips both
+        if *cursor == '\\' && cursor + 1 < eof
+            { cursor += 2; continue; }
+        String posBefore = cursor;
+        PLGitem term = terminator.match(state);
+        if term {
+            long len = posBefore - saveStart;
+            PLGitem result = new PLGitem(saveStart, len);
+            result.terminator = term;
+            if !consumeTerminator
+                cursor = posBefore;     // leave terminator for next match
+            return result; }
+        cursor++; }
+    cursor = saveStart;     // didn't find it
+    return null;
+}
+}

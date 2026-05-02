@@ -1,0 +1,2248 @@
+
+/*******************************************************************************
+	setRules copied over from plg.twk
+*******************************************************************************/
+void setRules()
+{
+Alternative alt;
+Element     elem;
+    setSkip();
+alternateSet = getSet("alternateSet","#([~'a-zA-Z");
+characterSet = getSet("characterSet","[a-zA-Z");
+commandSet   = getSet("commandSet","derst");
+commentSet   = getSet("commentSet","derst/");
+elementSet   = getSet("elementSet","[(a-zA-Z~'");
+excludeSet   = getSet("excludeSet","A-Za-z:.|");
+nameSet      = getSet("nameSet","a-zA-Z");
+numberSet    = getSet("numberSet","0-9");
+singleQuote  = getSet("singleQuote","'");
+//
+    currentRule = getRule("Max");
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 1; // kLit
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.litText = ",";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.ruleRef = getRule("Integer");
+    elem.label = "maximum";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("Name");
+    currentSet = getSet("._a-zA-Z0-9");
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 3; // kSet
+    elem.minimum = 1;
+    elem.maximum = 999999;
+    elem.setRef = currentSet;
+    elem.label = "name";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("SetAssignment");
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 1; // kLit
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.litText = "=";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.ruleRef = getRule("SetName");
+    elem.label = "set";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("BalanceRight");
+    currentRule.defer = BalanceRightplgAct;
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 1; // kLit
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.litText = "<>";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.ruleRef = getRule("Element");
+    elem.label = "element";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 0;
+    elem.maximum = 1;
+    elem.ruleRef = getRule("ElementType");
+    elem.label = "type";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 1; // kLit
+    elem.minimum = 0;
+    elem.maximum = 1;
+    elem.litText = "&";
+    elem.label = "noSkip";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("Command");
+    currentRule.immediate = CommandplgNow;
+    currentRule.next = getRule("Command2");
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 1; // kLit
+    elem.minimum = 0;
+    elem.maximum = 1;
+    elem.litText = "re";
+    elem.label = "reset";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 1; // kLit
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.litText = "setSKIP";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 0;
+    elem.maximum = 1;
+    elem.ruleRef = getRule("SetAssignment");
+    elem.label = "set";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("Command2");
+    currentRule.immediate = Command2plgNow;
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 1; // kLit
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.litText = "dEBUG";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("FileName");
+    currentRule.immediate = FileNameplgNow;
+    currentSet = getSet("A-Za-z0-9_");
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 1; // kLit
+    elem.minimum = 0;
+    elem.maximum = 1;
+    elem.litText = "/";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 0;
+    elem.maximum = 999999;
+    elem.ruleRef = getRule("FileNameBlock0");
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 3; // kSet
+    elem.minimum = 1;
+    elem.maximum = 999999;
+    elem.setRef = currentSet;
+    elem.label = "name";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 1; // kLit
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.litText = ".g";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("SetVariable6");
+    currentRule.immediate = SetVariable6plgNow;
+    currentSet = excludeSet;
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 1; // kLit
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.litText = "Debug";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 3; // kSet
+    elem.minimum = -1;
+    elem.maximum = 1;
+    elem.setRef = currentSet;
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 0;
+    elem.maximum = 999999;
+    elem.ruleRef = getRule("DebugRule");
+    elem.label = "rulename";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 1; // kLit
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.litText = ";";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("Header");
+    currentRule.immediate = HeaderplgNow;
+    currentRule.doNotGuard = true;
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 1; // kLit
+    elem.minimum = 0;
+    elem.maximum = 1;
+    elem.litText = "%%";
+    elem.label = "head";
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 0;
+    elem.maximum = 1;
+    elem.ruleRef = getRule("Extender");
+    elem.label = "name";
+    elem.skipSet = getSet("defaultSKIP");
+    // currentTest.skipOverMatch = true;
+    // currentTest.processUpTo = true;
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("ActionEnd");
+    currentSet = getSet(".|;");
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 1; // kLit
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.litText = "\n";
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 3; // kSet
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.setRef = currentSet;
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("SetName");
+    currentRule.immediate = SetNameplgNow;
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.ruleRef = getRule("Name");
+    elem.label = "set";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("Tail");
+    currentRule.immediate = TailplgNow;
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 1; // kLit
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.litText = "%%";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 4; // kAny
+    elem.minimum = 1;
+    elem.maximum = 999999;
+    elem.label = "code";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("Alpha");
+    currentSet = getSet("a-zA-Z0-9_.");
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 3; // kSet
+    elem.minimum = 1;
+    elem.maximum = 999999;
+    elem.setRef = currentSet;
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("TrailingSpace");
+    currentSet = getSet("t");
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 3; // kSet
+    elem.minimum = 0;
+    elem.maximum = 999999;
+    elem.setRef = currentSet;
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 1; // kLit
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.litText = "\n";
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("CommentPart");
+    currentRule.next = getRule("CommentPart2");
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.ruleRef = getRule("CommentPartBalancE");
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("Body7");
+    currentRule.immediate = Body7plgNow;
+    currentRule.doNotGuard = true;
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 1; // kLit
+    elem.minimum = 0;
+    elem.maximum = 1;
+    elem.litText = "\n";
+    elem.label = "error";
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("CommentPartBalancE");
+    currentRule.immediate = balancE;
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 1; // kLit
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.litText = "/*";
+    elem.label = "start";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 0;
+    elem.maximum = 999999;
+    elem.ruleRef = getRule("CommentPartBoDY");
+    elem.label = "body";
+    elem.skipSet = getSet("defaultSKIP");
+    // currentTest.leftBalance = true;
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 1; // kLit
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.litText = "*/";
+    elem.label = "finish";
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("DebugTextBalancE");
+    currentRule.immediate = balancE;
+    currentSet = singleQuote;
+    currentSet = singleQuote;
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 3; // kSet
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.setRef = currentSet;
+    elem.label = "start";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 0;
+    elem.maximum = 999999;
+    elem.ruleRef = getRule("DebugTextBoDY");
+    elem.label = "body";
+    elem.skipSet = getSet("defaultSKIP");
+    // currentTest.leftBalance = true;
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 3; // kSet
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.setRef = currentSet;
+    elem.label = "finish";
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("CommentPartBoDY");
+    currentRule.immediate = balancEbody;
+    currentRule.next = getRule("CommentPartAny");
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 1; // kLit
+    elem.minimum = 0;
+    elem.maximum = 1;
+    elem.litText = "/*";
+    elem.label = "begin";
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 1; // kLit
+    elem.minimum = 0;
+    elem.maximum = 1;
+    elem.litText = "*/";
+    elem.label = "end";
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("SetVariable4");
+    currentRule.immediate = SetVariable4plgNow;
+    currentSet = excludeSet;
+    currentRule.next = getRule("SetVariable5");
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 1; // kLit
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.litText = "Set";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 3; // kSet
+    elem.minimum = -1;
+    elem.maximum = 1;
+    elem.setRef = currentSet;
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.ruleRef = getRule("Name");
+    elem.label = "name";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 0;
+    elem.maximum = 1;
+    elem.ruleRef = getRule("StringSet");
+    elem.label = "set";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 1; // kLit
+    elem.minimum = 0;
+    elem.maximum = 1;
+    elem.litText = ";";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("CommentPartAny");
+    currentRule.immediate = balancEbail;
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 4; // kAny
+    elem.minimum = 1;
+    elem.maximum = 1;
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("QuotedStringBlock1Block2");
+    saveTest = currentTest;
+    currentSet = getSet("'");
+    saveTest.setAlternate(currentTest);
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.ruleRef = getRule("QuotedStringBlock1Block3");
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 3; // kSet
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.setRef = currentSet;
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("CommentPart2");
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 1; // kLit
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.litText = "//";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 1; // kLit
+    elem.minimum = 0;
+    elem.maximum = 1;
+    elem.litText = "\n";
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("DebugText2");
+    currentSet = getSet("a-zA-Z0-9");
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 3; // kSet
+    elem.minimum = 1;
+    elem.maximum = 999999;
+    elem.setRef = currentSet;
+    elem.label = "text";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("Comment");
+    currentSet = getSet("/");
+    currentRule.guardSet = currentSet;
+    currentRule.next = getRule("Comment2");
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.ruleRef = getRule("CommentPart");
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("Balanced");
+    currentRule.defer = BalancedplgAct;
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.ruleRef = getRule("Element");
+    elem.label = "left";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 0;
+    elem.maximum = 1;
+    elem.ruleRef = getRule("ElementType");
+    elem.label = "type";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 1; // kLit
+    elem.minimum = 0;
+    elem.maximum = 1;
+    elem.litText = "&";
+    elem.label = "noSkip";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 0;
+    elem.maximum = 1;
+    elem.ruleRef = getRule("BalanceRight");
+    elem.label = "right";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("Comment2");
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.ruleRef = getRule("Command");
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("Extender");
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 1; // kLit
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.litText = "eXTENDS";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.ruleRef = getRule("Name");
+    elem.label = "name";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("OptionClause");
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 1; // kLit
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.litText = "|";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.ruleRef = getRule("RuleOption");
+    elem.label = "dummy";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("FileNameBlock0");
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.ruleRef = getRule("Alpha");
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 1; // kLit
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.litText = "/";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("Integer");
+    currentSet = getSet("n");
+    currentSet = getSet("0-9");
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 3; // kSet
+    elem.minimum = 0;
+    elem.maximum = 999999;
+    elem.setRef = currentSet;
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 3; // kSet
+    elem.minimum = 1;
+    elem.maximum = 999999;
+    elem.setRef = currentSet;
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("DebugRule");
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.ruleRef = getRule("Name");
+    elem.label = "name";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 0;
+    elem.maximum = 1;
+    elem.ruleRef = getRule("DebugOption");
+    elem.label = "option";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("Body6");
+    currentRule.next = getRule("Body7");
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.ruleRef = getRule("ActionRule");
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("Label");
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.ruleRef = getRule("Name");
+    elem.label = "atLabel";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 1; // kLit
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.litText = "=";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("QuotedString");
+    currentSet = singleQuote;
+    currentSet = singleQuote;
+    currentRule.next = getRule("QuotedString2");
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 3; // kSet
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.setRef = currentSet;
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.ruleRef = getRule("QuotedStringBlock1");
+    elem.label = "text";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 3; // kSet
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.setRef = currentSet;
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("QuotedStringBlock1");
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 1;
+    elem.maximum = 999999;
+    elem.ruleRef = getRule("QuotedStringBlock1Block2");
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("QuotedStringBlock1Block3");
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 1; // kLit
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.litText = "\\";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 4; // kAny
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("QuotedString2");
+    currentSet = getSet(".$");
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 3; // kSet
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.setRef = currentSet;
+    elem.label = "text";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("Word");
+    currentSet = getSet("n;");
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 3; // kSet
+    elem.minimum = 1;
+    elem.maximum = 999999;
+    elem.setRef = currentSet;
+    elem.label = "what";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("ActionOption");
+    currentRule.defer = ActionOptionplgAct;
+    currentRule.next = getRule("ActionOption2");
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 1; // kLit
+    elem.minimum = 1;
+    elem.maximum = 999999;
+    elem.litText = "|";
+    elem.label = "option";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("ActionOption2");
+    currentRule.defer = ActionOption2plgAct;
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 1; // kLit
+    elem.minimum = 0;
+    elem.maximum = 1;
+    elem.litText = ".";
+    elem.label = "immediate";
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 1; // kLit
+    elem.minimum = -1;
+    elem.maximum = 1;
+    elem.litText = ";";
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.ruleRef = getRule("ActionBody");
+    elem.label = "action";
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("ActionRule");
+    currentRule.immediate = ActionRuleplgNow;
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.ruleRef = getRule("Name");
+    elem.label = "ruleName";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 1; // kLit
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.litText = "!";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 1;
+    elem.maximum = 999999;
+    elem.ruleRef = getRule("ActionOption");
+    elem.label = "list";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 1; // kLit
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.litText = ";";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("Alternative2");
+    currentRule.defer = Alternative2plgAct;
+    currentSet = getSet(")|");
+    currentRule.guardSet = currentSet;
+    currentRule.next = getRule("Alternative3");
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 0;
+    elem.maximum = 1;
+    elem.ruleRef = getRule("Guard");
+    elem.label = "guard";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 0;
+    elem.maximum = 1;
+    elem.ruleRef = getRule("Label");
+    elem.label = "atLabel";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.ruleRef = getRule("Alternative2Block5");
+    elem.label = "atElement";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("ActionBody");
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = -1;
+    elem.maximum = 1;
+    elem.ruleRef = getRule("ActionEnd");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 0;
+    elem.maximum = 1;
+    elem.ruleRef = getRule("ActionEnd");
+    elem.label = "body";
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("Alternative");
+    currentRule.defer = AlternativeplgAct;
+    currentRule.next = getRule("Alternative2");
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 1; // kLit
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.litText = "FAIL";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.ruleRef = getRule("AlternativeBlock4");
+    elem.label = "exception";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("Block");
+    currentRule.defer = BlockplgAct;
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 1; // kLit
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.litText = "(";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 1;
+    elem.maximum = 999999;
+    elem.ruleRef = getRule("Alternative");
+    elem.label = "atAlternative";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 0;
+    elem.maximum = 999999;
+    elem.ruleRef = getRule("Clause");
+    elem.label = "clause";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 1; // kLit
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.litText = ")";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 0;
+    elem.maximum = 1;
+    elem.ruleRef = getRule("ElementType");
+    elem.label = "type";
+    elem.skipSet = getSet("defaultSKIP");
+    // currentTest.errorMessage = "Missing right parenthesis";
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 1; // kLit
+    elem.minimum = 0;
+    elem.maximum = 1;
+    elem.litText = "&";
+    elem.label = "noSkip";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("Clause");
+    currentRule.defer = ClauseplgAct;
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 1; // kLit
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.litText = "|";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 1;
+    elem.maximum = 999999;
+    elem.ruleRef = getRule("Alternative");
+    elem.label = "atAlternative";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("Element");
+    currentRule.immediate = ElementplgNow;
+    currentRule.defer = ElementplgAct;
+    currentRule.next = getRule("Element2");
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = -1;
+    elem.maximum = 1;
+    elem.ruleRef = getRule("Command");
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.ruleRef = getRule("Name");
+    elem.label = "atElement";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("Element2");
+    currentRule.defer = Element2plgAct;
+    currentRule.next = getRule("Element3");
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.ruleRef = getRule("QuotedString");
+    elem.label = "atElement";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("Body2");
+    currentRule.next = getRule("Body3");
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.ruleRef = getRule("SetVariable");
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("Element3");
+    currentRule.defer = Element3plgAct;
+    currentRule.next = getRule("Element4");
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.ruleRef = getRule("StringSet");
+    elem.label = "atElement";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("Body3");
+    currentRule.next = getRule("Body4");
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.ruleRef = getRule("Include");
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("Element4");
+    currentRule.defer = Element4plgAct;
+    currentSet = getSet(".$");
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 1; // kLit
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.litText = "~";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 3; // kSet
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.setRef = currentSet;
+    elem.label = "atElement";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("Body4");
+    currentRule.next = getRule("Body5");
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.ruleRef = getRule("Tail");
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("ElementType");
+    currentRule.defer = ElementTypeplgAct;
+    currentRule.next = getRule("ElementType2");
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 1; // kLit
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.litText = "";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.ruleRef = getRule("Integer");
+    elem.label = "minimum";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 0;
+    elem.maximum = 1;
+    elem.ruleRef = getRule("Max");
+    elem.label = "maximum";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 1; // kLit
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.litText = "";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("ElementType2");
+    currentRule.defer = ElementType2plgAct;
+    currentSet = getSet("*+?!%");
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 3; // kSet
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.setRef = currentSet;
+    elem.label = "option";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("ForwardReference");
+    currentRule.immediate = ForwardReferenceplgNow;
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.ruleRef = getRule("Name");
+    elem.label = "name";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("Guard");
+    currentRule.defer = GuardplgAct;
+    currentRule.next = getRule("Guard2");
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 1; // kLit
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.litText = "#";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.ruleRef = getRule("StringSet");
+    elem.label = "set";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("Guard2");
+    currentRule.defer = Guard2plgAct;
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 1; // kLit
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.litText = "#doNotGuard";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("Include");
+    currentRule.immediate = IncludeplgNow;
+    currentRule.next = getRule("Include2");
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 1; // kLit
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.litText = "include(";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 1; // kLit
+    elem.minimum = 0;
+    elem.maximum = 1;
+    elem.litText = ")";
+    elem.label = "file";
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("ParseInclude");
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 1;
+    elem.maximum = 999999;
+    elem.ruleRef = getRule("Body");
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("Include2");
+    currentRule.immediate = Include2plgNow;
+    currentRule.next = getRule("Include3");
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 1; // kLit
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.litText = "insert(";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 1; // kLit
+    elem.minimum = 0;
+    elem.maximum = 1;
+    elem.litText = ")";
+    elem.label = "file";
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("DebugTextBoDY");
+    currentRule.immediate = balancEbody;
+    currentSet = singleQuote;
+    currentSet = singleQuote;
+    currentRule.next = getRule("DebugTextAny");
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 3; // kSet
+    elem.minimum = 0;
+    elem.maximum = 1;
+    elem.setRef = currentSet;
+    elem.label = "begin";
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 3; // kSet
+    elem.minimum = 0;
+    elem.maximum = 1;
+    elem.setRef = currentSet;
+    elem.label = "end";
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("Include3");
+    currentRule.immediate = Include3plgNow;
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 1; // kLit
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.litText = "-%";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 1; // kLit
+    elem.minimum = 0;
+    elem.maximum = 1;
+    elem.litText = "%-";
+    elem.label = "code";
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("Rule");
+    currentRule.immediate = RuleplgNow;
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.ruleRef = getRule("Name");
+    elem.label = "ruleName";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 1; // kLit
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.litText = ":";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.ruleRef = getRule("RuleOptions");
+    elem.label = "options";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 1; // kLit
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.litText = ";";
+    elem.skipSet = getSet("defaultSKIP");
+    // currentTest.errorMessage = "Rule specification failed";
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("RuleOption");
+    currentRule.defer = RuleOptionplgAct;
+    currentRule.doNotGuard = true;
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 1;
+    elem.maximum = 999999;
+    elem.ruleRef = getRule("Alternative");
+    elem.label = "atAlternative";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("RuleOptions");
+    currentRule.defer = RuleOptionsplgAct;
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.ruleRef = getRule("RuleOption");
+    elem.label = "first";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 0;
+    elem.maximum = 999999;
+    elem.ruleRef = getRule("OptionClause");
+    elem.label = "others";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("SetVariable");
+    currentRule.immediate = SetVariableplgNow;
+    currentSet = excludeSet;
+    currentRule.next = getRule("SetVariable2");
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 1; // kLit
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.litText = "Variable";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 3; // kSet
+    elem.minimum = -1;
+    elem.maximum = 1;
+    elem.setRef = currentSet;
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 1;
+    elem.maximum = 999999;
+    elem.ruleRef = getRule("Name");
+    elem.label = "variable";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 1; // kLit
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.litText = ";";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("SetVariable3");
+    currentRule.immediate = SetVariable3plgNow;
+    currentSet = excludeSet;
+    currentRule.next = getRule("SetVariable4");
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 1; // kLit
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.litText = "KeyWord";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 3; // kSet
+    elem.minimum = -1;
+    elem.maximum = 1;
+    elem.setRef = currentSet;
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.ruleRef = getRule("Name");
+    elem.label = "name";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 0;
+    elem.maximum = 999999;
+    elem.ruleRef = getRule("Word");
+    elem.label = "list";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 1; // kLit
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.litText = ";";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("SetVariable5");
+    currentRule.immediate = SetVariable5plgNow;
+    currentSet = excludeSet;
+    currentRule.next = getRule("SetVariable6");
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 1; // kLit
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.litText = "Condition";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 3; // kSet
+    elem.minimum = -1;
+    elem.maximum = 1;
+    elem.setRef = currentSet;
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 1;
+    elem.maximum = 999999;
+    elem.ruleRef = getRule("Name");
+    elem.label = "condishun";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 1; // kLit
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.litText = ";";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("Start");
+    currentRule.immediate = StartplgNow;
+    currentRule.next = getRule("Start2");
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 0;
+    elem.maximum = 1;
+    elem.ruleRef = getRule("Header");
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 1;
+    elem.maximum = 999999;
+    elem.ruleRef = getRule("Body");
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("StringSet");
+    currentRule.defer = StringSetplgAct;
+    currentRule.next = getRule("StringSet2");
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 1; // kLit
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.litText = "[";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 1; // kLit
+    elem.minimum = 0;
+    elem.maximum = 1;
+    elem.litText = "]";
+    elem.label = "text";
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("StringSet2");
+    currentRule.immediate = StringSet2plgNow;
+    currentRule.defer = StringSet2plgAct;
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.ruleRef = getRule("Name");
+    elem.label = "name";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("AlternativeBlock4");
+    saveTest = currentTest;
+    saveTest.setAlternate(currentTest);
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.ruleRef = getRule("Name");
+    elem.label = "exception";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.ruleRef = getRule("QuotedString");
+    elem.label = "exception";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("Alternative2Block5");
+    saveTest = currentTest;
+    saveTest.setAlternate(currentTest);
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.ruleRef = getRule("Balanced");
+    elem.label = "atElement";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.ruleRef = getRule("Block");
+    elem.label = "atElement";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("Alternative3");
+    currentSet = commentSet;
+    currentRule.guardSet = currentSet;
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.ruleRef = getRule("Comment");
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("Body");
+    currentSet = commentSet;
+    currentRule.guardSet = currentSet;
+    currentRule.next = getRule("Body2");
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.ruleRef = getRule("Comment");
+    elem.label = "comment";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("Body5");
+    currentRule.next = getRule("Body6");
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.ruleRef = getRule("Rule");
+    elem.label = "atRule";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("DebugText");
+    currentRule.next = getRule("DebugText2");
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.ruleRef = getRule("DebugTextBalancE");
+    elem.label = "text";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("DebugTextAny");
+    currentRule.immediate = balancEbail;
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 4; // kAny
+    elem.minimum = 1;
+    elem.maximum = 1;
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("DebugOption");
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 1; // kLit
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.litText = "=";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.ruleRef = getRule("DebugText");
+    elem.label = "option";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("SetVariable2");
+    currentSet = excludeSet;
+    currentRule.next = getRule("SetVariable3");
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 1; // kLit
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.litText = "Rules";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 3; // kSet
+    elem.minimum = -1;
+    elem.maximum = 1;
+    elem.setRef = currentSet;
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 1;
+    elem.maximum = 999999;
+    elem.ruleRef = getRule("ForwardReference");
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 1; // kLit
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.litText = ";";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("Start2");
+//
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 6; // kRuleRef
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.ruleRef = getRule("Start2Block6");
+    elem.label = "error";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+    
+    currentRule = getRule("Start2Block6");
+    currentSet = getSet("\n");
+    
+    Alternative alt = new;
+    
+    Element elem = new;
+    elem.kind = 3; // kSet
+    elem.minimum = 1;
+    elem.maximum = 999999;
+    elem.setRef = currentSet;
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    
+    Element elem = new;
+    elem.kind = 1; // kLit
+    elem.minimum = 1;
+    elem.maximum = 1;
+    elem.litText = "\n";
+    elem.skipSet = getSet("defaultSKIP");
+    alt.elements += elem;
+    
+    currentRule.alternatives += alt;
+}

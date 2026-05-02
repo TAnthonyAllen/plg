@@ -1,0 +1,274 @@
+
+external PLGparse
+external PLGitem
+external PLGrule
+external PLGset
+external Buffer
+external regex.h
+{
+	typedef regex_t;
+	typedef reqmatch_t;
+	int         REG_EXTENDED,
+                REG_ICASE,
+                REG_NOSUB;
+	int		regcomp(regex_t* m,String s,int f);
+	int		regexec(regex_t* m,String s,size_t m,reqmatch_t p,int f);
+	size_t	regerror(int e,regex_t* m,String s,size_t b);
+}
+
+external Alternative
+{
+DoubleLinkList  elements;
+PLGset          guardSet;
+
+    Alternative();
+    void generate(Buffer output);
+    int match(PLGparse state, PLGitem *out);
+}
+
+external Element
+{
+String          label;
+int             minimum;
+int             maximum;
+String          errorMessage;
+PLGset          skipSet;
+PLGset          guardSet;           // FIRST set, computed once
+boolean         banged
+                isIgnored
+                noSkip
+                kind:4[kLit kChr kSet kAny kEof kRuleRef kKeyTable kCondition kVariable kUpTo kBalanced]
+                ;
+// Kind-specific data — only one of these is meaningful, depending on kind
+String          litText;            // for Lit
+char            chrChar;            // for Chr
+PLGset          setRef;             // for Set
+PLGrule         ruleRef;            // for RuleRef
+KeyTable        tableRef;           // for KeyTable
+void            *condFunc;          // for Condition
+char            **varPtr;           // for Variable
+Element         terminator;         // for UpTo
+boolean         consumeTerminator;  // for UpTo
+Element         openElement;        // for Balanced
+Element         closeElement;       // for Balanced
+    void generate(Buffer output);
+    PLGitem match(PLGparse state);
+    PLGitem applyRepetition(PLGparse state, PLGitem firstResult);
+    PLGitem matchByKind(PLGparse state);
+    PLGitem matchLit(PLGparse state);
+    PLGitem matchChr(PLGparse state);
+    PLGitem matchSet(PLGparse state);
+    PLGitem matchAny(PLGparse state);
+    PLGitem matchEof(PLGparse state);
+    PLGitem matchRuleRef(PLGparse state);
+    PLGitem matchKeyTable(PLGparse state);
+    PLGitem matchCondition(PLGparse state);
+    PLGitem matchVariable(PLGparse state);
+    PLGitem matchUpTo(PLGparse state);
+    PLGitem matchBalanced(PLGparse state);
+}
+
+external PLG
+{
+PLGset      alternateSet,
+            characterSet,
+            commandSet,
+            commentSet,
+            elementSet,
+            excludeSet,
+            nameSet,
+            numberSet,
+            singleQuote;
+BaseHash    plgRuleTable,
+            plgSetTable;
+Buffer      output,
+            buffer,
+            headerBuffer,
+            includeBuffer,
+            parseBuffer;
+Stak        ruleStack,
+            testStack;
+String      parentParser;
+PLGitem     tail,
+            ruleActionName;
+int         alternateFlag,
+            blockCount,
+            optionCount,
+            regexCount,
+            testFlag;
+boolean     hasActions,
+            hasConditions,
+            hasKeys,
+            hasSets,
+            hasVariables;
+PLGparse    parser;
+    PLG();
+    PLG(String input);
+    void init();
+    void run();
+    void setRules();
+}
+
+external PLGitem
+{
+String      itemStart;
+long        itemLength;
+String      itemLabel;
+BaseHash    children;
+PLGitem     terminator;
+PLGitem     itemNext;
+void*       itemValue;
+boolean     conditionResult;
+char        savedChar;
+    PLGitem();
+    PLGitem(String start, long length);
+    PLGitem(String s);
+    String string();
+    void unString();
+    String toString();
+
+static PLGitem  itemEmpty;
+alias
+    start       itemStart
+    length      itemLength
+    label       itemLabel
+    next        itemNext
+    value       itemValue
+    ;
+}
+
+external PLGparse
+{
+Buffer      buffer;
+Buffer      buffer;
+String      cursor,
+            eof,
+            parserName;
+PLGrule     currentRule;
+PLGset		currentSet,
+            defaultSkip,
+            skipSet;
+Stak        skipStack,
+            inputStack;
+int         depth;
+BaseHash    rules,
+            setTable;
+PLGset      alternateSet;
+PLGset      characterSet;
+PLGset      commandSet;
+PLGset      commentSet;
+PLGset      elementSet;
+PLGset      excludeSet;
+PLGset      nameSet;
+PLGset      numberSet;
+PLGset      singleQuote;
+boolean
+    debugRulePLG
+    debugGuardPLG
+    doNotGuard
+    setsInitialized
+    skipping
+    ;
+    PLGparse();
+    PLGparse(String input);
+    String snapshot();
+    void   restore(String s);
+    void   skip();
+    void reportError(Alternative alt, String message);
+    void divertInput(String s);
+    void generateRules(Buffer output);
+    PLGrule getRule(String name);
+    PLGset getSet(String specs);
+    PLGset getSet(PLGset named, String specs);
+    void initialize();
+    PLGitem parse(String name);
+    PLGitem parse(PLGrule rule);
+    void revertInput();
+    void setInput(String s);
+    void setInput(PLGitem item);
+    void setSkip();
+    void skip();
+}
+
+external PLGrgx
+{
+regex_t		*model;
+String		expression;
+boolean
+            caseSensitive
+            compiled
+            status
+            ;
+	PLGrgx(String s);
+	void		compile();
+	int			matches(String s);
+}
+
+external PLGrule
+{
+String          name;
+DoubleLinkList  alternatives;
+PLGset          guardSet;
+PLGparse        parentParser;
+void		    &defer(PLGitem i);
+int			    &immediate(PLGitem i);
+PLGitem		    deferAction,
+                failMethod,
+                immediateAction;
+boolean
+    balanceRule
+    balanceAny
+    balanceBody
+    balanceBail
+    doNotGuard
+    debug
+    ;
+    PLGrule(String s);
+    void addAlternative(Alternative alt);
+    void declareActions(Buffer output);
+    void generate(Buffer output);
+    PLGitem match(PLGparse state);
+    PLGset setGuard();
+    void writeActions(String parserName,Buffer output);
+}
+
+external PLGset
+{
+unsigned long	*map;
+String			name;
+Buffer          setBuffer;
+boolean
+            deferUpdate
+			hidden
+			negated
+			parsed
+            setUpdated
+			;
+static unsigned long    *mapper;
+	PLGset();
+	PLGset(String s);
+	void		clear();
+    int			contains(char c);
+    int         contains(String s);
+	int			foundIn(String s);
+	int			foundIn(PLGitem i);
+	void		generate(Buffer b);
+	int			isEmpty();
+	int			length();
+    void		reset(int i);
+    void		reset(int b, int e);
+	void		reset(PLGset s);
+    void		set(int i);
+    void		set(int b, int e);
+	void		set(PLGset s);
+	void		set(String text);
+    void        setSimple(String text);
+	int			skip(String plgStart);
+    String		toString();
+    String      toText();
+    void        updateBuffer();
+	static void printText(String text,Buffer output);
+	overload
+		+=		set
+		;
+}

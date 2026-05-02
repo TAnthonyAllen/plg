@@ -1,0 +1,75 @@
+include /Users/anthony/Dropbox/data/InProcess/Include/globals
+include /Users/anthony/Dropbox/data/InProcess/Include/frame
+include PLGrevision
+
+/*******************************************************************************
+	Class that embodies an item (like a PLGitem)
+*******************************************************************************/
+class PLGitem
+{
+String      start;
+long        length;
+String      label;
+BaseHash    children;
+PLGitem     terminator;
+boolean     conditionResult;
+PLGitem     next;
+void*       value;
+char        savedChar;
+static PLGitem     itemEmpty;
+
+/*****************************************************************************
+	Constructors
+*****************************************************************************/
+PLGitem()
+{
+    itemStart   = 0;
+    itemLength  = 0;
+}
+
+PLGitem(String start, long length)
+{
+    itemStart   = start;
+    itemLength  = length;
+}
+
+PLGitem(String s)
+{
+    itemStart   = s;
+    itemLength  = strlen(s);
+}
+
+/*****************************************************************************
+	string returns a temporary string derived from the input stream this item
+    was created in. It adds a null eof to end the string, changing the stream
+*****************************************************************************/
+String string()
+{
+    // null terminate in place
+    savedChar = *(itemStart + itemLength);
+    *(itemStart + itemLength) = 0;
+    return itemStart;
+}
+
+/*****************************************************************************
+	unString resets the input stream modified by calling string()
+*****************************************************************************/
+void unString()
+{
+    if !savedChar return;
+    *(itemStart + itemLength) = savedChar;
+    savedChar = 0;
+}
+
+/*****************************************************************************
+	Returns a copy of the item text
+*****************************************************************************/
+String toString()
+{
+char	*text = (char*)malloc(itemLength + 1);
+
+    strncpy(text,itemStart,itemLength);
+    *(text + itemLength) = 0;
+    return text;
+}
+}

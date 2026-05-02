@@ -1,0 +1,118 @@
+include /Users/anthony/Dropbox/data/InProcess/Include/globals
+include /Users/anthony/Dropbox/data/InProcess/Include/frame
+include PLGrevision
+
+/*******************************************************************************
+	Class that embodies a Rule in plg
+*******************************************************************************/
+class PLGrule
+{
+String          name;
+DoubleLinkList  alternatives;
+PLGset          guardSet;
+PLGparse        parentParser;
+void		    &defer(PLGitem i);
+int			    &immediate(PLGitem i);
+PLGitem		    deferAction,
+                failMethod,
+                immediateAction;
+boolean
+    balanceRule
+    balanceAny
+    balanceBody
+    balanceBail
+    doNotGuard
+    debug
+    ;
+
+PLGitem match(PLGparse state);
+
+/*******************************************************************************
+	Rule constructor
+*******************************************************************************/
+PLGrule(String s)
+{
+    alternatives = new;
+    name = s;
+}
+
+/*******************************************************************************
+	addAlternative: simple wrapper adds an alternative to alterntives list
+*******************************************************************************/
+void addAlternative(Alternative alt)
+{
+    alternatives += alt;
+}
+
+/*****************************************************************************
+	This method writes out external declarations for actions associated
+	with this rule.
+*****************************************************************************/
+void declareActions(Buffer output)
+{
+    // to be rewritten
+}
+
+/*****************************************************************************
+	Generate the code to implement this rule
+*****************************************************************************/
+void generate(Buffer output)
+{
+Alternative test;
+	print(output) "//\ncurrentRule = getRule(\"" name "\");":;
+
+	if balanceRule print "currentRule.immediate = balancE;":;
+	or balanceBody print "currentRule.immediate = balancEbody;":;
+	or balanceAny print "currentRule.immediate = balancEbail;":;
+    or immediateAction
+		print "currentRule.immediate = " name parserName "Now;":;
+    if deferAction
+		print "currentRule.defer = " name parserName "Act;":;
+	if doNotGuard
+		print "currentRule.doNotGuard = true;":;
+	or guardSet guardSet.generate(output);
+    alternatives.reset();
+    cerr "alternatives count: " alternatives.length():;
+	while test = alternatives.next()
+		{
+        cerr "generating alternative":;
+		test.generate(output);
+		if test.guardSet
+			{
+			test.guardSet.generate(output);
+			print "currentRule.guardSet = currentSet;":;
+			}
+		}
+    if debug        print "currentRule.debug = true;":;
+	if failMethod	print "currentRule.fail = " failMethod ";\n";
+}
+
+PLGitem match(PLGparse state)
+{
+DoubleLink  link = null;
+Alternative alt;
+PLGitem     result;
+    cout "PLGrule: " name " at: " state.cursor:;
+    for link = alternatives.first {
+        alt = link.value;
+        if alt.match(state, result)  return result; }
+    return null;
+}
+
+/*****************************************************************************
+	Set the guard sets for this rule
+*****************************************************************************/
+PLGset setGuard()
+{
+    // needs rewriting
+	return null;
+}
+
+/*****************************************************************************
+	This method writes out the actions associated with this rule.
+*****************************************************************************/
+void writeActions(String parserName,Buffer output)
+{
+    // TODO: implement
+}
+}
