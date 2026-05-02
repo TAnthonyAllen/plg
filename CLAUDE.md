@@ -145,8 +145,12 @@ In TAWK source:
 for link = list.first {
     item = link.value;
     // process
-    link = link.next; }
+    }
 ```
+
+**Do not** add an explicit `link = link.next;` inside the body — TAWK's
+`for x = list.first { ... }` already auto-advances. Explicit increment
+double-advances and segfaults on multi-alternative rules.
 
 ---
 

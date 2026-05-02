@@ -98,7 +98,8 @@ int         altCount = alternatives.length();
 String      saved;
     if guardSet && state.cursor < state.eof && !guardSet.contains(*state.cursor)
         {
-        cout "PLGrule: " name " GUARD-REJECTED at offset " (state.cursor - state.buffer.start):;
+        char ch = *state.cursor;
+        cout "PLGrule: " name " GUARD-REJECTED at offset " (state.cursor - state.buffer.start) " char='" ch "' guard=[" guardSet.toString() "]":;
         return null;
         }
     cout "PLGrule: " name " (" altCount " alts) at offset " (state.cursor - state.buffer.start):;

@@ -138,7 +138,8 @@ int 			altCount = alternatives->length;
 char 			*saved = 0;
 	if ( guardSet && state->cursor < state->eof && !guardSet->contains(*state->cursor) )
 		{
-		::printf("PLGrule: %s GUARD-REJECTED at offset %lu\n",name,(state->cursor - state->buffer->start));
+		char 	ch = *state->cursor;
+		::printf("PLGrule: %s GUARD-REJECTED at offset %lu char='%c' guard=[%s]\n",name,(state->cursor - state->buffer->start),ch,guardSet->toString());
 		return 0;
 		}
 	::printf("PLGrule: %s (%d alts) at offset %lu\n",name,altCount,(state->cursor - state->buffer->start));
