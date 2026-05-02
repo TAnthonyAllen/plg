@@ -403,15 +403,27 @@ void PLG::setRules()
 	parser->currentRule->alternatives->add(parser->currentAlt);
 	parser->currentRule = parser->getRule("Alternative");
 	//currentRule.defer = AlternativeplgAct;
-	//currentRule.next = getRule("Alternative2");
+	// (was: FAIL AlternativeBlock4 — inlined as two alts since
+	//  AlternativeBlock4 was an anonymous alternation Name|QuotedString)
 	parser->currentAlt = new Alternative();
 	parser->addTest(1,"FAIL","",1,1,"defaultSKIP");
-	parser->addTest(6,"AlternativeBlock4","exception",1,1,"defaultSKIP");
+	parser->addTest(6,"Name","exception",1,1,"defaultSKIP");
+	parser->currentRule->alternatives->add(parser->currentAlt);
+	parser->currentAlt = new Alternative();
+	parser->addTest(1,"FAIL","",1,1,"defaultSKIP");
+	parser->addTest(6,"QuotedString","exception",1,1,"defaultSKIP");
+	parser->currentRule->alternatives->add(parser->currentAlt);
+	// (was: Guard? Label? Alternative2Block5 — inlined as two alts since
+	//  Alternative2Block5 was an anonymous alternation Balanced|Block)
+	parser->currentAlt = new Alternative();
+	parser->addTest(6,"Guard","guard",0,1,"defaultSKIP");
+	parser->addTest(6,"Label","atLabel",0,1,"defaultSKIP");
+	parser->addTest(6,"Balanced","atElement",1,1,"defaultSKIP");
 	parser->currentRule->alternatives->add(parser->currentAlt);
 	parser->currentAlt = new Alternative();
 	parser->addTest(6,"Guard","guard",0,1,"defaultSKIP");
 	parser->addTest(6,"Label","atLabel",0,1,"defaultSKIP");
-	parser->addTest(6,"Alternative2Block5","atElement",1,1,"defaultSKIP");
+	parser->addTest(6,"Block","atElement",1,1,"defaultSKIP");
 	parser->currentRule->alternatives->add(parser->currentAlt);
 	parser->currentAlt = new Alternative();
 	parser->addTest(6,"Comment","",1,1,"defaultSKIP");
@@ -590,16 +602,8 @@ void PLG::setRules()
 	parser->currentAlt = new Alternative();
 	parser->addTest(6,"Name","name",1,1,"defaultSKIP");
 	parser->currentRule->alternatives->add(parser->currentAlt);
-	parser->currentRule = parser->getRule("AlternativeBlock4");
-	parser->currentAlt = new Alternative();
-	parser->addTest(6,"Name","exception",1,1,"defaultSKIP");
-	parser->addTest(6,"QuotedString","exception",1,1,"defaultSKIP");
-	parser->currentRule->alternatives->add(parser->currentAlt);
-	parser->currentRule = parser->getRule("Alternative2Block5");
-	parser->currentAlt = new Alternative();
-	parser->addTest(6,"Balanced","atElement",1,1,"defaultSKIP");
-	parser->addTest(6,"Block","atElement",1,1,"defaultSKIP");
-	parser->currentRule->alternatives->add(parser->currentAlt);
+	// AlternativeBlock4 and Alternative2Block5 deleted — inlined into
+	// Alternative's alternative list above.
 	parser->currentRule = parser->getRule("Body");
 	parser->currentSet = commentSet;
 	parser->currentRule->guardSet = parser->currentSet;
