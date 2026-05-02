@@ -19,6 +19,9 @@
 **/*.xcuserstate
 **/project.xcworkspace/xcuserdata/
 
+# Xcode — shared schemes (xcodegen regenerates these as needed)
+*.xcodeproj/xcshareddata/
+
 # Xcode — build output (xcodebuild dumps here under Revision/)
 /build/
 build/
