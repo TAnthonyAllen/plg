@@ -224,6 +224,7 @@ boolean
     balanceBail
     doNotGuard
     debug
+    guardComputed
     ;
     PLGrule(String s);
     void addAlternative(Alternative alt);

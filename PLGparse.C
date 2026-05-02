@@ -262,11 +262,16 @@ PLGset *PLGparse::getSet(PLGset *named, char *specs)
 }
 
 /*****************************************************************************
-	For now initialize is just a stump
+	initialize — set the skip set, then populate FIRST sets (guards) on
+	every rule for fast-rejection in PLGrule::match.
 *****************************************************************************/
 void PLGparse::initialize()
 {
+PLGrule 	*rule = 0;
 	setSkip();
+	rules->hashList->entry = 0;
+	while ( rule = (PLGrule*)rules->hashList->next() )
+		rule->setGuard();
 }
 
 /*****************************************************************************

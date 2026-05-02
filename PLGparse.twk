@@ -187,11 +187,16 @@ PLGset set = setTable[name];
 }
 
 /*****************************************************************************
-	For now initialize is just a stump
+	initialize — set the skip set, then populate FIRST sets (guards) on
+	every rule for fast-rejection in PLGrule::match.
 *****************************************************************************/
 void initialize()
 {
+PLGrule rule;
     setSkip();
+    rules.entry = null;
+    while rule = rules.next()
+        rule.setGuard();
 }
 
 /*****************************************************************************

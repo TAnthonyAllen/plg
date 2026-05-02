@@ -4,6 +4,7 @@
 #include "Alternative.h"
 #include "DoubleLink.h"
 #include "PLGset.h"
+#include "Element.h"
 #include "Buffer.h"
 #include "PLGparse.h"
 #include "PLGitem.h"
@@ -27,6 +28,7 @@ PLGrule::PLGrule(char *s)
 	balanceBail = 0;
 	doNotGuard = 0;
 	debug = 0;
+	guardComputed = 0;
 	alternatives = new DoubleLinkList();
 	name = s;
 }
@@ -134,6 +136,11 @@ PLGitem 		*result = 0;
 int 			altNum = 0;
 int 			altCount = alternatives->length;
 char 			*saved = 0;
+	if ( guardSet && state->cursor < state->eof && !guardSet->contains(*state->cursor) )
+		{
+		::printf("PLGrule: %s GUARD-REJECTED at offset %lu\n",name,(state->cursor - state->buffer->start));
+		return 0;
+		}
 	::printf("PLGrule: %s (%d alts) at offset %lu\n",name,altCount,(state->cursor - state->buffer->start));
 	for ( link = alternatives->first; link; link = link->next )
 		{
@@ -143,22 +150,82 @@ char 			*saved = 0;
 		::printf("  %s try alt %d/%d at offset %lu\n",name,altNum,altCount,(saved - state->buffer->start));
 		if ( alt->match(state,result) )
 			{
-			::printf("  %s alt %d SUCCEEDED -> offset %lu\n",name,altNum,(state->cursor - state->buffer->start));
-			return result;
+			if ( state->cursor > saved )
+				{
+				::printf("  %s alt %d SUCCEEDED -> offset %lu\n",name,altNum,(state->cursor - state->buffer->start));
+				return result;
+				}
+			::printf("  %s alt %d ZERO-ADVANCE — treating as fail\n",name,altNum);
 			}
-		::printf("  %s alt %d FAILED at offset %lu (was %lu)\n",name,altNum,(state->cursor - state->buffer->start),(saved - state->buffer->start));
+		else {
+			::printf("  %s alt %d FAILED at offset %lu (was %lu)\n",name,altNum,(state->cursor - state->buffer->start),(saved - state->buffer->start));
+			}
 		}
 	::printf("  %s ALL %d alts failed\n",name,altCount);
 	return 0;
 }
 
 /*****************************************************************************
-	Set the guard sets for this rule
+	Set the guard sets for this rule.
+	Computes the FIRST set across all alternatives:
+	  - kLit  → first char of litText
+	  - kSet  → setRef
+	  - kRuleRef → recurse into the referenced rule's setGuard
+	Cycle protection: assign guardSet (initially empty) before recursing
+	so a back-edge sees a partial set instead of infinite-looping.
+	Rules flagged doNotGuard get null and won't fast-fail.
 *****************************************************************************/
 PLGset *PLGrule::setGuard()
 {
-	// needs rewriting
-	return 0;
+PLGset 			*guard = 0;
+Alternative 	*alt = 0;
+Element 		*elem = 0;
+DoubleLink 		*link = 0;
+DoubleLink 		*elemLink = 0;
+PLGset 			*sub = 0;
+	if ( doNotGuard )
+		return 0;
+	if ( guardComputed )
+		return guardSet;
+	guardComputed = 1;
+	guard = new PLGset();
+	guardSet = guard;
+	for ( link = alternatives->first; link; link = link->next )
+		{
+		alt = (Alternative*)link->value;
+		// For each alt, walk elements until we hit a required (min > 0) one.
+		// Optional (min=0) elements contribute their FIRST set AND the next
+		// element is also reachable, so keep walking.
+		for ( elemLink = alt->elements->first; elemLink; elemLink = elemLink->next )
+			{
+			elem = (Element*)elemLink->value;
+			if ( elem )
+				{
+				switch (elem->kind)
+					{
+					case 1:
+						if ( elem->litText )
+							guard->set(*elem->litText);
+						break;
+					case 3:
+						if ( elem->setRef )
+							guard->set(elem->setRef);
+						break;
+					case 6:
+						if ( elem->ruleRef )
+							{
+							sub = elem->ruleRef->setGuard();
+							if ( sub )
+								guard->set(sub);
+							}
+						break;
+					}
+				if ( elem->minimum > 0 )
+					break;
+				}
+			}
+		}
+	return guard;
 }
 
 /*****************************************************************************
