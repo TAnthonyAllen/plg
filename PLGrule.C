@@ -184,6 +184,7 @@ Element 		*elem = 0;
 DoubleLink 		*link = 0;
 DoubleLink 		*elemLink = 0;
 PLGset 			*sub = 0;
+int 			noGuard = 0;
 	if ( doNotGuard )
 		return 0;
 	if ( guardComputed )
@@ -218,6 +219,8 @@ PLGset 			*sub = 0;
 							sub = elem->ruleRef->setGuard();
 							if ( sub )
 								guard->set(sub);
+							else	noGuard = 1;
+							// descendant is doNotGuard
 							}
 						break;
 					}
@@ -225,6 +228,14 @@ PLGset 			*sub = 0;
 					break;
 				}
 			}
+		}
+	// If any alt's chain leads through a doNotGuard rule, this rule
+	// also can't be guarded — return null so callers don't fast-fail
+	// on what would otherwise be an empty (=reject-all) guardSet.
+	if ( noGuard )
+		{
+		guardSet = 0;
+		return 0;
 		}
 	return guard;
 }

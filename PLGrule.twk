@@ -144,6 +144,7 @@ Element     elem;
 DoubleLink  link;
 DoubleLink  elemLink;
 PLGset      sub;
+int         noGuard = false;
     if doNotGuard       return null;
     if guardComputed    return guardSet;
     guardComputed = true;
@@ -172,13 +173,24 @@ PLGset      sub;
                         if elem.ruleRef
                             {
                             sub = elem.ruleRef.setGuard();
-                            if sub  guard.set(sub);
+                            if sub
+                                guard.set(sub);
+                            else
+                                noGuard = true;     // descendant is doNotGuard
                             }
                         break;
                     }
                 if elem.minimum > 0  break;
                 }
             }
+        }
+    // If any alt's chain leads through a doNotGuard rule, this rule
+    // also can't be guarded — return null so callers don't fast-fail
+    // on what would otherwise be an empty (=reject-all) guardSet.
+    if noGuard
+        {
+        guardSet = null;
+        return null;
         }
     return guard;
 }
