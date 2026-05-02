@@ -7,12 +7,14 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		017A7BAC351736753FA32951 /* PLGrule.C in Sources */ = {isa = PBXBuildFile; fileRef = 7EA96040AC60625EE3A50270 /* PLGrule.C */; };
 		05E6846B8624F95AFFE69EC0 /* StringRoutines.C in Sources */ = {isa = PBXBuildFile; fileRef = 26D8CF5C404D26AD3726334E /* StringRoutines.C */; };
 		08BCB0E0B504FF0EDF656977 /* DoubleLink.C in Sources */ = {isa = PBXBuildFile; fileRef = 32E10AD377E5C62452AEAB6A /* DoubleLink.C */; };
 		0AB7AECB2FD18B2A986F15C8 /* BaseEntry.C in Sources */ = {isa = PBXBuildFile; fileRef = 85AF13E7C398F9A09AE71492 /* BaseEntry.C */; };
 		1F89E6379405881F00693AA6 /* Tape.C in Sources */ = {isa = PBXBuildFile; fileRef = DF2EA177C15A5794CA1851CB /* Tape.C */; };
+		2867C5B354DF452B63AC253A /* PLG.C in Sources */ = {isa = PBXBuildFile; fileRef = 2F368BB3FA0C6FF86F604A90 /* PLG.C */; };
 		2E6868787AA2B9501F839CBD /* SearchTree.C in Sources */ = {isa = PBXBuildFile; fileRef = 10C2CAF23362DD243CCD7615 /* SearchTree.C */; };
-		34C8DF045E359A400EF43DBA /* Element.C in Sources */ = {isa = PBXBuildFile; fileRef = 449842B640763A77BF33C914 /* Element.C */; };
+		31CB07495162A78839AE7FEF /* PLGset.C in Sources */ = {isa = PBXBuildFile; fileRef = 17F24CD272A29873D80E6560 /* PLGset.C */; };
 		5C849A7B67AF8357A5852BA9 /* SearchNode.C in Sources */ = {isa = PBXBuildFile; fileRef = 30DF0B6B9D48AA30AF8A6995 /* SearchNode.C */; };
 		5FA9F9C43CBB6183451C75A4 /* Hasher.C in Sources */ = {isa = PBXBuildFile; fileRef = C9E3D3909C7BCE697F63B5B8 /* Hasher.C */; };
 		696997627369F80E4F1E5457 /* KeyTableItem.C in Sources */ = {isa = PBXBuildFile; fileRef = 98AF585A8195B3B3E6CA04C5 /* KeyTableItem.C */; };
@@ -21,107 +23,187 @@
 		781B50CD06115571AF4FE36C /* HashLink.C in Sources */ = {isa = PBXBuildFile; fileRef = 7A85EEEF53D13AF2D7622AB0 /* HashLink.C */; };
 		797F66DB44B77A8FA16E17D9 /* KeyMap.C in Sources */ = {isa = PBXBuildFile; fileRef = 03CA656BB4661016DF9CB7AA /* KeyMap.C */; };
 		79DBC0076BD943814E02BD39 /* Stak.C in Sources */ = {isa = PBXBuildFile; fileRef = 65FFF1325F68703DA8B7BAE6 /* Stak.C */; };
-		7E9E72B64D10B6D482414EC5 /* PLGparse.C in Sources */ = {isa = PBXBuildFile; fileRef = A6876DF07883B92E0E3A66B2 /* PLGparse.C */; };
-		85A7BA63C5910B745FD13A8B /* PLG.C in Sources */ = {isa = PBXBuildFile; fileRef = F8EE2EF968567A4B857B125B /* PLG.C */; };
+		7BD12CAA20CA130F449D8D7E /* PLGitem.C in Sources */ = {isa = PBXBuildFile; fileRef = 4672664E5B5863770EBA26D2 /* PLGitem.C */; };
 		8AD151294FEA774CEF66FF75 /* BaseHash.C in Sources */ = {isa = PBXBuildFile; fileRef = 63564987A82CE80B47B5056C /* BaseHash.C */; };
-		8F7B30C0E39E8B3490F7E045 /* PLGset.C in Sources */ = {isa = PBXBuildFile; fileRef = 4537F94D627CCCDB7A98ECBE /* PLGset.C */; };
+		8F00F46ECD55886A82737DFB /* Alternative.C in Sources */ = {isa = PBXBuildFile; fileRef = A3CD96751749F0D1612B9073 /* Alternative.C */; };
 		9B1003DD3639BE341992F7FF /* DoubleLinkList.C in Sources */ = {isa = PBXBuildFile; fileRef = 93E5B1F7C9D5D0ADE445C185 /* DoubleLinkList.C */; };
 		A405DCF5EF8ED0F635EA2DED /* SearchItem.C in Sources */ = {isa = PBXBuildFile; fileRef = E9F032DF0620CB80D108EC90 /* SearchItem.C */; };
-		B823705B30B307E1890FCD66 /* Alternative.C in Sources */ = {isa = PBXBuildFile; fileRef = 47A95352B09C0C622005B90D /* Alternative.C */; };
+		AE396CA7CA872EB6C2F627C5 /* PLGparse.C in Sources */ = {isa = PBXBuildFile; fileRef = 8A58EA01E6173C512C966939 /* PLGparse.C */; };
+		B8EA8FD3673960C2F257343E /* Element.C in Sources */ = {isa = PBXBuildFile; fileRef = 1C603E2D70C360DC356ED5FE /* Element.C */; };
 		C034690F41581276FA676500 /* TapeSegment.C in Sources */ = {isa = PBXBuildFile; fileRef = A6B9C8D5A42208B83B52BB66 /* TapeSegment.C */; };
-		CC7A5C7BF378BACA25E3877A /* PLGitem.C in Sources */ = {isa = PBXBuildFile; fileRef = F7ED38E5E10FC69CFDAFC934 /* PLGitem.C */; };
 		CFA0B03975C36A061C20ADEE /* DispatchQ.C in Sources */ = {isa = PBXBuildFile; fileRef = 4F16619D751870530B624359 /* DispatchQ.C */; };
 		DA745E8DA084D258219F685A /* Stack.C in Sources */ = {isa = PBXBuildFile; fileRef = 5A3ED102F348AF96C4F65703 /* Stack.C */; };
 		DB89664F6652B390559251E8 /* Segment.C in Sources */ = {isa = PBXBuildFile; fileRef = CDC10A038296439B69194BF1 /* Segment.C */; };
 		EAD81BF8C11D83CE09600B7A /* Buffer.C in Sources */ = {isa = PBXBuildFile; fileRef = F94B7C45CBDD2E5D46569962 /* Buffer.C */; };
 		EB4000CFEF0B9FF3FB99F37F /* HashList.C in Sources */ = {isa = PBXBuildFile; fileRef = F6B2DCD6514EA94A4A261ABD /* HashList.C */; };
-		FC6AF7027F91F6018E8B4C46 /* PLGrule.C in Sources */ = {isa = PBXBuildFile; fileRef = 7F486711793E98F5A380BC9E /* PLGrule.C */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		004C312336A8204C6D17B06C /* Hasher.twk */ = {isa = PBXFileReference; path = Hasher.twk; sourceTree = "<group>"; };
 		01A8D997192EAAE29B45E008 /* BitMAP.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BitMAP.h; sourceTree = "<group>"; };
 		03CA656BB4661016DF9CB7AA /* KeyMap.C */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = KeyMap.C; sourceTree = "<group>"; };
+		07051C8AF63E482C4F0C211B /* Segment.twk */ = {isa = PBXFileReference; path = Segment.twk; sourceTree = "<group>"; };
 		10C2CAF23362DD243CCD7615 /* SearchTree.C */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SearchTree.C; sourceTree = "<group>"; };
 		119702107AB810736EA26CC1 /* Bot.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Bot.h; sourceTree = "<group>"; };
 		12ED7BAA4856CE8D1A9AC119 /* HashLink.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HashLink.h; sourceTree = "<group>"; };
+		15C6EE561E068F723056F109 /* URLservice.twk */ = {isa = PBXFileReference; path = URLservice.twk; sourceTree = "<group>"; };
+		17F24CD272A29873D80E6560 /* PLGset.C */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = PLGset.C; path = ../PLGset.C; sourceTree = "<group>"; };
 		19A8ADA51C843FF03C8B6C15 /* BitMAP.C */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = BitMAP.C; sourceTree = "<group>"; };
 		1B35E70D95E868DB9AB18FDF /* OCroutines.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = OCroutines.h; sourceTree = "<group>"; };
-		1E3101BE1E2D05EFAB6BDD8F /* Alternative.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Alternative.h; sourceTree = "<group>"; };
-		1FDB147173F043E3E4A289AF /* PLG.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PLG.h; sourceTree = "<group>"; };
+		1BF0153BB7370F685E8E5417 /* Bot.twk */ = {isa = PBXFileReference; path = Bot.twk; sourceTree = "<group>"; };
+		1C603E2D70C360DC356ED5FE /* Element.C */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Element.C; sourceTree = "<group>"; };
+		1EF6F32B8C48B9965D217619 /* PLGrule.twk */ = {isa = PBXFileReference; path = PLGrule.twk; sourceTree = "<group>"; };
 		26D8CF5C404D26AD3726334E /* StringRoutines.C */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = StringRoutines.C; sourceTree = "<group>"; };
+		2F368BB3FA0C6FF86F604A90 /* PLG.C */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = PLG.C; sourceTree = "<group>"; };
 		30DF0B6B9D48AA30AF8A6995 /* SearchNode.C */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SearchNode.C; sourceTree = "<group>"; };
 		32E10AD377E5C62452AEAB6A /* DoubleLink.C */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = DoubleLink.C; sourceTree = "<group>"; };
-		368344B5F3524220A90555FC /* PLGrule.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PLGrule.h; sourceTree = "<group>"; };
+		350FB24A42E1A6054E38F427 /* Tape.twk */ = {isa = PBXFileReference; path = Tape.twk; sourceTree = "<group>"; };
+		391C2B75E226E93B0D2BE725 /* PLGrule.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PLGrule.h; sourceTree = "<group>"; };
 		403FC00F86C0EDBAA30BDCEE /* HashList.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = HashList.h; sourceTree = "<group>"; };
-		449842B640763A77BF33C914 /* Element.C */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Element.C; sourceTree = "<group>"; };
-		4537F94D627CCCDB7A98ECBE /* PLGset.C */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = PLGset.C; sourceTree = "<group>"; };
-		47A95352B09C0C622005B90D /* Alternative.C */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Alternative.C; sourceTree = "<group>"; };
+		4672664E5B5863770EBA26D2 /* PLGitem.C */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = PLGitem.C; sourceTree = "<group>"; };
 		4A916AAE1A3133C81FF20E91 /* plg */ = {isa = PBXFileReference; includeInIndex = 0; path = plg; sourceTree = BUILT_PRODUCTS_DIR; };
+		4B9B4D6B97AA5EF32022C106 /* PLGparse.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PLGparse.h; sourceTree = "<group>"; };
+		4E93D40C61415EC13BD447B7 /* PLG.twk */ = {isa = PBXFileReference; path = PLG.twk; sourceTree = "<group>"; };
+		4F0A39848B5DF42DD937BFCB /* BitMAP.twk */ = {isa = PBXFileReference; path = BitMAP.twk; sourceTree = "<group>"; };
 		4F16619D751870530B624359 /* DispatchQ.C */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = DispatchQ.C; sourceTree = "<group>"; };
+		4FC31B4DB4B3E694F5302629 /* PLGitem.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PLGitem.h; sourceTree = "<group>"; };
 		575101ACF30F85EE0488D9D1 /* Buffer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Buffer.h; sourceTree = "<group>"; };
 		577AFAF9C2B60668F9FC01A0 /* SearchNode.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SearchNode.h; sourceTree = "<group>"; };
 		582E83CB4E9C369745BE3B43 /* DoubleLinkList.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DoubleLinkList.h; sourceTree = "<group>"; };
 		5A3ED102F348AF96C4F65703 /* Stack.C */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Stack.C; sourceTree = "<group>"; };
+		5D6BD4C81116B6F76C95B3E2 /* Alternative.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Alternative.h; sourceTree = "<group>"; };
+		5DA9E906A98B4F735D77CAE6 /* DoubleLinkList.twk */ = {isa = PBXFileReference; path = DoubleLinkList.twk; sourceTree = "<group>"; };
+		608CFEA00E417E02F5CACB23 /* Element.twk */ = {isa = PBXFileReference; path = Element.twk; sourceTree = "<group>"; };
+		620E1F2A7A16CEDA5CA8A6AC /* PLGparse.twk */ = {isa = PBXFileReference; path = PLGparse.twk; sourceTree = "<group>"; };
 		63564987A82CE80B47B5056C /* BaseHash.C */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = BaseHash.C; sourceTree = "<group>"; };
 		65FFF1325F68703DA8B7BAE6 /* Stak.C */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Stak.C; sourceTree = "<group>"; };
+		686084D9BB00D09559E43094 /* setRules.twk */ = {isa = PBXFileReference; path = setRules.twk; sourceTree = "<group>"; };
 		6ACEA4C97612A215CABB5C0A /* Tape.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Tape.h; sourceTree = "<group>"; };
 		6C549BFFB9FCE853B3E0FE91 /* TapeSegment.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TapeSegment.h; sourceTree = "<group>"; };
 		6D2EDCF5B8DB2D189FE823B4 /* DoubleLink.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DoubleLink.h; sourceTree = "<group>"; };
+		6E78E2D17E8F3956CA2BDA29 /* SearchNode.twk */ = {isa = PBXFileReference; path = SearchNode.twk; sourceTree = "<group>"; };
 		703A8339316FD0636EBD6C08 /* SearchItem.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SearchItem.h; sourceTree = "<group>"; };
+		7143F520B37ADE2ABF2263F3 /* PLGset.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = PLGset.h; path = ../PLGset.h; sourceTree = "<group>"; };
 		7A85EEEF53D13AF2D7622AB0 /* HashLink.C */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HashLink.C; sourceTree = "<group>"; };
-		7F486711793E98F5A380BC9E /* PLGrule.C */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = PLGrule.C; sourceTree = "<group>"; };
+		7D16D8740CD0F1CF121AC2FE /* Element.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Element.h; sourceTree = "<group>"; };
+		7EA96040AC60625EE3A50270 /* PLGrule.C */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = PLGrule.C; sourceTree = "<group>"; };
+		8160C28B2C7F78DB4AD21A36 /* BaseHash.twk */ = {isa = PBXFileReference; path = BaseHash.twk; sourceTree = "<group>"; };
 		85AF13E7C398F9A09AE71492 /* BaseEntry.C */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = BaseEntry.C; sourceTree = "<group>"; };
-		868EB12F8C5E885BD5C0812B /* Element.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Element.h; sourceTree = "<group>"; };
+		86B94B07681E382BD193C74C /* HashList.twk */ = {isa = PBXFileReference; path = HashList.twk; sourceTree = "<group>"; };
 		86F24751EC90C44CDFF53A25 /* Hasher.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Hasher.h; sourceTree = "<group>"; };
+		876F146ACD4B1F9D3EDEADC9 /* StringRoutines.twk */ = {isa = PBXFileReference; path = StringRoutines.twk; sourceTree = "<group>"; };
+		8A0DFB8EB7462B0CDE1B043C /* KeyTable.twk */ = {isa = PBXFileReference; path = KeyTable.twk; sourceTree = "<group>"; };
+		8A58EA01E6173C512C966939 /* PLGparse.C */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = PLGparse.C; sourceTree = "<group>"; };
 		8AAE5F17711FCD305CC4B286 /* Stack.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Stack.h; sourceTree = "<group>"; };
+		8C37CE74C8EFF456472BCD0E /* DispatchQ.twk */ = {isa = PBXFileReference; path = DispatchQ.twk; sourceTree = "<group>"; };
 		8FDA5406B91F2DE85F48CB27 /* BaseHash.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BaseHash.h; sourceTree = "<group>"; };
-		8FE3ACAA78C45058894B1D7C /* PLGparse.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PLGparse.h; sourceTree = "<group>"; };
+		902515DD3D1FD3ED9C92A432 /* KeyTableItem.twk */ = {isa = PBXFileReference; path = KeyTableItem.twk; sourceTree = "<group>"; };
 		916B3EC0334999E00729236C /* KeyTable.C */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = KeyTable.C; sourceTree = "<group>"; };
 		93E5B1F7C9D5D0ADE445C185 /* DoubleLinkList.C */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = DoubleLinkList.C; sourceTree = "<group>"; };
 		947DDC0D4D92910FD8F4EE75 /* StringRoutines.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = StringRoutines.h; sourceTree = "<group>"; };
-		985BD11F7E7D0B38A3EEFF93 /* PLGitem.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PLGitem.h; sourceTree = "<group>"; };
+		977F1A872A389A29B0F95422 /* SearchTree.twk */ = {isa = PBXFileReference; path = SearchTree.twk; sourceTree = "<group>"; };
 		98AF585A8195B3B3E6CA04C5 /* KeyTableItem.C */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = KeyTableItem.C; sourceTree = "<group>"; };
 		9BDDEC45E745748AE4AE1FC2 /* Segment.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Segment.h; sourceTree = "<group>"; };
 		A0FF1B494E580F6692409C1D /* Stak.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Stak.h; sourceTree = "<group>"; };
+		A2C1662FF9FAB91A61E19C76 /* DoubleLink.twk */ = {isa = PBXFileReference; path = DoubleLink.twk; sourceTree = "<group>"; };
+		A3CD96751749F0D1612B9073 /* Alternative.C */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Alternative.C; sourceTree = "<group>"; };
 		A65AD6231F0BCA18476F2696 /* KeyTableItem.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = KeyTableItem.h; sourceTree = "<group>"; };
-		A6876DF07883B92E0E3A66B2 /* PLGparse.C */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = PLGparse.C; sourceTree = "<group>"; };
 		A6B9C8D5A42208B83B52BB66 /* TapeSegment.C */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = TapeSegment.C; sourceTree = "<group>"; };
 		AA949C0DFC177F2B30D37823 /* DispatchQ.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DispatchQ.h; sourceTree = "<group>"; };
+		AC1AE2690CE8F8CE6A71F1D3 /* SearchItem.twk */ = {isa = PBXFileReference; path = SearchItem.twk; sourceTree = "<group>"; };
+		B4B8A3407488A189979E2EE1 /* HashLink.twk */ = {isa = PBXFileReference; path = HashLink.twk; sourceTree = "<group>"; };
 		BA77D0A2BCAF2F66DF0F1B55 /* KeyMap.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = KeyMap.h; sourceTree = "<group>"; };
+		C1FF8F77E1849BA632E5583A /* Alternative.twk */ = {isa = PBXFileReference; path = Alternative.twk; sourceTree = "<group>"; };
+		C2B57B49A92DCCD57345854E /* OCroutines.twk */ = {isa = PBXFileReference; path = OCroutines.twk; sourceTree = "<group>"; };
 		C9E3D3909C7BCE697F63B5B8 /* Hasher.C */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Hasher.C; sourceTree = "<group>"; };
+		CA47443C634E4A9D6402888D /* Buffer.twk */ = {isa = PBXFileReference; path = Buffer.twk; sourceTree = "<group>"; };
 		CDC10A038296439B69194BF1 /* Segment.C */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Segment.C; sourceTree = "<group>"; };
+		CE0F86A01845BEFE910EAA2B /* SimpleList.twk */ = {isa = PBXFileReference; path = SimpleList.twk; sourceTree = "<group>"; };
+		CE282A961638C60FF5419608 /* PLGset.twk */ = {isa = PBXFileReference; name = PLGset.twk; path = ../PLGset.twk; sourceTree = "<group>"; };
 		CFE0A39E36F7EE2BDC9CDEED /* SearchTree.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SearchTree.h; sourceTree = "<group>"; };
+		D6378F140FF0FE548809E28E /* KeyMap.twk */ = {isa = PBXFileReference; path = KeyMap.twk; sourceTree = "<group>"; };
+		D72F3A2795DDE75814C56F1C /* PLGrevision */ = {isa = PBXFileReference; path = PLGrevision; sourceTree = "<group>"; };
 		D7985807187F96952178C39A /* KeyTable.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = KeyTable.h; sourceTree = "<group>"; };
 		DF2EA177C15A5794CA1851CB /* Tape.C */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Tape.C; sourceTree = "<group>"; };
+		DF71BE21D29B2F6BF9DF1E87 /* PLG.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PLG.h; sourceTree = "<group>"; };
+		DFFA4EFADFE0D2BC2E4676C5 /* PLGitem.twk */ = {isa = PBXFileReference; path = PLGitem.twk; sourceTree = "<group>"; };
 		E755BA00115E9782C223ECE3 /* URLservice.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = URLservice.h; sourceTree = "<group>"; };
 		E9F032DF0620CB80D108EC90 /* SearchItem.C */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SearchItem.C; sourceTree = "<group>"; };
+		F19B5EE384FCF09AFD6551C8 /* TapeSegment.twk */ = {isa = PBXFileReference; path = TapeSegment.twk; sourceTree = "<group>"; };
 		F6B2DCD6514EA94A4A261ABD /* HashList.C */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = HashList.C; sourceTree = "<group>"; };
-		F7ED38E5E10FC69CFDAFC934 /* PLGitem.C */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = PLGitem.C; sourceTree = "<group>"; };
 		F8A4AB6ADB8633C35397C59F /* BaseEntry.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BaseEntry.h; sourceTree = "<group>"; };
-		F8EE2EF968567A4B857B125B /* PLG.C */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = PLG.C; sourceTree = "<group>"; };
 		F94B7C45CBDD2E5D46569962 /* Buffer.C */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Buffer.C; sourceTree = "<group>"; };
-		FB51125545A5917631190528 /* PLGset.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PLGset.h; sourceTree = "<group>"; };
+		FCA4C6317BA0257AC97CF546 /* Stak.twk */ = {isa = PBXFileReference; path = Stak.twk; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
-		084C024EFFB7422C6E43F448 /* Revision */ = {
+		0D35F11736B9FFC4A0C44B1E /* plg */ = {
 			isa = PBXGroup;
 			children = (
-				47A95352B09C0C622005B90D /* Alternative.C */,
-				1E3101BE1E2D05EFAB6BDD8F /* Alternative.h */,
-				449842B640763A77BF33C914 /* Element.C */,
-				868EB12F8C5E885BD5C0812B /* Element.h */,
-				F8EE2EF968567A4B857B125B /* PLG.C */,
-				1FDB147173F043E3E4A289AF /* PLG.h */,
-				F7ED38E5E10FC69CFDAFC934 /* PLGitem.C */,
-				985BD11F7E7D0B38A3EEFF93 /* PLGitem.h */,
-				A6876DF07883B92E0E3A66B2 /* PLGparse.C */,
-				8FE3ACAA78C45058894B1D7C /* PLGparse.h */,
-				7F486711793E98F5A380BC9E /* PLGrule.C */,
-				368344B5F3524220A90555FC /* PLGrule.h */,
+				CE282A961638C60FF5419608 /* PLGset.twk */,
+				5B1CC052174F7D62F9E1A97C /* Revision */,
+			);
+			name = plg;
+			sourceTree = "<group>";
+		};
+		16D383FF3A0985E769F169D3 /* Maps */ = {
+			isa = PBXGroup;
+			children = (
+				C5F87F04CB5F7401E01FC614 /* Maps */,
+			);
+			name = Maps;
+			sourceTree = "<group>";
+		};
+		2138ED922DAF8A89C46E304C /* KeyTable */ = {
+			isa = PBXGroup;
+			children = (
+				A4B934094B2475058B65CDE4 /* KeyTable */,
+			);
+			name = KeyTable;
+			sourceTree = "<group>";
+		};
+		253ED25AA6FA81C5D9583936 /* Frame */ = {
+			isa = PBXGroup;
+			children = (
+				6671ED08D3FE03D41A7869CA /* Frame */,
+			);
+			name = Frame;
+			sourceTree = "<group>";
+		};
+		4C40FD304431DAE100B04540 /* Frame */ = {
+			isa = PBXGroup;
+			children = (
+				6671ED08D3FE03D41A7869CA /* Frame */,
+			);
+			name = Frame;
+			sourceTree = "<group>";
+		};
+		5B1CC052174F7D62F9E1A97C /* Revision */ = {
+			isa = PBXGroup;
+			children = (
+				A3CD96751749F0D1612B9073 /* Alternative.C */,
+				5D6BD4C81116B6F76C95B3E2 /* Alternative.h */,
+				C1FF8F77E1849BA632E5583A /* Alternative.twk */,
+				1C603E2D70C360DC356ED5FE /* Element.C */,
+				7D16D8740CD0F1CF121AC2FE /* Element.h */,
+				608CFEA00E417E02F5CACB23 /* Element.twk */,
+				2F368BB3FA0C6FF86F604A90 /* PLG.C */,
+				DF71BE21D29B2F6BF9DF1E87 /* PLG.h */,
+				4E93D40C61415EC13BD447B7 /* PLG.twk */,
+				4672664E5B5863770EBA26D2 /* PLGitem.C */,
+				4FC31B4DB4B3E694F5302629 /* PLGitem.h */,
+				DFFA4EFADFE0D2BC2E4676C5 /* PLGitem.twk */,
+				8A58EA01E6173C512C966939 /* PLGparse.C */,
+				4B9B4D6B97AA5EF32022C106 /* PLGparse.h */,
+				620E1F2A7A16CEDA5CA8A6AC /* PLGparse.twk */,
+				D72F3A2795DDE75814C56F1C /* PLGrevision */,
+				7EA96040AC60625EE3A50270 /* PLGrule.C */,
+				391C2B75E226E93B0D2BE725 /* PLGrule.h */,
+				1EF6F32B8C48B9965D217619 /* PLGrule.twk */,
+				686084D9BB00D09559E43094 /* setRules.twk */,
 			);
 			name = Revision;
-			path = Revision;
+			path = .;
 			sourceTree = "<group>";
 		};
 		5E92D8D85E928886B74D1BBE /* support */ = {
@@ -141,50 +223,113 @@
 				F8A4AB6ADB8633C35397C59F /* BaseEntry.h */,
 				63564987A82CE80B47B5056C /* BaseHash.C */,
 				8FDA5406B91F2DE85F48CB27 /* BaseHash.h */,
+				8160C28B2C7F78DB4AD21A36 /* BaseHash.twk */,
 				119702107AB810736EA26CC1 /* Bot.h */,
+				1BF0153BB7370F685E8E5417 /* Bot.twk */,
 				F94B7C45CBDD2E5D46569962 /* Buffer.C */,
 				575101ACF30F85EE0488D9D1 /* Buffer.h */,
+				CA47443C634E4A9D6402888D /* Buffer.twk */,
 				4F16619D751870530B624359 /* DispatchQ.C */,
 				AA949C0DFC177F2B30D37823 /* DispatchQ.h */,
+				8C37CE74C8EFF456472BCD0E /* DispatchQ.twk */,
 				32E10AD377E5C62452AEAB6A /* DoubleLink.C */,
 				6D2EDCF5B8DB2D189FE823B4 /* DoubleLink.h */,
+				A2C1662FF9FAB91A61E19C76 /* DoubleLink.twk */,
 				93E5B1F7C9D5D0ADE445C185 /* DoubleLinkList.C */,
 				582E83CB4E9C369745BE3B43 /* DoubleLinkList.h */,
+				5DA9E906A98B4F735D77CAE6 /* DoubleLinkList.twk */,
 				C9E3D3909C7BCE697F63B5B8 /* Hasher.C */,
 				86F24751EC90C44CDFF53A25 /* Hasher.h */,
+				004C312336A8204C6D17B06C /* Hasher.twk */,
 				7A85EEEF53D13AF2D7622AB0 /* HashLink.C */,
 				12ED7BAA4856CE8D1A9AC119 /* HashLink.h */,
+				B4B8A3407488A189979E2EE1 /* HashLink.twk */,
 				F6B2DCD6514EA94A4A261ABD /* HashList.C */,
 				403FC00F86C0EDBAA30BDCEE /* HashList.h */,
+				86B94B07681E382BD193C74C /* HashList.twk */,
 				1B35E70D95E868DB9AB18FDF /* OCroutines.h */,
+				C2B57B49A92DCCD57345854E /* OCroutines.twk */,
 				E9F032DF0620CB80D108EC90 /* SearchItem.C */,
 				703A8339316FD0636EBD6C08 /* SearchItem.h */,
+				AC1AE2690CE8F8CE6A71F1D3 /* SearchItem.twk */,
 				30DF0B6B9D48AA30AF8A6995 /* SearchNode.C */,
 				577AFAF9C2B60668F9FC01A0 /* SearchNode.h */,
+				6E78E2D17E8F3956CA2BDA29 /* SearchNode.twk */,
 				10C2CAF23362DD243CCD7615 /* SearchTree.C */,
 				CFE0A39E36F7EE2BDC9CDEED /* SearchTree.h */,
+				977F1A872A389A29B0F95422 /* SearchTree.twk */,
+				CE0F86A01845BEFE910EAA2B /* SimpleList.twk */,
 				5A3ED102F348AF96C4F65703 /* Stack.C */,
 				8AAE5F17711FCD305CC4B286 /* Stack.h */,
 				65FFF1325F68703DA8B7BAE6 /* Stak.C */,
 				A0FF1B494E580F6692409C1D /* Stak.h */,
+				FCA4C6317BA0257AC97CF546 /* Stak.twk */,
 				26D8CF5C404D26AD3726334E /* StringRoutines.C */,
 				947DDC0D4D92910FD8F4EE75 /* StringRoutines.h */,
+				876F146ACD4B1F9D3EDEADC9 /* StringRoutines.twk */,
 				DF2EA177C15A5794CA1851CB /* Tape.C */,
 				6ACEA4C97612A215CABB5C0A /* Tape.h */,
+				350FB24A42E1A6054E38F427 /* Tape.twk */,
 				A6B9C8D5A42208B83B52BB66 /* TapeSegment.C */,
 				6C549BFFB9FCE853B3E0FE91 /* TapeSegment.h */,
+				F19B5EE384FCF09AFD6551C8 /* TapeSegment.twk */,
 				E755BA00115E9782C223ECE3 /* URLservice.h */,
+				15C6EE561E068F723056F109 /* URLservice.twk */,
 			);
-			path = Frame;
+			name = Frame;
+			path = ../../../support/Frame;
+			sourceTree = "<group>";
+		};
+		671CF5EE318712408545B694 /* Frame */ = {
+			isa = PBXGroup;
+			children = (
+				6671ED08D3FE03D41A7869CA /* Frame */,
+			);
+			name = Frame;
+			sourceTree = "<group>";
+		};
+		73AF425A1B3ED8B1774BC07C /* Maps */ = {
+			isa = PBXGroup;
+			children = (
+				C5F87F04CB5F7401E01FC614 /* Maps */,
+			);
+			name = Maps;
 			sourceTree = "<group>";
 		};
 		73D6A8E24670E2E10F838353 = {
 			isa = PBXGroup;
 			children = (
 				CDADEC99825C6E6A7D5E6C94 /* data */,
-				E7036275823611F915F0599F /* Parse */,
+				F4F2F4BFDD8384836C21A3B1 /* Headers */,
+				BC29BDAA30BB4300196C98B1 /* Sources */,
+				E9C12767B838C867954BD6B5 /* TAWK */,
 				CC1055E92E17B2BF4BBD719B /* Products */,
 			);
+			sourceTree = "<group>";
+		};
+		7413B1F7D0CD915636306233 /* plg */ = {
+			isa = PBXGroup;
+			children = (
+				7143F520B37ADE2ABF2263F3 /* PLGset.h */,
+				5B1CC052174F7D62F9E1A97C /* Revision */,
+			);
+			name = plg;
+			sourceTree = "<group>";
+		};
+		97BBC3E192136015316D2C8F /* KeyTable */ = {
+			isa = PBXGroup;
+			children = (
+				A4B934094B2475058B65CDE4 /* KeyTable */,
+			);
+			name = KeyTable;
+			sourceTree = "<group>";
+		};
+		A37A42649C127BB59AA07609 /* KeyTable */ = {
+			isa = PBXGroup;
+			children = (
+				A4B934094B2475058B65CDE4 /* KeyTable */,
+			);
+			name = KeyTable;
 			sourceTree = "<group>";
 		};
 		A4B934094B2475058B65CDE4 /* KeyTable */ = {
@@ -192,12 +337,35 @@
 			children = (
 				03CA656BB4661016DF9CB7AA /* KeyMap.C */,
 				BA77D0A2BCAF2F66DF0F1B55 /* KeyMap.h */,
+				D6378F140FF0FE548809E28E /* KeyMap.twk */,
 				916B3EC0334999E00729236C /* KeyTable.C */,
 				D7985807187F96952178C39A /* KeyTable.h */,
+				8A0DFB8EB7462B0CDE1B043C /* KeyTable.twk */,
 				98AF585A8195B3B3E6CA04C5 /* KeyTableItem.C */,
 				A65AD6231F0BCA18476F2696 /* KeyTableItem.h */,
+				902515DD3D1FD3ED9C92A432 /* KeyTableItem.twk */,
 			);
-			path = KeyTable;
+			name = KeyTable;
+			path = ../../../support/KeyTable;
+			sourceTree = "<group>";
+		};
+		BC29BDAA30BB4300196C98B1 /* Sources */ = {
+			isa = PBXGroup;
+			children = (
+				4C40FD304431DAE100B04540 /* Frame */,
+				97BBC3E192136015316D2C8F /* KeyTable */,
+				BE824C11B69BFF5B68E2B5C5 /* Maps */,
+				EDD39751DC1703EDF5D70A31 /* plg */,
+			);
+			name = Sources;
+			sourceTree = "<group>";
+		};
+		BE824C11B69BFF5B68E2B5C5 /* Maps */ = {
+			isa = PBXGroup;
+			children = (
+				C5F87F04CB5F7401E01FC614 /* Maps */,
+			);
+			name = Maps;
 			sourceTree = "<group>";
 		};
 		C5F87F04CB5F7401E01FC614 /* Maps */ = {
@@ -205,10 +373,13 @@
 			children = (
 				19A8ADA51C843FF03C8B6C15 /* BitMAP.C */,
 				01A8D997192EAAE29B45E008 /* BitMAP.h */,
+				4F0A39848B5DF42DD937BFCB /* BitMAP.twk */,
 				CDC10A038296439B69194BF1 /* Segment.C */,
 				9BDDEC45E745748AE4AE1FC2 /* Segment.h */,
+				07051C8AF63E482C4F0C211B /* Segment.twk */,
 			);
-			path = Maps;
+			name = Maps;
+			path = ../../../support/Maps;
 			sourceTree = "<group>";
 		};
 		CC1055E92E17B2BF4BBD719B /* Products */ = {
@@ -228,15 +399,35 @@
 			path = ../../..;
 			sourceTree = "<group>";
 		};
-		E7036275823611F915F0599F /* Parse */ = {
+		E9C12767B838C867954BD6B5 /* TAWK */ = {
 			isa = PBXGroup;
 			children = (
-				4537F94D627CCCDB7A98ECBE /* PLGset.C */,
-				FB51125545A5917631190528 /* PLGset.h */,
-				084C024EFFB7422C6E43F448 /* Revision */,
+				671CF5EE318712408545B694 /* Frame */,
+				A37A42649C127BB59AA07609 /* KeyTable */,
+				73AF425A1B3ED8B1774BC07C /* Maps */,
+				0D35F11736B9FFC4A0C44B1E /* plg */,
 			);
-			name = Parse;
-			path = ..;
+			name = TAWK;
+			sourceTree = "<group>";
+		};
+		EDD39751DC1703EDF5D70A31 /* plg */ = {
+			isa = PBXGroup;
+			children = (
+				17F24CD272A29873D80E6560 /* PLGset.C */,
+				5B1CC052174F7D62F9E1A97C /* Revision */,
+			);
+			name = plg;
+			sourceTree = "<group>";
+		};
+		F4F2F4BFDD8384836C21A3B1 /* Headers */ = {
+			isa = PBXGroup;
+			children = (
+				253ED25AA6FA81C5D9583936 /* Frame */,
+				2138ED922DAF8A89C46E304C /* KeyTable */,
+				16D383FF3A0985E769F169D3 /* Maps */,
+				7413B1F7D0CD915636306233 /* plg */,
+			);
+			name = Headers;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -294,7 +485,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				B823705B30B307E1890FCD66 /* Alternative.C in Sources */,
+				8F00F46ECD55886A82737DFB /* Alternative.C in Sources */,
 				0AB7AECB2FD18B2A986F15C8 /* BaseEntry.C in Sources */,
 				8AD151294FEA774CEF66FF75 /* BaseHash.C in Sources */,
 				6C03EE1B50921E95CBEB34AB /* BitMAP.C in Sources */,
@@ -302,18 +493,18 @@
 				CFA0B03975C36A061C20ADEE /* DispatchQ.C in Sources */,
 				08BCB0E0B504FF0EDF656977 /* DoubleLink.C in Sources */,
 				9B1003DD3639BE341992F7FF /* DoubleLinkList.C in Sources */,
-				34C8DF045E359A400EF43DBA /* Element.C in Sources */,
+				B8EA8FD3673960C2F257343E /* Element.C in Sources */,
 				781B50CD06115571AF4FE36C /* HashLink.C in Sources */,
 				EB4000CFEF0B9FF3FB99F37F /* HashList.C in Sources */,
 				5FA9F9C43CBB6183451C75A4 /* Hasher.C in Sources */,
 				797F66DB44B77A8FA16E17D9 /* KeyMap.C in Sources */,
 				6EB32C7F63423A51B37FD060 /* KeyTable.C in Sources */,
 				696997627369F80E4F1E5457 /* KeyTableItem.C in Sources */,
-				85A7BA63C5910B745FD13A8B /* PLG.C in Sources */,
-				CC7A5C7BF378BACA25E3877A /* PLGitem.C in Sources */,
-				7E9E72B64D10B6D482414EC5 /* PLGparse.C in Sources */,
-				FC6AF7027F91F6018E8B4C46 /* PLGrule.C in Sources */,
-				8F7B30C0E39E8B3490F7E045 /* PLGset.C in Sources */,
+				2867C5B354DF452B63AC253A /* PLG.C in Sources */,
+				7BD12CAA20CA130F449D8D7E /* PLGitem.C in Sources */,
+				AE396CA7CA872EB6C2F627C5 /* PLGparse.C in Sources */,
+				017A7BAC351736753FA32951 /* PLGrule.C in Sources */,
+				31CB07495162A78839AE7FEF /* PLGset.C in Sources */,
 				A405DCF5EF8ED0F635EA2DED /* SearchItem.C in Sources */,
 				5C849A7B67AF8357A5852BA9 /* SearchNode.C in Sources */,
 				2E6868787AA2B9501F839CBD /* SearchTree.C in Sources */,
