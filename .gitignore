@@ -1,3 +1,6 @@
+# Dropbox keeps re-creating this Xcode shell after we deleted it; keep it out
+/NewPLG/
+
 # macOS
 .DS_Store
 .AppleDouble
