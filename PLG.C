@@ -1,5 +1,6 @@
 #include <string.h>
 #include <stdio.h>
+#include "StringRoutines.h"
 #include "DoubleLinkList.h"
 #include "PLGrule.h"
 #include "Alternative.h"
@@ -102,6 +103,29 @@ void PLG::init()
 	ruleStack = new Stak();
 	testStack = new Stak();
 	parser = new PLGparse();
+}
+
+/*******************************************************************************
+	process — load a grammar file, run it through the parser starting at the
+	"Start" rule, and report the result.
+*******************************************************************************/
+void PLG::process(char *filename)
+{
+char 		*content = 0;
+PLGitem 	*result = 0;
+	setRules();
+	parser->initialize();
+	content = ::getStringFromFile(filename);
+	if ( !content )
+		{
+		::fprintf(stderr,"process: could not load %s\n",filename);
+		return;
+		}
+	parser->setInput(content);
+	result = parser->parse("Start");
+	if ( result )
+		::printf("parsed %ld chars from %s\n",result->itemLength,filename);
+	else	::printf("parse failed on %s\n",filename);
 }
 
 /*******************************************************************************

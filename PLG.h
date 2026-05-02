@@ -49,6 +49,7 @@ PLGparse *parser;
 PLG();
 PLG(char *input);
 void init();
+void process(char *filename);
 void run();
 void setRules();
 };

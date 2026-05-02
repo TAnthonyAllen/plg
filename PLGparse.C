@@ -4,12 +4,12 @@
 #include "PLGrule.h"
 #include "Alternative.h"
 #include "DoubleLink.h"
-#include "PLGitem.h"
 #include "PLGset.h"
 #include "Stak.h"
 #include "BaseHash.h"
 #include "Element.h"
 #include "Buffer.h"
+#include "PLGitem.h"
 #include "PLG.h"
 #include "PLGparse.h"
 
@@ -18,7 +18,7 @@
 	moved into the support library, where PLGitem is unreachable).
 	Returns true iff any character of `item`'s text is in `set`.
 *******************************************************************************/
-int foundIn(PLGset *set, PLGitem *item)
+extern "C" int foundIn(PLGset *set, PLGitem *item)
 {
 	if ( item && set )
 		{
@@ -35,10 +35,18 @@ int foundIn(PLGset *set, PLGitem *item)
 /*******************************************************************************
 	Main
 *******************************************************************************/
-int main()
+int main(int argc, char **argv)
 {
-PLG 	*state = new PLG("12345 hello");
-	state->run();
+PLG 	*state = 0;
+	if ( argc > 1 )
+		{
+		state = new PLG();
+		state->process(argv[1]);
+		}
+	else {
+		state = new PLG("12345 hello");
+		state->run();
+		}
 }
 
 /*******************************************************************************
@@ -51,6 +59,7 @@ PLGparse::PLGparse()
 	eof = 0;
 	parserName = 0;
 	currentRule = 0;
+	currentAlt = 0;
 	currentSet = 0;
 	defaultSkip = 0;
 	skipSet = 0;
@@ -71,7 +80,6 @@ PLGparse::PLGparse()
 	doNotGuard = 0;
 	setsInitialized = 0;
 	skipping = 0;
-	currentAlt = 0;
 	rules = new BaseHash();
 	setTable = new BaseHash();
 	if ( !PLGitem::itemEmpty )
@@ -85,6 +93,7 @@ PLGparse::PLGparse(char *input)
 {
 	parserName = 0;
 	currentRule = 0;
+	currentAlt = 0;
 	currentSet = 0;
 	defaultSkip = 0;
 	skipSet = 0;
@@ -105,7 +114,6 @@ PLGparse::PLGparse(char *input)
 	doNotGuard = 0;
 	setsInitialized = 0;
 	skipping = 0;
-	currentAlt = 0;
 	buffer = ::bufferFactory1();
 	buffer->appendString(input);
 	cursor = buffer->start;
@@ -357,3 +365,6 @@ char *PLGparse::snapshot()
 {
 	return cursor;
 }
+/*	Warning: the following methods were referenced but not declared
+	process(char*)
+*/

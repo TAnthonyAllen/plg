@@ -1,9 +1,9 @@
 class Buffer;
 class PLGrule;
+class Alternative;
 class PLGset;
 class Stak;
 class BaseHash;
-class Alternative;
 class PLGitem;
 /*******************************************************************************
 	PLGparse defines the environment for a test version of plg and provides
@@ -18,6 +18,7 @@ char *cursor;
 char *eof;
 char *parserName;
 PLGrule *currentRule;
+Alternative *currentAlt;
 PLGset *currentSet;
 PLGset *defaultSkip;
 PLGset *skipSet;
@@ -43,7 +44,6 @@ struct
 	unsigned int setsInitialized:1;
 	unsigned int skipping:1;
 	};
-Alternative *currentAlt;
 PLGparse();
 PLGparse(char *input);
 void addTest(int kind, char *data, char *label, int min, int max, char *skipSet);
@@ -65,5 +65,5 @@ void setSkip();
 void skip();
 char *snapshot();
 };
-int foundIn(PLGset *set, PLGitem *item);
-int main();
+extern "C" int foundIn(PLGset *set, PLGitem *item);
+int main(int argc, char **argv);

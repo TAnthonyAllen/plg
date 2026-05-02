@@ -131,6 +131,29 @@ PLGitem result = parse("Max");
 }
 
 /*******************************************************************************
+	process — load a grammar file, run it through the parser starting at the
+	"Start" rule, and report the result.
+*******************************************************************************/
+void process(String filename)
+{
+String  content;
+PLGitem result;
+    setRules();
+    initialize();
+    content = getStringFromFile(filename);
+    if !content
+        {
+        cerr "process: could not load " filename:;
+        return;
+        }
+    setInput(content);
+    result = parse("Start");
+    if result
+        cout "parsed " result.itemLength " chars from " filename:;
+    else cout "parse failed on " filename:;
+}
+
+/*******************************************************************************
 	setRules copied over from plg.twk
 *******************************************************************************/
 void setRules()
