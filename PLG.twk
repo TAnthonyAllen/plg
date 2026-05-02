@@ -166,7 +166,6 @@ singleQuote  = getSet("singleQuote","'");
     elem.setRef = currentSet;
     alt.elements += elem;
     currentRule.alternatives += alt;
-
     currentRule = getRule("Max");
     alt = new;
     
