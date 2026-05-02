@@ -1,0 +1,91 @@
+name: plg
+options:
+  bundleIdPrefix: com.taa.plg
+  createIntermediateGroups: true
+  deploymentTarget:
+    macOS: "12.0"
+
+# Tell xcodegen that .C files are C++ sources (uppercase .C is the convention
+# tawk emits; xcodegen would otherwise treat them as Resources).
+fileTypes:
+  C:
+    buildPhase: sources
+    lastKnownFileType: sourcecode.cpp.cpp
+
+settings:
+  base:
+    ALWAYS_SEARCH_USER_PATHS: NO
+    CLANG_CXX_LANGUAGE_STANDARD: "gnu++17"
+    CLANG_CXX_LIBRARY: "libc++"
+    GCC_C_LANGUAGE_STANDARD: "gnu11"
+
+targets:
+  plg:
+    type: tool
+    platform: macOS
+    sources:
+      # Revision/ — new plg sources (C++ — go to sources phase)
+      - path: .
+        buildPhase: sources
+        includes:
+          - "*.C"
+        excludes:
+          - "project.yml"
+      # PLGset from the old Parse/ directory (one level up)
+      - path: ../PLGset.C
+        buildPhase: sources
+      # Headers from Revision/ — for navigation, no compile
+      - path: .
+        buildPhase: none
+        includes:
+          - "*.h"
+      # PLGset.h
+      - path: ../PLGset.h
+        buildPhase: none
+      # support/Frame — base data structures
+      - path: ../../../support/Frame
+        buildPhase: sources
+        includes:
+          - "*.C"
+        excludes:
+          - "BeforeRefactor"
+      - path: ../../../support/Frame
+        buildPhase: none
+        includes:
+          - "*.h"
+        excludes:
+          - "BeforeRefactor"
+      # support/Maps  (perfect.c excluded — K&R-era code, won't compile)
+      - path: ../../../support/Maps
+        buildPhase: sources
+        includes:
+          - "*.C"
+      - path: ../../../support/Maps
+        buildPhase: none
+        includes:
+          - "*.h"
+      # support/KeyTable
+      - path: ../../../support/KeyTable
+        buildPhase: sources
+        includes:
+          - "*.C"
+      - path: ../../../support/KeyTable
+        buildPhase: none
+        includes:
+          - "*.h"
+
+    settings:
+      base:
+        HEADER_SEARCH_PATHS:
+          - "$(SRCROOT)"
+          - "$(SRCROOT)/.."
+          - "$(SRCROOT)/../../../support/Frame"
+          - "$(SRCROOT)/../../../support/Maps"
+          - "$(SRCROOT)/../../../support/KeyTable"
+          - "$(SRCROOT)/../../../support/Include"
+        WARNING_CFLAGS:
+          - "-Wno-parentheses"
+          - "-Wno-write-strings"
+        OTHER_CFLAGS:
+          - "-Wno-parentheses"
+          - "-Wno-write-strings"

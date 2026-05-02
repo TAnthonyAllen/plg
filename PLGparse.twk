@@ -9,7 +9,6 @@ include PLGrevision
 class PLGparse
 {
 Buffer      buffer;
-Buffer      buffer;
 String      cursor,
             eof,
             parserName;
@@ -23,15 +22,6 @@ Stak        skipStack,
 int         depth;
 BaseHash    rules,
             setTable;
-PLGset      alternateSet;
-PLGset      characterSet;
-PLGset      commandSet;
-PLGset      commentSet;
-PLGset      elementSet;
-PLGset      excludeSet;
-PLGset      nameSet;
-PLGset      numberSet;
-PLGset      singleQuote;
 boolean
     debugRulePLG
     debugGuardPLG
@@ -75,10 +65,39 @@ use buffer
 *******************************************************************************/
 String snapshot()           { return cursor; }
 void restore(String s)      { cursor = s; }
-void skip()                 { if skipSet skipSet.skip(cursor); }
 void reportError(Alternative alt, String message)
 {
     cerr "FAIL: " message:;
+}
+
+/*****************************************************************************
+	addTest builds an Element from the given parameters and appends it to
+	currentAlt. Used by setRules() to replace the verbose
+	"new Element(); elem->kind = ...; alt->addElement(elem);" pattern with
+	one call per element.
+*****************************************************************************/
+void addTest(int kind, String data, String label, int min, int max, String skipSet)
+{
+Element elem = new;
+    elem.kind       = kind;
+    elem.minimum    = min;
+    elem.maximum    = max;
+    if label        elem.label      = label;
+    if skipSet      elem.skipSet    = getSet(skipSet);
+    switch(kind) {
+        case kLit:      elem.litText = data;            break;
+        case kChr:      elem.chrChar = *data;           break;
+        case kSet:      elem.setRef  = getSet(data);    break;
+        case kRuleRef:  elem.ruleRef = getRule(data);   break;
+        case kKeyTable: cerr "addTest: kKeyTable not yet supported (getTable() not implemented)":; break;
+        case kAny:
+        case kEof:      break;      // no data needed
+        default:        cerr "addTest: unsupported kind " kind:; break;
+        }
+    if !currentAlt {
+        cerr "addTest: no currentAlt set":;
+        return; }
+    currentAlt.elements.add((void*)elem);
 }
 
 /*******************************************************************************
@@ -165,36 +184,6 @@ PLGset set = setTable[name];
         setTable[name] = (void*)set;
         }
     return set;
-}
-
-/*****************************************************************************
-	addTest builds an Element from the given parameters and appends it to
-	currentAlt. Used by setRules() to replace the verbose
-	"new Element(); elem->kind = ...; alt->addElement(elem);" pattern with
-	one call per element.
-*****************************************************************************/
-void addTest(int kind, String data, String label, int min, int max, String skipSet)
-{
-Element elem = new;
-    elem.kind       = kind;
-    elem.minimum    = min;
-    elem.maximum    = max;
-    if label        elem.label      = label;
-    if skipSet      elem.skipSet    = getSet(skipSet);
-    switch(kind) {
-        case kLit:      elem.litText = data;            break;
-        case kChr:      elem.chrChar = *data;           break;
-        case kSet:      elem.setRef  = getSet(data);    break;
-        case kRuleRef:  elem.ruleRef = getRule(data);   break;
-        case kKeyTable: cerr "addTest: kKeyTable not yet supported (getTable() not implemented)":; break;
-        case kAny:
-        case kEof:      break;      // no data needed
-        default:        cerr "addTest: unsupported kind " kind:; break;
-        }
-    if !currentAlt {
-        cerr "addTest: no currentAlt set":;
-        return; }
-    currentAlt.elements.add((void*)elem);
 }
 
 /*****************************************************************************

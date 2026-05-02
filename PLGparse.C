@@ -8,6 +8,7 @@
 #include "PLGset.h"
 #include "Stak.h"
 #include "BaseHash.h"
+#include "Element.h"
 #include "Buffer.h"
 #include "PLG.h"
 #include "PLGparse.h"
@@ -51,6 +52,7 @@ PLGparse::PLGparse()
 	doNotGuard = 0;
 	setsInitialized = 0;
 	skipping = 0;
+	currentAlt = 0;
 	rules = new BaseHash();
 	setTable = new BaseHash();
 	if ( !PLGitem::itemEmpty )
@@ -84,6 +86,7 @@ PLGparse::PLGparse(char *input)
 	doNotGuard = 0;
 	setsInitialized = 0;
 	skipping = 0;
+	currentAlt = 0;
 	buffer = ::bufferFactory1();
 	buffer->appendString(input);
 	cursor = buffer->start;
@@ -95,6 +98,55 @@ PLGparse::PLGparse(char *input)
 		PLGitem::itemEmpty = new PLGitem();
 		PLGitem::itemEmpty->itemLength = 0;
 		}
+}
+
+/*****************************************************************************
+	addTest builds an Element from the given parameters and appends it to
+	currentAlt. Used by setRules() to replace the verbose
+	"new Element(); elem->kind = ...; alt->addElement(elem);" pattern with
+	one call per element.
+*****************************************************************************/
+void PLGparse::addTest(int kind, char *data, char *label, int min, int max, char *skipSet)
+{
+Element 	*elem = new Element();
+	elem->kind = kind;
+	elem->minimum = min;
+	elem->maximum = max;
+	if ( label )
+		elem->label = label;
+	if ( skipSet )
+		elem->skipSet = getSet(skipSet);
+	switch (kind)
+		{
+		case 1:
+			elem->litText = data;
+			break;
+		case 2:
+			elem->chrChar = *data;
+			break;
+		case 3:
+			elem->setRef = getSet(data);
+			break;
+		case 6:
+			elem->ruleRef = getRule(data);
+			break;
+		case 7:
+			::fprintf(stderr,"addTest: kKeyTable not yet supported (getTable() not implemented)\n");
+			break;
+		case 4:
+		case 5:
+			break;
+			// no data needed
+		default:
+			::fprintf(stderr,"addTest: unsupported kind %d\n",kind);
+			break;
+		}
+	if ( !currentAlt )
+		{
+		::fprintf(stderr,"addTest: no currentAlt set\n");
+		return;
+		}
+	currentAlt->elements->add((void*)elem);
 }
 
 /*******************************************************************************

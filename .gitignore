@@ -19,7 +19,8 @@
 **/*.xcuserstate
 **/project.xcworkspace/xcuserdata/
 
-# Xcode — build output
+# Xcode — build output (xcodebuild dumps here under Revision/)
+/build/
 build/
 DerivedData/
 *.xcodeproj/project.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist

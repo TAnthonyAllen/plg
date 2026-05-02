@@ -1,12 +1,10 @@
-#ifndef PLGparse_h
-#define PLGparse_h
 class Buffer;
 class PLGrule;
 class PLGset;
 class Stak;
 class BaseHash;
-class PLGitem;
 class Alternative;
+class PLGitem;
 /*******************************************************************************
 	PLGparse defines the environment for a test version of plg and provides
     the code to run it
@@ -45,8 +43,10 @@ struct
 	unsigned int setsInitialized:1;
 	unsigned int skipping:1;
 	};
+Alternative *currentAlt;
 PLGparse();
 PLGparse(char *input);
+void addTest(int kind, char *data, char *label, int min, int max, char *skipSet);
 void divertInput(char *s);
 void generateRules(Buffer *output);
 PLGrule *getRule(char *name);
@@ -66,4 +66,3 @@ void skip();
 char *snapshot();
 };
 int main();
-#endif
