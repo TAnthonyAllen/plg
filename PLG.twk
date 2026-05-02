@@ -150,1083 +150,523 @@ numberSet    = getSet("numberSet","0-9");
 singleQuote  = getSet("singleQuote","'");
 
     currentRule = getRule("Integer");
-    alt = new Alternative();
-    elem = new;
-    elem.kind = 3; // kSet
-    elem.minimum = 0;
-    elem.maximum = 999999;
-    currentSet = getSet(" \f\r\t\n");
-    elem.setRef = currentSet;
-    alt.elements += elem;
-    elem = new;
-    elem.kind = 3; // kSet
-    elem.minimum = 1;
-    elem.maximum = 999999;
-    currentSet = getSet("0-9");
-    elem.setRef = currentSet;
-    alt.elements += elem;
-    currentRule.alternatives += alt;
+    currentAlt = new Alternative();
+    addTest(3, " \f\r\t\n", "", 0, 999999, "");
+    addTest(3, "0-9", "", 1, 999999, "");
+    currentRule.alternatives += currentAlt;
     currentRule = getRule("Max");
-    alt = new;
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 1; // kLit
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.litText = ",";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(1, ",", "", 1, 1, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.ruleRef = getRule("Integer");
-    elem.label = "maximum";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(6, "Integer", "maximum", 1, 1, "defaultSKIP");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("Name");
     currentSet = getSet("._a-zA-Z0-9");
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 3; // kSet
-    elem.minimum = 1;
-    elem.maximum = 999999;
-    elem.setRef = currentSet;
-    elem.label = "name";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(3, "._a-zA-Z0-9", "name", 1, 999999, "defaultSKIP");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("SetAssignment");
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 1; // kLit
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.litText = "=";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(1, "=", "", 1, 1, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.ruleRef = getRule("SetName");
-    elem.label = "set";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(6, "SetName", "set", 1, 1, "defaultSKIP");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("BalanceRight");
     //currentRule.defer = BalanceRightplgAct;
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 1; // kLit
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.litText = "<>";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(1, "<>", "", 1, 1, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.ruleRef = getRule("Element");
-    elem.label = "element";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(6, "Element", "element", 1, 1, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 0;
-    elem.maximum = 1;
-    elem.ruleRef = getRule("ElementType");
-    elem.label = "type";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(6, "ElementType", "type", 0, 1, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 1; // kLit
-    elem.minimum = 0;
-    elem.maximum = 1;
-    elem.litText = "&";
-    elem.label = "noSkip";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(1, "&", "noSkip", 0, 1, "defaultSKIP");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("Command");
     //currentRule.immediate = CommandplgNow;
     //currentRule.next = getRule("Command2");
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 1; // kLit
-    elem.minimum = 0;
-    elem.maximum = 1;
-    elem.litText = "re";
-    elem.label = "reset";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(1, "re", "reset", 0, 1, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 1; // kLit
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.litText = "setSKIP";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(1, "setSKIP", "", 1, 1, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 0;
-    elem.maximum = 1;
-    elem.ruleRef = getRule("SetAssignment");
-    elem.label = "set";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(6, "SetAssignment", "set", 0, 1, "defaultSKIP");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("Command2");
     //currentRule.immediate = Command2plgNow;
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 1; // kLit
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.litText = "dEBUG";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(1, "dEBUG", "", 1, 1, "defaultSKIP");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("FileName");
     //currentRule.immediate = FileNameplgNow;
     currentSet = getSet("A-Za-z0-9_");
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 1; // kLit
-    elem.minimum = 0;
-    elem.maximum = 1;
-    elem.litText = "/";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(1, "/", "", 0, 1, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 0;
-    elem.maximum = 999999;
-    elem.ruleRef = getRule("FileNameBlock0");
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(6, "FileNameBlock0", "", 0, 999999, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 3; // kSet
-    elem.minimum = 1;
-    elem.maximum = 999999;
-    elem.setRef = currentSet;
-    elem.label = "name";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(3, "A-Za-z0-9_", "name", 1, 999999, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 1; // kLit
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.litText = ".g";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(1, ".g", "", 1, 1, "defaultSKIP");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("SetVariable6");
     //currentRule.immediate = SetVariable6plgNow;
     currentSet = excludeSet;
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 1; // kLit
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.litText = "Debug";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(1, "Debug", "", 1, 1, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 3; // kSet
-    elem.minimum = -1;
-    elem.maximum = 1;
-    elem.setRef = currentSet;
-    alt.elements += elem;
+    addTest(3, "A-Za-z0-9_", "", -1, 1, "");
     
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 0;
-    elem.maximum = 999999;
-    elem.ruleRef = getRule("DebugRule");
-    elem.label = "rulename";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(6, "DebugRule", "rulename", 0, 999999, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 1; // kLit
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.litText = ";";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(1, ";", "", 1, 1, "defaultSKIP");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("Header");
     //currentRule.immediate = HeaderplgNow;
     currentRule.doNotGuard = true;
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 1; // kLit
-    elem.minimum = 0;
-    elem.maximum = 1;
-    elem.litText = "%%";
-    elem.label = "head";
-    alt.elements += elem;
+    addTest(1, "%%", "head", 0, 1, "");
     
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 0;
-    elem.maximum = 1;
-    elem.ruleRef = getRule("Extender");
-    elem.label = "name";
-    elem.skipSet = getSet("defaultSKIP");
-    // currentTest.skipOverMatch = true;
-    // currentTest.processUpTo = true;
-    alt.elements += elem;
+    addTest(6, "Extender", "name", 0, 1, "defaultSKIP");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("ActionEnd");
     currentSet = getSet(".|;");
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 1; // kLit
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.litText = "\n";
-    alt.elements += elem;
+    addTest(1, "\n", "", 1, 1, "");
     
     
-    elem = new;
-    elem.kind = 3; // kSet
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.setRef = currentSet;
-    alt.elements += elem;
+    addTest(3, ".|;", "", 1, 1, "");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("SetName");
     //currentRule.immediate = SetNameplgNow;
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.ruleRef = getRule("Name");
-    elem.label = "set";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(6, "Name", "set", 1, 1, "defaultSKIP");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("Tail");
     //currentRule.immediate = TailplgNow;
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 1; // kLit
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.litText = "%%";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(1, "%%", "", 1, 1, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 4; // kAny
-    elem.minimum = 1;
-    elem.maximum = 999999;
-    elem.label = "code";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(4, "", "code", 1, 999999, "defaultSKIP");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("Alpha");
     currentSet = getSet("a-zA-Z0-9_.");
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 3; // kSet
-    elem.minimum = 1;
-    elem.maximum = 999999;
-    elem.setRef = currentSet;
-    alt.elements += elem;
+    addTest(3, "a-zA-Z0-9_.", "", 1, 999999, "");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("TrailingSpace");
     currentSet = getSet("t");
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 3; // kSet
-    elem.minimum = 0;
-    elem.maximum = 999999;
-    elem.setRef = currentSet;
-    alt.elements += elem;
+    addTest(3, "t", "", 0, 999999, "");
     
     
-    elem = new;
-    elem.kind = 1; // kLit
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.litText = "\n";
-    alt.elements += elem;
+    addTest(1, "\n", "", 1, 1, "");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("CommentPart");
     //currentRule.next = getRule("CommentPart2");
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.ruleRef = getRule("CommentPartBalancE");
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(6, "CommentPartBalancE", "", 1, 1, "defaultSKIP");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("Body7");
     //currentRule.immediate = Body7plgNow;
     currentRule.doNotGuard = true;
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 1; // kLit
-    elem.minimum = 0;
-    elem.maximum = 1;
-    elem.litText = "\n";
-    elem.label = "error";
-    alt.elements += elem;
+    addTest(1, "\n", "error", 0, 1, "");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("CommentPartBalancE");
     //currentRule.immediate = balancE;
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 1; // kLit
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.litText = "/*";
-    elem.label = "start";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(1, "/*", "start", 1, 1, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 0;
-    elem.maximum = 999999;
-    elem.ruleRef = getRule("CommentPartBoDY");
-    elem.label = "body";
-    elem.skipSet = getSet("defaultSKIP");
-    // currentTest.leftBalance = true;
-    alt.elements += elem;
+    addTest(6, "CommentPartBoDY", "body", 0, 999999, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 1; // kLit
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.litText = "*/";
-    elem.label = "finish";
-    alt.elements += elem;
+    addTest(1, "*/", "finish", 1, 1, "");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("DebugTextBalancE");
     //currentRule.immediate = balancE;
     currentSet = singleQuote;
     currentSet = singleQuote;
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 3; // kSet
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.setRef = currentSet;
-    elem.label = "start";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(3, "t", "start", 1, 1, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 0;
-    elem.maximum = 999999;
-    elem.ruleRef = getRule("DebugTextBoDY");
-    elem.label = "body";
-    elem.skipSet = getSet("defaultSKIP");
-    // currentTest.leftBalance = true;
-    alt.elements += elem;
+    addTest(6, "DebugTextBoDY", "body", 0, 999999, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 3; // kSet
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.setRef = currentSet;
-    elem.label = "finish";
-    alt.elements += elem;
+    addTest(3, "t", "finish", 1, 1, "");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("CommentPartBoDY");
     //currentRule.immediate = balancEbody;
     //currentRule.next = getRule("CommentPartAny");
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 1; // kLit
-    elem.minimum = 0;
-    elem.maximum = 1;
-    elem.litText = "/*";
-    elem.label = "begin";
-    alt.elements += elem;
+    addTest(1, "/*", "begin", 0, 1, "");
     
     
-    elem = new;
-    elem.kind = 1; // kLit
-    elem.minimum = 0;
-    elem.maximum = 1;
-    elem.litText = "*/";
-    elem.label = "end";
-    alt.elements += elem;
+    addTest(1, "*/", "end", 0, 1, "");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("SetVariable4");
     //currentRule.immediate = SetVariable4plgNow;
     currentSet = excludeSet;
     //currentRule.next = getRule("SetVariable5");
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 1; // kLit
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.litText = "Set";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(1, "Set", "", 1, 1, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 3; // kSet
-    elem.minimum = -1;
-    elem.maximum = 1;
-    elem.setRef = currentSet;
-    alt.elements += elem;
+    addTest(3, "t", "", -1, 1, "");
     
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.ruleRef = getRule("Name");
-    elem.label = "name";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(6, "Name", "name", 1, 1, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 0;
-    elem.maximum = 1;
-    elem.ruleRef = getRule("StringSet");
-    elem.label = "set";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(6, "StringSet", "set", 0, 1, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 1; // kLit
-    elem.minimum = 0;
-    elem.maximum = 1;
-    elem.litText = ";";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(1, ";", "", 0, 1, "defaultSKIP");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("CommentPartAny");
     //currentRule.immediate = balancEbail;
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 4; // kAny
-    elem.minimum = 1;
-    elem.maximum = 1;
-    alt.elements += elem;
+    addTest(4, "", "", 1, 1, "");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("QuotedStringBlock1Block2");
     currentSet = getSet("'");
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.ruleRef = getRule("QuotedStringBlock1Block3");
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(6, "QuotedStringBlock1Block3", "", 1, 1, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 3; // kSet
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.setRef = currentSet;
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(3, "'", "", 1, 1, "defaultSKIP");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("CommentPart2");
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 1; // kLit
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.litText = "//";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(1, "//", "", 1, 1, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 1; // kLit
-    elem.minimum = 0;
-    elem.maximum = 1;
-    elem.litText = "\n";
-    alt.elements += elem;
+    addTest(1, "\n", "", 0, 1, "");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("DebugText2");
     currentSet = getSet("a-zA-Z0-9");
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 3; // kSet
-    elem.minimum = 1;
-    elem.maximum = 999999;
-    elem.setRef = currentSet;
-    elem.label = "text";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(3, "a-zA-Z0-9", "text", 1, 999999, "defaultSKIP");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("Comment");
     currentSet = getSet("/");
     currentRule.guardSet = currentSet;
     //currentRule.next = getRule("Comment2");
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.ruleRef = getRule("CommentPart");
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(6, "CommentPart", "", 1, 1, "defaultSKIP");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("Balanced");
     //currentRule.defer = BalancedplgAct;
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.ruleRef = getRule("Element");
-    elem.label = "left";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(6, "Element", "left", 1, 1, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 0;
-    elem.maximum = 1;
-    elem.ruleRef = getRule("ElementType");
-    elem.label = "type";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(6, "ElementType", "type", 0, 1, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 1; // kLit
-    elem.minimum = 0;
-    elem.maximum = 1;
-    elem.litText = "&";
-    elem.label = "noSkip";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(1, "&", "noSkip", 0, 1, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 0;
-    elem.maximum = 1;
-    elem.ruleRef = getRule("BalanceRight");
-    elem.label = "right";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(6, "BalanceRight", "right", 0, 1, "defaultSKIP");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("Comment2");
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.ruleRef = getRule("Command");
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(6, "Command", "", 1, 1, "defaultSKIP");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("Extender");
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 1; // kLit
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.litText = "eXTENDS";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(1, "eXTENDS", "", 1, 1, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.ruleRef = getRule("Name");
-    elem.label = "name";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(6, "Name", "name", 1, 1, "defaultSKIP");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("OptionClause");
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 1; // kLit
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.litText = "|";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(1, "|", "", 1, 1, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.ruleRef = getRule("RuleOption");
-    elem.label = "dummy";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(6, "RuleOption", "dummy", 1, 1, "defaultSKIP");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("FileNameBlock0");
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.ruleRef = getRule("Alpha");
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(6, "Alpha", "", 1, 1, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 1; // kLit
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.litText = "/";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(1, "/", "", 1, 1, "defaultSKIP");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("Integer");
     currentSet = getSet("n");
     currentSet = getSet("0-9");
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 3; // kSet
-    elem.minimum = 0;
-    elem.maximum = 999999;
-    elem.setRef = currentSet;
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(3, "0-9", "", 0, 999999, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 3; // kSet
-    elem.minimum = 1;
-    elem.maximum = 999999;
-    elem.setRef = currentSet;
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(3, "0-9", "", 1, 999999, "defaultSKIP");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("DebugRule");
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.ruleRef = getRule("Name");
-    elem.label = "name";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(6, "Name", "name", 1, 1, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 0;
-    elem.maximum = 1;
-    elem.ruleRef = getRule("DebugOption");
-    elem.label = "option";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(6, "DebugOption", "option", 0, 1, "defaultSKIP");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("Body6");
     //currentRule.next = getRule("Body7");
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.ruleRef = getRule("ActionRule");
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(6, "ActionRule", "", 1, 1, "defaultSKIP");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("Label");
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.ruleRef = getRule("Name");
-    elem.label = "atLabel";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(6, "Name", "atLabel", 1, 1, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 1; // kLit
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.litText = "=";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(1, "=", "", 1, 1, "defaultSKIP");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("QuotedString");
     currentSet = singleQuote;
     currentSet = singleQuote;
     //currentRule.next = getRule("QuotedString2");
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 3; // kSet
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.setRef = currentSet;
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(3, "0-9", "", 1, 1, "defaultSKIP");
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.ruleRef = getRule("QuotedStringBlock1");
-    elem.label = "text";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(6, "QuotedStringBlock1", "text", 1, 1, "defaultSKIP");
     
-    elem = new;
-    elem.kind = 3; // kSet
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.setRef = currentSet;
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(3, "0-9", "", 1, 1, "defaultSKIP");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("QuotedStringBlock1");
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 1;
-    elem.maximum = 999999;
-    elem.ruleRef = getRule("QuotedStringBlock1Block2");
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(6, "QuotedStringBlock1Block2", "", 1, 999999, "defaultSKIP");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("QuotedStringBlock1Block3");
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 1; // kLit
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.litText = "\\";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(1, "\\", "", 1, 1, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 4; // kAny
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(4, "", "", 1, 1, "defaultSKIP");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("QuotedString2");
     currentSet = getSet(".$");
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 3; // kSet
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.setRef = currentSet;
-    elem.label = "text";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(3, ".$", "text", 1, 1, "defaultSKIP");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("Word");
     currentSet = getSet("n;");
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 3; // kSet
-    elem.minimum = 1;
-    elem.maximum = 999999;
-    elem.setRef = currentSet;
-    elem.label = "what";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(3, "n;", "what", 1, 999999, "defaultSKIP");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("ActionOption");
     //currentRule.defer = ActionOptionplgAct;
     //currentRule.next = getRule("ActionOption2");
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 1; // kLit
-    elem.minimum = 1;
-    elem.maximum = 999999;
-    elem.litText = "|";
-    elem.label = "option";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(1, "|", "option", 1, 999999, "defaultSKIP");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("ActionOption2");
     //currentRule.defer = ActionOption2plgAct;
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 1; // kLit
-    elem.minimum = 0;
-    elem.maximum = 1;
-    elem.litText = ".";
-    elem.label = "immediate";
-    alt.elements += elem;
+    addTest(1, ".", "immediate", 0, 1, "");
     
     
-    elem = new;
-    elem.kind = 1; // kLit
-    elem.minimum = -1;
-    elem.maximum = 1;
-    elem.litText = ";";
-    alt.elements += elem;
+    addTest(1, ";", "", -1, 1, "");
     
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.ruleRef = getRule("ActionBody");
-    elem.label = "action";
-    alt.elements += elem;
+    addTest(6, "ActionBody", "action", 1, 1, "");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("ActionRule");
     //currentRule.immediate = ActionRuleplgNow;
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.ruleRef = getRule("Name");
-    elem.label = "ruleName";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(6, "Name", "ruleName", 1, 1, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 1; // kLit
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.litText = "!";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(1, "!", "", 1, 1, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 1;
-    elem.maximum = 999999;
-    elem.ruleRef = getRule("ActionOption");
-    elem.label = "list";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(6, "ActionOption", "list", 1, 999999, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 1; // kLit
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.litText = ";";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(1, ";", "", 1, 1, "defaultSKIP");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("Alternative2");
     //currentRule.defer = Alternative2plgAct;
@@ -1234,491 +674,245 @@ singleQuote  = getSet("singleQuote","'");
     currentRule.guardSet = currentSet;
     //currentRule.next = getRule("Alternative3");
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 0;
-    elem.maximum = 1;
-    elem.ruleRef = getRule("Guard");
-    elem.label = "guard";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(6, "Guard", "guard", 0, 1, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 0;
-    elem.maximum = 1;
-    elem.ruleRef = getRule("Label");
-    elem.label = "atLabel";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(6, "Label", "atLabel", 0, 1, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.ruleRef = getRule("Alternative2Block5");
-    elem.label = "atElement";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(6, "Alternative2Block5", "atElement", 1, 1, "defaultSKIP");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("ActionBody");
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = -1;
-    elem.maximum = 1;
-    elem.ruleRef = getRule("ActionEnd");
-    alt.elements += elem;
+    addTest(6, "ActionEnd", "", -1, 1, "");
     
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 0;
-    elem.maximum = 1;
-    elem.ruleRef = getRule("ActionEnd");
-    elem.label = "body";
-    alt.elements += elem;
+    addTest(6, "ActionEnd", "body", 0, 1, "");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("Alternative");
     //currentRule.defer = AlternativeplgAct;
     //currentRule.next = getRule("Alternative2");
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 1; // kLit
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.litText = "FAIL";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(1, "FAIL", "", 1, 1, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.ruleRef = getRule("AlternativeBlock4");
-    elem.label = "exception";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(6, "AlternativeBlock4", "exception", 1, 1, "defaultSKIP");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("Block");
     //currentRule.defer = BlockplgAct;
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 1; // kLit
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.litText = "(";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(1, "(", "", 1, 1, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 1;
-    elem.maximum = 999999;
-    elem.ruleRef = getRule("Alternative");
-    elem.label = "atAlternative";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(6, "Alternative", "atAlternative", 1, 999999, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 0;
-    elem.maximum = 999999;
-    elem.ruleRef = getRule("Clause");
-    elem.label = "clause";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(6, "Clause", "clause", 0, 999999, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 1; // kLit
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.litText = ")";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(1, ")", "", 1, 1, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 0;
-    elem.maximum = 1;
-    elem.ruleRef = getRule("ElementType");
-    elem.label = "type";
-    elem.skipSet = getSet("defaultSKIP");
-    // currentTest.errorMessage = "Missing right parenthesis";
-    alt.elements += elem;
+    addTest(6, "ElementType", "type", 0, 1, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 1; // kLit
-    elem.minimum = 0;
-    elem.maximum = 1;
-    elem.litText = "&";
-    elem.label = "noSkip";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(1, "&", "noSkip", 0, 1, "defaultSKIP");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("Clause");
     //currentRule.defer = ClauseplgAct;
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 1; // kLit
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.litText = "|";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(1, "|", "", 1, 1, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 1;
-    elem.maximum = 999999;
-    elem.ruleRef = getRule("Alternative");
-    elem.label = "atAlternative";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(6, "Alternative", "atAlternative", 1, 999999, "defaultSKIP");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("Element");
     //currentRule.immediate = ElementplgNow;
     //currentRule.defer = ElementplgAct;
     //currentRule.next = getRule("Element2");
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = -1;
-    elem.maximum = 1;
-    elem.ruleRef = getRule("Command");
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(6, "Command", "", -1, 1, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.ruleRef = getRule("Name");
-    elem.label = "atElement";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(6, "Name", "atElement", 1, 1, "defaultSKIP");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("Element2");
     //currentRule.defer = Element2plgAct;
     //currentRule.next = getRule("Element3");
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.ruleRef = getRule("QuotedString");
-    elem.label = "atElement";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(6, "QuotedString", "atElement", 1, 1, "defaultSKIP");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("Body2");
     //currentRule.next = getRule("Body3");
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.ruleRef = getRule("SetVariable");
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(6, "SetVariable", "", 1, 1, "defaultSKIP");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("Element3");
     //currentRule.defer = Element3plgAct;
     //currentRule.next = getRule("Element4");
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.ruleRef = getRule("StringSet");
-    elem.label = "atElement";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(6, "StringSet", "atElement", 1, 1, "defaultSKIP");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("Body3");
     //currentRule.next = getRule("Body4");
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.ruleRef = getRule("Include");
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(6, "Include", "", 1, 1, "defaultSKIP");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("Element4");
     //currentRule.defer = Element4plgAct;
     currentSet = getSet(".$");
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 1; // kLit
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.litText = "~";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(1, "~", "", 1, 1, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 3; // kSet
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.setRef = currentSet;
-    elem.label = "atElement";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(3, ".$", "atElement", 1, 1, "defaultSKIP");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("Body4");
     //currentRule.next = getRule("Body5");
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.ruleRef = getRule("Tail");
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(6, "Tail", "", 1, 1, "defaultSKIP");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("ElementType");
     //currentRule.defer = ElementTypeplgAct;
     //currentRule.next = getRule("ElementType2");
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 1; // kLit
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.litText = "";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(1, "", "", 1, 1, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.ruleRef = getRule("Integer");
-    elem.label = "minimum";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(6, "Integer", "minimum", 1, 1, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 0;
-    elem.maximum = 1;
-    elem.ruleRef = getRule("Max");
-    elem.label = "maximum";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(6, "Max", "maximum", 0, 1, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 1; // kLit
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.litText = "";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(1, "", "", 1, 1, "defaultSKIP");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("ElementType2");
     //currentRule.defer = ElementType2plgAct;
     currentSet = getSet("*+?!%");
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 3; // kSet
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.setRef = currentSet;
-    elem.label = "option";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(3, "*+?!%", "option", 1, 1, "defaultSKIP");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("ForwardReference");
     //currentRule.immediate = ForwardReferenceplgNow;
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.ruleRef = getRule("Name");
-    elem.label = "name";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(6, "Name", "name", 1, 1, "defaultSKIP");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("Guard");
     //currentRule.defer = GuardplgAct;
     //currentRule.next = getRule("Guard2");
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 1; // kLit
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.litText = "#";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(1, "#", "", 1, 1, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.ruleRef = getRule("StringSet");
-    elem.label = "set";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(6, "StringSet", "set", 1, 1, "defaultSKIP");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("Guard2");
     //currentRule.defer = Guard2plgAct;
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 1; // kLit
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.litText = "#doNotGuard";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(1, "#doNotGuard", "", 1, 1, "defaultSKIP");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("Include");
     //currentRule.immediate = IncludeplgNow;
     //currentRule.next = getRule("Include2");
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 1; // kLit
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.litText = "include(";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(1, "include(", "", 1, 1, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 1; // kLit
-    elem.minimum = 0;
-    elem.maximum = 1;
-    elem.litText = ")";
-    elem.label = "file";
-    alt.elements += elem;
+    addTest(1, ")", "file", 0, 1, "");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("ParseInclude");
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 1;
-    elem.maximum = 999999;
-    elem.ruleRef = getRule("Body");
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(6, "Body", "", 1, 999999, "defaultSKIP");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("Include2");
     //currentRule.immediate = Include2plgNow;
     //currentRule.next = getRule("Include3");
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 1; // kLit
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.litText = "insert(";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(1, "insert(", "", 1, 1, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 1; // kLit
-    elem.minimum = 0;
-    elem.maximum = 1;
-    elem.litText = ")";
-    elem.label = "file";
-    alt.elements += elem;
+    addTest(1, ")", "file", 0, 1, "");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("DebugTextBoDY");
     //currentRule.immediate = balancEbody;
@@ -1726,580 +920,284 @@ singleQuote  = getSet("singleQuote","'");
     currentSet = singleQuote;
     //currentRule.next = getRule("DebugTextAny");
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 3; // kSet
-    elem.minimum = 0;
-    elem.maximum = 1;
-    elem.setRef = currentSet;
-    elem.label = "begin";
-    alt.elements += elem;
+    addTest(3, "*+?!%", "begin", 0, 1, "");
     
     
-    elem = new;
-    elem.kind = 3; // kSet
-    elem.minimum = 0;
-    elem.maximum = 1;
-    elem.setRef = currentSet;
-    elem.label = "end";
-    alt.elements += elem;
+    addTest(3, "*+?!%", "end", 0, 1, "");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("Include3");
     //currentRule.immediate = Include3plgNow;
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 1; // kLit
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.litText = "-%";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(1, "-%", "", 1, 1, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 1; // kLit
-    elem.minimum = 0;
-    elem.maximum = 1;
-    elem.litText = "%-";
-    elem.label = "code";
-    alt.elements += elem;
+    addTest(1, "%-", "code", 0, 1, "");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("Rule");
     //currentRule.immediate = RuleplgNow;
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.ruleRef = getRule("Name");
-    elem.label = "ruleName";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(6, "Name", "ruleName", 1, 1, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 1; // kLit
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.litText = ":";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(1, ":", "", 1, 1, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.ruleRef = getRule("RuleOptions");
-    elem.label = "options";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(6, "RuleOptions", "options", 1, 1, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 1; // kLit
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.litText = ";";
-    elem.skipSet = getSet("defaultSKIP");
-    // currentTest.errorMessage = "Rule specification failed";
-    alt.elements += elem;
+    addTest(1, ";", "", 1, 1, "defaultSKIP");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("RuleOption");
     //currentRule.defer = RuleOptionplgAct;
     currentRule.doNotGuard = true;
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 1;
-    elem.maximum = 999999;
-    elem.ruleRef = getRule("Alternative");
-    elem.label = "atAlternative";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(6, "Alternative", "atAlternative", 1, 999999, "defaultSKIP");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("RuleOptions");
     //currentRule.defer = RuleOptionsplgAct;
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.ruleRef = getRule("RuleOption");
-    elem.label = "first";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(6, "RuleOption", "first", 1, 1, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 0;
-    elem.maximum = 999999;
-    elem.ruleRef = getRule("OptionClause");
-    elem.label = "others";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(6, "OptionClause", "others", 0, 999999, "defaultSKIP");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("SetVariable");
     //currentRule.immediate = SetVariableplgNow;
     currentSet = excludeSet;
     //currentRule.next = getRule("SetVariable2");
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 1; // kLit
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.litText = "Variable";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(1, "Variable", "", 1, 1, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 3; // kSet
-    elem.minimum = -1;
-    elem.maximum = 1;
-    elem.setRef = currentSet;
-    alt.elements += elem;
+    addTest(3, "*+?!%", "", -1, 1, "");
     
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 1;
-    elem.maximum = 999999;
-    elem.ruleRef = getRule("Name");
-    elem.label = "variable";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(6, "Name", "variable", 1, 999999, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 1; // kLit
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.litText = ";";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(1, ";", "", 1, 1, "defaultSKIP");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("SetVariable3");
     //currentRule.immediate = SetVariable3plgNow;
     currentSet = excludeSet;
     //currentRule.next = getRule("SetVariable4");
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 1; // kLit
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.litText = "KeyWord";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(1, "KeyWord", "", 1, 1, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 3; // kSet
-    elem.minimum = -1;
-    elem.maximum = 1;
-    elem.setRef = currentSet;
-    alt.elements += elem;
+    addTest(3, "*+?!%", "", -1, 1, "");
     
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.ruleRef = getRule("Name");
-    elem.label = "name";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(6, "Name", "name", 1, 1, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 0;
-    elem.maximum = 999999;
-    elem.ruleRef = getRule("Word");
-    elem.label = "list";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(6, "Word", "list", 0, 999999, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 1; // kLit
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.litText = ";";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(1, ";", "", 1, 1, "defaultSKIP");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("SetVariable5");
     //currentRule.immediate = SetVariable5plgNow;
     currentSet = excludeSet;
     //currentRule.next = getRule("SetVariable6");
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 1; // kLit
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.litText = "Condition";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(1, "Condition", "", 1, 1, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 3; // kSet
-    elem.minimum = -1;
-    elem.maximum = 1;
-    elem.setRef = currentSet;
-    alt.elements += elem;
+    addTest(3, "*+?!%", "", -1, 1, "");
     
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 1;
-    elem.maximum = 999999;
-    elem.ruleRef = getRule("Name");
-    elem.label = "condishun";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(6, "Name", "condishun", 1, 999999, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 1; // kLit
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.litText = ";";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(1, ";", "", 1, 1, "defaultSKIP");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("Start");
     //currentRule.immediate = StartplgNow;
     //currentRule.next = getRule("Start2");
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 0;
-    elem.maximum = 1;
-    elem.ruleRef = getRule("Header");
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(6, "Header", "", 0, 1, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 1;
-    elem.maximum = 999999;
-    elem.ruleRef = getRule("Body");
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(6, "Body", "", 1, 999999, "defaultSKIP");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("StringSet");
     //currentRule.defer = StringSetplgAct;
     //currentRule.next = getRule("StringSet2");
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 1; // kLit
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.litText = "[";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(1, "[", "", 1, 1, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 1; // kLit
-    elem.minimum = 0;
-    elem.maximum = 1;
-    elem.litText = "]";
-    elem.label = "text";
-    alt.elements += elem;
+    addTest(1, "]", "text", 0, 1, "");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("StringSet2");
     //currentRule.immediate = StringSet2plgNow;
     //currentRule.defer = StringSet2plgAct;
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.ruleRef = getRule("Name");
-    elem.label = "name";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(6, "Name", "name", 1, 1, "defaultSKIP");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("AlternativeBlock4");
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.ruleRef = getRule("Name");
-    elem.label = "exception";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(6, "Name", "exception", 1, 1, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.ruleRef = getRule("QuotedString");
-    elem.label = "exception";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(6, "QuotedString", "exception", 1, 1, "defaultSKIP");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("Alternative2Block5");
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.ruleRef = getRule("Balanced");
-    elem.label = "atElement";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(6, "Balanced", "atElement", 1, 1, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.ruleRef = getRule("Block");
-    elem.label = "atElement";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(6, "Block", "atElement", 1, 1, "defaultSKIP");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("Alternative3");
     currentSet = commentSet;
     currentRule.guardSet = currentSet;
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.ruleRef = getRule("Comment");
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(6, "Comment", "", 1, 1, "defaultSKIP");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("Body");
     currentSet = commentSet;
     currentRule.guardSet = currentSet;
     //currentRule.next = getRule("Body2");
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.ruleRef = getRule("Comment");
-    elem.label = "comment";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(6, "Comment", "comment", 1, 1, "defaultSKIP");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("Body5");
     //currentRule.next = getRule("Body6");
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.ruleRef = getRule("Rule");
-    elem.label = "atRule";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(6, "Rule", "atRule", 1, 1, "defaultSKIP");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("DebugText");
     //currentRule.next = getRule("DebugText2");
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.ruleRef = getRule("DebugTextBalancE");
-    elem.label = "text";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(6, "DebugTextBalancE", "text", 1, 1, "defaultSKIP");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("DebugTextAny");
     //currentRule.immediate = balancEbail;
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 4; // kAny
-    elem.minimum = 1;
-    elem.maximum = 1;
-    alt.elements += elem;
+    addTest(4, "", "", 1, 1, "");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("DebugOption");
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 1; // kLit
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.litText = "=";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(1, "=", "", 1, 1, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.ruleRef = getRule("DebugText");
-    elem.label = "option";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(6, "DebugText", "option", 1, 1, "defaultSKIP");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("SetVariable2");
     currentSet = excludeSet;
     //currentRule.next = getRule("SetVariable3");
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 1; // kLit
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.litText = "Rules";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(1, "Rules", "", 1, 1, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 3; // kSet
-    elem.minimum = -1;
-    elem.maximum = 1;
-    elem.setRef = currentSet;
-    alt.elements += elem;
+    addTest(3, "*+?!%", "", -1, 1, "");
     
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 1;
-    elem.maximum = 999999;
-    elem.ruleRef = getRule("ForwardReference");
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(6, "ForwardReference", "", 1, 999999, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 1; // kLit
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.litText = ";";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(1, ";", "", 1, 1, "defaultSKIP");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("Start2");
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 6; // kRuleRef
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.ruleRef = getRule("Start2Block6");
-    elem.label = "error";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(6, "Start2Block6", "error", 1, 1, "defaultSKIP");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
     
     currentRule = getRule("Start2Block6");
     currentSet = getSet("\n");
     
-    alt = new Alternative();
+    currentAlt = new Alternative();
     
-    elem = new;
-    elem.kind = 3; // kSet
-    elem.minimum = 1;
-    elem.maximum = 999999;
-    elem.setRef = currentSet;
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(3, "\n", "", 1, 999999, "defaultSKIP");
     
     
-    elem = new;
-    elem.kind = 1; // kLit
-    elem.minimum = 1;
-    elem.maximum = 1;
-    elem.litText = "\n";
-    elem.skipSet = getSet("defaultSKIP");
-    alt.elements += elem;
+    addTest(1, "\n", "", 1, 1, "defaultSKIP");
     
-    currentRule.alternatives += alt;
+    currentRule.alternatives += currentAlt;
 }
 }
