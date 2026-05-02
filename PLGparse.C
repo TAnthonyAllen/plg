@@ -14,6 +14,25 @@
 #include "PLGparse.h"
 
 /*******************************************************************************
+	foundIn — free function (was PLGset::foundIn(PLGitem) before PLGset
+	moved into the support library, where PLGitem is unreachable).
+	Returns true iff any character of `item`'s text is in `set`.
+*******************************************************************************/
+int foundIn(PLGset *set, PLGitem *item)
+{
+	if ( item && set )
+		{
+		int 	i = 0;
+		char 	*atText = item->itemStart;
+		if ( atText && !set->isEmpty() )
+			for ( i = item->itemLength; i > 0; i--, atText++ )
+				if ( set->contains(*atText) )
+					return 1;
+		}
+	return 0;
+}
+
+/*******************************************************************************
 	Main
 *******************************************************************************/
 int main()

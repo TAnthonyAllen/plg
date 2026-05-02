@@ -251,7 +251,6 @@ static unsigned long    *mapper;
     int			contains(char c);
     int         contains(String s);
 	int			foundIn(String s);
-	int			foundIn(PLGitem i);
 	void		generate(Buffer b);
 	int			isEmpty();
 	int			length();
@@ -271,4 +270,9 @@ static unsigned long    *mapper;
 	overload
 		+=		set
 		;
+}
+
+external PLGparse.h
+{
+    extern int foundIn(PLGset s, PLGitem i);
 }

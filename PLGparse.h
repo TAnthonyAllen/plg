@@ -65,4 +65,5 @@ void setSkip();
 void skip();
 char *snapshot();
 };
+int foundIn(PLGset *set, PLGitem *item);
 int main();

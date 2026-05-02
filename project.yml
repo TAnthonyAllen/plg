@@ -18,79 +18,46 @@ settings:
     CLANG_CXX_LIBRARY: "libc++"
     GCC_C_LANGUAGE_STANDARD: "gnu11"
 
-# Three navigator groups: Sources / Headers / TAWK
-# Each path entry sits one level under one of those groups.
-# `name:` overrides the auto-name from the path basename where needed.
+# Pull in the support project so we can depend on (and link against) its
+# static library target.
+projectReferences:
+  Support:
+    path: ../../../support/support.xcodeproj
+
 targets:
   plg:
     type: tool
     platform: macOS
     sources:
-      # ── Sources (.C) ─────────────────────────────────────────────────
+      # ── Sources (.C) — plg's own files only ──────────────────────────
       - path: .
         name: plg
         group: Sources
         buildPhase: sources
         includes: ["*.C"]
-      - path: ../../../support/Frame
-        group: Sources
-        buildPhase: sources
-        includes: ["*.C"]
-        excludes: ["BeforeRefactor"]
-      - path: ../../../support/Maps
-        group: Sources
-        buildPhase: sources
-        includes: ["*.C"]
-      - path: ../../../support/KeyTable
-        group: Sources
-        buildPhase: sources
-        includes: ["*.C"]
 
-      # ── Headers (.h) ─────────────────────────────────────────────────
+      # ── Headers (.h) — plg's own files only ─────────────────────────
       - path: .
         name: plg
         group: Headers
         buildPhase: none
         includes: ["*.h"]
-      - path: ../../../support/Frame
-        group: Headers
-        buildPhase: none
-        includes: ["*.h"]
-        excludes: ["BeforeRefactor"]
-      - path: ../../../support/Maps
-        group: Headers
-        buildPhase: none
-        includes: ["*.h"]
-      - path: ../../../support/KeyTable
-        group: Headers
-        buildPhase: none
-        includes: ["*.h"]
 
-      # ── TAWK source (.twk + PLGrevision) ─────────────────────────────
+      # ── TAWK source — plg's own files only ──────────────────────────
       - path: .
         name: plg
         group: TAWK
         buildPhase: none
         includes: ["*.twk", "PLGrevision"]
-      - path: ../../../support/Frame
-        group: TAWK
-        buildPhase: none
-        includes: ["*.twk"]
-        excludes: ["BeforeRefactor"]
-      - path: ../../../support/Maps
-        group: TAWK
-        buildPhase: none
-        includes: ["*.twk"]
-      - path: ../../../support/KeyTable
-        group: TAWK
-        buildPhase: none
-        includes: ["*.twk"]
+
+    # Build/link against support.a from the support project.
+    dependencies:
+      - target: Support/support
 
     settings:
       base:
         HEADER_SEARCH_PATHS:
           - "$(SRCROOT)"
-          - "$(SRCROOT)/.."
           - "$(SRCROOT)/../../../support/Frame"
           - "$(SRCROOT)/../../../support/Maps"
           - "$(SRCROOT)/../../../support/KeyTable"
