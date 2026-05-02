@@ -1,7 +1,6 @@
 name: plg
 options:
   bundleIdPrefix: com.taa.plg
-  createIntermediateGroups: true
   deploymentTarget:
     macOS: "12.0"
 
@@ -19,8 +18,9 @@ settings:
     CLANG_CXX_LIBRARY: "libc++"
     GCC_C_LANGUAGE_STANDARD: "gnu11"
 
-# Three navigator groups: Sources (.C), Headers (.h), TAWK (.twk).
-# Each preserves the dir-of-origin as a sub-group.
+# Three navigator groups: Sources / Headers / TAWK
+# Each path entry sits one level under one of those groups.
+# `name:` overrides the auto-name from the path basename where needed.
 targets:
   plg:
     type: tool
@@ -28,67 +28,61 @@ targets:
     sources:
       # ── Sources (.C) ─────────────────────────────────────────────────
       - path: .
-        group: Sources/plg
+        name: plg
+        group: Sources
         buildPhase: sources
         includes: ["*.C"]
-      - path: ../PLGset.C
-        group: Sources/plg
-        buildPhase: sources
       - path: ../../../support/Frame
-        group: Sources/Frame
+        group: Sources
         buildPhase: sources
         includes: ["*.C"]
         excludes: ["BeforeRefactor"]
       - path: ../../../support/Maps
-        group: Sources/Maps
+        group: Sources
         buildPhase: sources
         includes: ["*.C"]
       - path: ../../../support/KeyTable
-        group: Sources/KeyTable
+        group: Sources
         buildPhase: sources
         includes: ["*.C"]
 
       # ── Headers (.h) ─────────────────────────────────────────────────
       - path: .
-        group: Headers/plg
+        name: plg
+        group: Headers
         buildPhase: none
         includes: ["*.h"]
-      - path: ../PLGset.h
-        group: Headers/plg
-        buildPhase: none
       - path: ../../../support/Frame
-        group: Headers/Frame
+        group: Headers
         buildPhase: none
         includes: ["*.h"]
         excludes: ["BeforeRefactor"]
       - path: ../../../support/Maps
-        group: Headers/Maps
+        group: Headers
         buildPhase: none
         includes: ["*.h"]
       - path: ../../../support/KeyTable
-        group: Headers/KeyTable
+        group: Headers
         buildPhase: none
         includes: ["*.h"]
 
       # ── TAWK source (.twk + PLGrevision) ─────────────────────────────
       - path: .
-        group: TAWK/plg
+        name: plg
+        group: TAWK
         buildPhase: none
         includes: ["*.twk", "PLGrevision"]
-      - path: ../PLGset.twk
-        group: TAWK/plg
-        buildPhase: none
       - path: ../../../support/Frame
-        group: TAWK/Frame
+        group: TAWK
         buildPhase: none
         includes: ["*.twk"]
         excludes: ["BeforeRefactor"]
       - path: ../../../support/Maps
-        group: TAWK/Maps
+        group: TAWK
         buildPhase: none
         includes: ["*.twk"]
       - path: ../../../support/KeyTable
-        group: TAWK/KeyTable
+        group: TAWK
         buildPhase: none
         includes: ["*.twk"]
 
