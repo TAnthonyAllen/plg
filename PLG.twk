@@ -418,15 +418,15 @@ singleQuote  = getSet("singleQuote","'");
     currentRule.alternatives += currentAlt;
     
     currentRule = getRule("QuotedStringBlock1Block2");
-    currentSet = getSet("'");
-    
+    // Source had `currentSet = getSet("'"); saveTest.setAlternate(currentTest);`
+    // — alternation between escape-sequence and any-non-quote-char.
+    // Inlined as two alts; second uses negated set "^'" to mean "any char
+    // except '".
     currentAlt = new Alternative();
-    
     addTest(6, "QuotedStringBlock1Block3", "", 1, 1, "defaultSKIP");
-    
-    
-    addTest(3, "'", "", 1, 1, "defaultSKIP");
-    
+    currentRule.alternatives += currentAlt;
+    currentAlt = new Alternative();
+    addTest(3, "^'", "", 1, 1, "defaultSKIP");
     currentRule.alternatives += currentAlt;
     
     currentRule = getRule("Comment");
@@ -981,21 +981,17 @@ singleQuote  = getSet("singleQuote","'");
     currentRule.alternatives += currentAlt;
     
     currentRule = getRule("StringSet");
-    //currentRule.defer = StringSetplgAct;
-    //currentRule.next = getRule("StringSet2");
-    
+    // Source: defer = StringSetplgAct; original grammar had '[' then ']'
+    // with the action callback doing content matching imperatively. In
+    // grammar terms this is `[ (^])*  ]` — opener, any chars except
+    // closer, closer.
     currentAlt = new Alternative();
-    
     addTest(1, "[", "", 1, 1, "defaultSKIP");
-    
-    
-    addTest(1, "]", "text", 0, 1, "");
-    
+    addTest(3, "^]", "text", 0, 999999, "");
+    addTest(1, "]", "", 1, 1, "");
     currentRule.alternatives += currentAlt;
     currentAlt = new Alternative();
-    
     addTest(6, "Name", "name", 1, 1, "defaultSKIP");
-    
     currentRule.alternatives += currentAlt;
     
     // AlternativeBlock4 and Alternative2Block5 deleted — inlined into

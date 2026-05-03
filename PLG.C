@@ -296,10 +296,15 @@ void PLG::setRules()
 	parser->addTest(4,"","",1,1,"");
 	parser->currentRule->alternatives->add(parser->currentAlt);
 	parser->currentRule = parser->getRule("QuotedStringBlock1Block2");
-	parser->currentSet = parser->getSet("'");
+	// Source had `currentSet = getSet("'"); saveTest.setAlternate(currentTest);`
+	// — alternation between escape-sequence and any-non-quote-char.
+	// Inlined as two alts; second uses negated set "^'" to mean "any char
+	// except '".
 	parser->currentAlt = new Alternative();
 	parser->addTest(6,"QuotedStringBlock1Block3","",1,1,"defaultSKIP");
-	parser->addTest(3,"'","",1,1,"defaultSKIP");
+	parser->currentRule->alternatives->add(parser->currentAlt);
+	parser->currentAlt = new Alternative();
+	parser->addTest(3,"^'","",1,1,"defaultSKIP");
 	parser->currentRule->alternatives->add(parser->currentAlt);
 	parser->currentRule = parser->getRule("Comment");
 	parser->currentSet = parser->getSet("/");
@@ -590,11 +595,14 @@ void PLG::setRules()
 	parser->addTest(6,"Start2Block6","error",1,1,"defaultSKIP");
 	parser->currentRule->alternatives->add(parser->currentAlt);
 	parser->currentRule = parser->getRule("StringSet");
-	//currentRule.defer = StringSetplgAct;
-	//currentRule.next = getRule("StringSet2");
+	// Source: defer = StringSetplgAct; original grammar had '[' then ']'
+	// with the action callback doing content matching imperatively. In
+	// grammar terms this is `[ (^])*  ]` — opener, any chars except
+	// closer, closer.
 	parser->currentAlt = new Alternative();
 	parser->addTest(1,"[","",1,1,"defaultSKIP");
-	parser->addTest(1,"]","text",0,1,"");
+	parser->addTest(3,"^]","text",0,999999,"");
+	parser->addTest(1,"]","",1,1,"");
 	parser->currentRule->alternatives->add(parser->currentAlt);
 	parser->currentAlt = new Alternative();
 	parser->addTest(6,"Name","name",1,1,"defaultSKIP");
