@@ -212,8 +212,8 @@ String          name;
 DoubleLinkList  alternatives;
 PLGset          guardSet;
 PLGparse        parentParser;
-void		    &defer(PLGitem i);
-int			    &immediate(PLGitem i);
+void		    &defer(PLGparse state, PLGitem i);
+int			    &immediate(PLGparse state, PLGitem i);
 PLGitem		    deferAction,
                 failMethod,
                 immediateAction;

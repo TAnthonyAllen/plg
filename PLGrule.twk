@@ -11,8 +11,8 @@ String          name;
 DoubleLinkList  alternatives;
 PLGset          guardSet;
 PLGparse        parentParser;
-void		    &defer(PLGitem i);
-int			    &immediate(PLGitem i);
+void		    &defer(PLGparse state, PLGitem i);
+int			    &immediate(PLGparse state, PLGitem i);
 PLGitem		    deferAction,
                 failMethod,
                 immediateAction;
@@ -113,6 +113,7 @@ String      saved;
             if state.cursor > saved
                 {
                 cout "  " name " alt " altNum " SUCCEEDED -> offset " (state.cursor - state.buffer.start):;
+                if immediate  immediate(state, result);
                 return result;
                 }
             cout "  " name " alt " altNum " ZERO-ADVANCE — treating as fail":;

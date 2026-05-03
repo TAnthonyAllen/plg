@@ -15,6 +15,28 @@
 #include "PLG.h"
 
 /*******************************************************************************
+	RuleplgNow — immediate action fired when a Rule alternative matches in
+	Testing.g (or any .g file the parser is processing). Looks up the
+	"ruleName" capture, calls state.getRule() so a fresh rule entry is
+	created in parser.rules. Trimmed: skips options.runDeferred() — that
+	cascade requires runDeferred infrastructure not yet implemented.
+*******************************************************************************/
+int RuleplgNow(PLGparse *state, PLGitem *iTEM)
+{
+PLGitem 	*ruleName = 0;
+char 		*name = 0;
+	if ( !iTEM || !iTEM->children )
+		return 0;
+	ruleName = (PLGitem*)iTEM->children->get("ruleName");
+	if ( !ruleName )
+		return 0;
+	name = ruleName->toString();
+	::printf("RuleplgNow: matched rule '%s'\n",name);
+	state->currentRule = state->getRule(name);
+	return 1;
+}
+
+/*******************************************************************************
 	PLG constructors
 *******************************************************************************/
 PLG::PLG()
@@ -107,9 +129,10 @@ void PLG::init()
 }
 
 /*******************************************************************************
-	process — load a grammar file, run it through the parser starting at the
-	"Start" rule, then emit a .twk file (foo.g -> foo.twk) containing the
-	generated setRules().
+	process — load a grammar file, install fresh rule/set tables so action
+	callbacks can populate them during parse, run the parser starting at the
+	"Start" rule, dump what landed in the fresh tables, then emit a .twk
+	file via generateRules() (currently still using the meta-grammar tables).
 *******************************************************************************/
 void PLG::process(char *filename)
 {
@@ -118,6 +141,8 @@ PLGitem 	*result = 0;
 Buffer 		*twkOut = 0;
 char 		*outFile = 0;
 char 		*dot = 0;
+BaseHash 	*metaRules = 0;
+BaseHash 	*metaSetTable = 0;
 	setRules();
 	parser->initialize();
 	content = ::getStringFromFile(filename);
@@ -126,11 +151,36 @@ char 		*dot = 0;
 		::fprintf(stderr,"process: could not load %s\n",filename);
 		return;
 		}
+	// Two-table pattern: save meta-grammar (the rules that *parse* .g files),
+	// install fresh empty tables for action callbacks to populate during the
+	// parse of `content`. Restore meta-grammar after so generateRules emits
+	// the meta-grammar (until we wire up the rest of the callback chain).
+	// Grab the Start rule reference BEFORE swapping so we can parse via
+	// the direct rule pointer instead of a name-lookup against the fresh
+	// (empty) table.
+PLGrule 	*startRule = (PLGrule*)parser->rules->get("Start");
+	if ( !startRule )
+		{
+		::fprintf(stderr,"process: no Start rule in meta-grammar\n");
+		return;
+		}
+	metaRules = parser->rules;
+	metaSetTable = parser->setTable;
+	parser->rules = new BaseHash();
+	parser->setTable = new BaseHash();
 	parser->setInput(content);
-	result = parser->parse("Start");
+	result = parser->parse(startRule);
 	if ( result )
 		::printf("parsed %ld chars from %s\n",result->itemLength,filename);
 	else	::printf("parse failed on %s\n",filename);
+	::printf("=== fresh rules table after parse (callback-populated) ===\n");
+	parser->rules->listKeys();
+	::printf("=== fresh setTable after parse ===\n");
+	parser->setTable->listKeys();
+	::printf("=== end fresh tables ===\n");
+	// Restore meta-grammar tables for generateRules.
+	parser->rules = metaRules;
+	parser->setTable = metaSetTable;
 	// Build output path: foo.g -> foo.twk
 	outFile = (char*)::malloc(::strlen(filename) + 8);
 	::strcpy(outFile,filename);
@@ -523,7 +573,7 @@ void PLG::setRules()
 	parser->addTest(4,"","",1,1,"");
 	parser->currentRule->alternatives->add(parser->currentAlt);
 	parser->currentRule = parser->getRule("Rule");
-	//currentRule.immediate = RuleplgNow;
+	parser->currentRule->immediate = ::RuleplgNow;
 	parser->currentAlt = new Alternative();
 	parser->addTest(6,"Name","ruleName",1,1,"defaultSKIP");
 	parser->addTest(1,":","",1,1,"defaultSKIP");

@@ -154,6 +154,8 @@ char 			*saved = 0;
 			if ( state->cursor > saved )
 				{
 				::printf("  %s alt %d SUCCEEDED -> offset %lu\n",name,altNum,(state->cursor - state->buffer->start));
+				if ( immediate )
+					immediate(state,result);
 				return result;
 				}
 			::printf("  %s alt %d ZERO-ADVANCE — treating as fail\n",name,altNum);
