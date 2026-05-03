@@ -389,13 +389,13 @@ singleQuote  = getSet("singleQuote","'");
     
     currentAlt = new Alternative();
     
-    addTest(3, "t", "start", 1, 1, "defaultSKIP");
+    addTest(3, "'", "start", 1, 1, "defaultSKIP");
     
     
     addTest(6, "DebugTextBoDY", "body", 0, 999999, "defaultSKIP");
     
     
-    addTest(3, "t", "finish", 1, 1, "");
+    addTest(3, "'", "finish", 1, 1, "");
     
     currentRule.alternatives += currentAlt;
     
@@ -814,10 +814,10 @@ singleQuote  = getSet("singleQuote","'");
     
     currentAlt = new Alternative();
     
-    addTest(3, "*+?!%", "begin", 0, 1, "");
+    addTest(3, "'", "begin", 0, 1, "");
     
     
-    addTest(3, "*+?!%", "end", 0, 1, "");
+    addTest(3, "'", "end", 0, 1, "");
     
     currentRule.alternatives += currentAlt;
     currentAlt = new Alternative();
@@ -876,7 +876,7 @@ singleQuote  = getSet("singleQuote","'");
     addTest(1, "Variable", "", 1, 1, "defaultSKIP");
     
     
-    addTest(3, "*+?!%", "", -1, 1, "");
+    addTest(3, "A-Za-z:.|", "", -1, 1, "");
     
     
     addTest(6, "Name", "variable", 1, 999999, "defaultSKIP");
@@ -890,7 +890,7 @@ singleQuote  = getSet("singleQuote","'");
     addTest(1, "Rules", "", 1, 1, "defaultSKIP");
     
     
-    addTest(3, "*+?!%", "", -1, 1, "");
+    addTest(3, "A-Za-z:.|", "", -1, 1, "");
     
     
     addTest(6, "ForwardReference", "", 1, 999999, "defaultSKIP");
@@ -904,7 +904,7 @@ singleQuote  = getSet("singleQuote","'");
     addTest(1, "KeyWord", "", 1, 1, "defaultSKIP");
     
     
-    addTest(3, "*+?!%", "", -1, 1, "");
+    addTest(3, "A-Za-z:.|", "", -1, 1, "");
     
     
     addTest(6, "Name", "name", 1, 1, "defaultSKIP");
@@ -921,7 +921,7 @@ singleQuote  = getSet("singleQuote","'");
     addTest(1, "Set", "", 1, 1, "defaultSKIP");
     
     
-    addTest(3, "t", "", -1, 1, "");
+    addTest(3, "A-Za-z:.|", "", -1, 1, "");
     
     
     addTest(6, "Name", "name", 1, 1, "defaultSKIP");
@@ -938,7 +938,7 @@ singleQuote  = getSet("singleQuote","'");
     addTest(1, "Condition", "", 1, 1, "defaultSKIP");
     
     
-    addTest(3, "*+?!%", "", -1, 1, "");
+    addTest(3, "A-Za-z:.|", "", -1, 1, "");
     
     
     addTest(6, "Name", "condishun", 1, 999999, "defaultSKIP");
