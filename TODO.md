@@ -28,6 +28,17 @@
 - [ ] shrink_setrules.py improvements — track named-set variable assignments properly
 - [ ] Xcode workspace (Shape B) — wire plg + support + tawk + incant
 
+### PLG — Action blocks (new top-level grammar construct)
+- [ ] Define `Action actionName { TAWK body } ;` syntax — inline TAWK method tied to a rule.
+  - PLG generates: `void actionName(PLGparse *state, PLGitem *item) { body }`
+  - Update Rule definition to allow optional immediate and deferred action-name references before options.
+  - Goal: `.g` files become self-contained — no separate `.act` or `.rtn` files needed.
+  - Conceptually parallel to incant field code blocks. Design approved, implementation pending.
+
+### PLG — known cosmetic issues (post-bootstrap)
+- [ ] kLit litText extraction picks up a leading `\n` in generated Testing.twk (e.g. `elem->litText = "\n,";` for `','`). Likely a stray byte in ElementplgAct's quote-stripping or in PLGset.printText escaping. Doesn't affect runtime correctness.
+- [ ] Set spec name loses leading space when serialized — e.g. `[ \f\r\t\n]` round-trips through generateRules as `getSet("\f\r\t\n")`. The runtime PLGset includes the space (input parses correctly); only the serialized name drops it. Likely PLGset.name field stripping or printText quirk.
+
 ### TAWK
 - [ ] Create TAWK repo Xcode project (project.yml)
 - [ ] TAWK autopsy — work through issues table in bible
