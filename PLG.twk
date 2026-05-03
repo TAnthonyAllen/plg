@@ -971,7 +971,7 @@ singleQuote  = getSet("singleQuote","'");
     currentRule.alternatives += currentAlt;
     
     currentRule = getRule("RuleOption");
-    //currentRule.defer = RuleOptionplgAct;
+    currentRule.defer = RuleOptionplgAct;
     currentRule.doNotGuard = true;
     
     currentAlt = new Alternative();
@@ -1236,25 +1236,37 @@ void RuleOptionsplgAct(PLGparse state, PLGitem iTEM)
 }
 
 /*******************************************************************************
-	AlternativeplgAct — fires after an Alternative meta-rule match completes
-	(deferred). Creates a new C++ Alternative object, appends it to the
-	currentRule (set up by RuleplgNow), and parks it on state.currentAlt so
-	a future ElementplgAct can populate its elements list.
+	RuleOptionplgAct — fires after a RuleOption match completes (deferred).
+	A plg "RuleOption" is a SEQUENCE of plg-Alternatives separated by `|`
+	at the RuleOptions level. Each RuleOption maps to ONE C++ Alternative
+	whose elements are the SEQUENCE of items inside it. So this callback
+	is what creates the C++ Alternative bucket — appends it to currentRule
+	and parks it on state.currentAlt for incoming ElementplgAct calls.
 *******************************************************************************/
-void AlternativeplgAct(PLGparse state, PLGitem iTEM)
+void RuleOptionplgAct(PLGparse state, PLGitem iTEM)
 {
 Alternative alt;
-PLGitem     atLabel;
     if !state.currentRule
         {
-        cerr "AlternativeplgAct: no currentRule — RuleplgNow must run first":;
+        cerr "RuleOptionplgAct: no currentRule":;
         return;
         }
     alt = new Alternative();
     state.currentRule.addAlternative(alt);
     state.currentAlt = alt;
-    // Stash any labeled-capture name so the next ElementplgAct can apply
-    // it to the element it creates. Cleared after that ElementplgAct runs.
+    cout "RuleOptionplgAct fired: new alt in rule '" state.currentRule.name "'":;
+}
+
+/*******************************************************************************
+	AlternativeplgAct — fires after a plg-Alternative meta-rule match
+	(deferred). A plg-Alternative is one element-with-modifiers; its only
+	job at this layer is to surface any labeled-capture name (`name=`) so
+	the immediately-following ElementplgAct can stamp it onto the Element
+	it creates. Does NOT create a C++ Alternative — that's RuleOptionplgAct.
+*******************************************************************************/
+void AlternativeplgAct(PLGparse state, PLGitem iTEM)
+{
+PLGitem     atLabel;
     state.pendingLabel = null;
     if iTEM && iTEM.children
         {
@@ -1269,7 +1281,7 @@ PLGitem     atLabel;
                 state.pendingLabel = nameItem.toString();
             }
         }
-    cout "AlternativeplgAct fired: added empty alt to rule '" state.currentRule.name "' pendingLabel=" state.pendingLabel:;
+    cout "AlternativeplgAct fired: pendingLabel=" state.pendingLabel:;
 }
 
 /*******************************************************************************
