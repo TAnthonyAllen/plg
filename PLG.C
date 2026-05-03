@@ -37,6 +37,88 @@ Alternative 	*alt = 0;
 }
 
 /*******************************************************************************
+	ElementTypeplgAct — fires after an ElementType meta-rule match
+	(deferred). Modifies the most-recently-added element on
+	state.currentAlt — sets min/max from explicit `{N M}` form, or maps
+	the option char to min/max + flags:
+	  *  -> min=0,  max=999999
+	  +  -> min=1,  max=999999
+	  ?  -> min=0,  max=1
+	  !  -> min=-1, banged=true, label cleared
+	  %  -> isIgnored=true
+	(`{`/`}` from the original spec aren't in the current option charset
+	`*+?!%`, so omitted; the corresponding processUpTo/skipOverMatch
+	fields don't exist on the new Element class either.)
+*******************************************************************************/
+void ElementTypeplgAct(PLGparse *state, PLGitem *iTEM)
+{
+Element 	*elem = 0;
+DoubleLink 	*lastLink = 0;
+PLGitem 	*minimum = 0;
+PLGitem 	*maximum = 0;
+PLGitem 	*option = 0;
+char 		opt = 0;
+	if ( !state->currentAlt )
+		{
+		::fprintf(stderr,"ElementTypeplgAct: no currentAlt\n");
+		return;
+		}
+	if ( !iTEM || !iTEM->children )
+		return;
+	lastLink = state->currentAlt->elements->last;
+	if ( !lastLink )
+		{
+		::fprintf(stderr,"ElementTypeplgAct: currentAlt has no elements to modify\n");
+		return;
+		}
+	elem = (Element*)lastLink->value;
+	// Alt 1: explicit `{Integer Max?}` form — minimum and (optional) maximum
+	minimum = (PLGitem*)iTEM->children->get("minimum");
+	if ( minimum )
+		{
+		elem->minimum = ::atoi(minimum->toString());
+		elem->maximum = elem->minimum;
+		maximum = (PLGitem*)iTEM->children->get("maximum");
+		if ( maximum )
+			elem->maximum = ::atoi(maximum->toString());
+		::printf("ElementTypeplgAct: explicit min=%d max=%d\n",elem->minimum,elem->maximum);
+		return;
+		}
+	// Alt 2: single option char from *+?!%
+	option = (PLGitem*)iTEM->children->get("option");
+	if ( !option )
+		{
+		::fprintf(stderr,"ElementTypeplgAct: no option child\n");
+		return;
+		}
+	opt = *option->itemStart;
+	if ( opt == '*' )
+		{
+		elem->minimum = 0;
+		elem->maximum = 999999;
+		}
+	if ( opt == '+' )
+		{
+		elem->minimum = 1;
+		elem->maximum = 999999;
+		}
+	if ( opt == '?' )
+		{
+		elem->minimum = 0;
+		elem->maximum = 1;
+		}
+	if ( opt == '!' )
+		{
+		elem->minimum = -1;
+		elem->banged = 1;
+		elem->label = 0;
+		}
+	if ( opt == '%' )
+		elem->isIgnored = 1;
+	::printf("ElementTypeplgAct: opt='%c' min=%d max=%d\n",opt,elem->minimum,elem->maximum);
+}
+
+/*******************************************************************************
 	ElementplgAct — fires after an Element meta-rule match completes
 	(deferred). Discriminates on the captured atElement's first character
 	to determine kind, fills kind-specific data, and appends the new
@@ -702,7 +784,7 @@ void PLG::setRules()
 	parser->addTest(3,".$","atElement",1,1,"defaultSKIP");
 	parser->currentRule->alternatives->add(parser->currentAlt);
 	parser->currentRule = parser->getRule("ElementType");
-	//currentRule.defer = ElementTypeplgAct;
+	parser->currentRule->defer = ::ElementTypeplgAct;
 	//currentRule.next = getRule("ElementType2");
 	parser->currentAlt = new Alternative();
 	parser->addTest(1,"","",1,1,"defaultSKIP");

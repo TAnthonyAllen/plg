@@ -30,7 +30,7 @@ void ElementplgAct(PLGparse state, PLGitem iTEM);
 void Element2plgAct(PLGitem iTEM);
 void Element3plgAct(PLGitem iTEM);
 void Element4plgAct(PLGitem iTEM);
-void ElementTypeplgAct(PLGitem iTEM);
+void ElementTypeplgAct(PLGparse state, PLGitem iTEM);
 void ElementType2plgAct(PLGitem iTEM);
 int ForwardReferenceplgNow(PLGitem iTEM);
 void GuardplgAct(PLGitem iTEM);
@@ -751,7 +751,7 @@ singleQuote  = getSet("singleQuote","'");
     currentRule.alternatives += currentAlt;
     
     currentRule = getRule("ElementType");
-    //currentRule.defer = ElementTypeplgAct;
+    currentRule.defer = ElementTypeplgAct;
     //currentRule.next = getRule("ElementType2");
     
     currentAlt = new Alternative();
@@ -1317,4 +1317,88 @@ int         handled = 0;
 
     state.currentAlt.elements += elem;
     cout "ElementplgAct fired: kind=" elem.kind " text='" text "' added to alt in rule '" state.currentRule.name "'":;
+}
+
+/*******************************************************************************
+	ElementTypeplgAct — fires after an ElementType meta-rule match
+	(deferred). Modifies the most-recently-added element on
+	state.currentAlt — sets min/max from explicit `{N M}` form, or maps
+	the option char to min/max + flags:
+	  *  -> min=0,  max=999999
+	  +  -> min=1,  max=999999
+	  ?  -> min=0,  max=1
+	  !  -> min=-1, banged=true, label cleared
+	  %  -> isIgnored=true
+	(`{`/`}` from the original spec aren't in the current option charset
+	`*+?!%`, so omitted; the corresponding processUpTo/skipOverMatch
+	fields don't exist on the new Element class either.)
+*******************************************************************************/
+void ElementTypeplgAct(PLGparse state, PLGitem iTEM)
+{
+Element     elem;
+DoubleLink  lastLink;
+PLGitem     minimum;
+PLGitem     maximum;
+PLGitem     option;
+char        opt;
+    if !state.currentAlt
+        {
+        cerr "ElementTypeplgAct: no currentAlt":;
+        return;
+        }
+    if !iTEM || !iTEM.children
+        return;
+    lastLink = state.currentAlt.elements.last;
+    if !lastLink
+        {
+        cerr "ElementTypeplgAct: currentAlt has no elements to modify":;
+        return;
+        }
+    elem = lastLink.value;
+
+    // Alt 1: explicit `{Integer Max?}` form — minimum and (optional) maximum
+    minimum = iTEM.children["minimum"];
+    if minimum
+        {
+        elem.minimum = atoi(minimum.toString());
+        elem.maximum = elem.minimum;
+        maximum = iTEM.children["maximum"];
+        if maximum
+            elem.maximum = atoi(maximum.toString());
+        cout "ElementTypeplgAct: explicit min=" elem.minimum " max=" elem.maximum:;
+        return;
+        }
+
+    // Alt 2: single option char from *+?!%
+    option = iTEM.children["option"];
+    if !option
+        {
+        cerr "ElementTypeplgAct: no option child":;
+        return;
+        }
+    opt = *option.start;
+    if opt == '*'
+        {
+        elem.minimum = 0;
+        elem.maximum = 999999;
+        }
+    if opt == '+'
+        {
+        elem.minimum = 1;
+        elem.maximum = 999999;
+        }
+    if opt == '?'
+        {
+        elem.minimum = 0;
+        elem.maximum = 1;
+        }
+    if opt == '!'
+        {
+        elem.minimum = -1;
+        elem.banged = true;
+        elem.label = null;
+        }
+    if opt == '%'
+        elem.isIgnored = true;
+    cout "ElementTypeplgAct: opt='" opt "' min=" elem.minimum " max=" elem.maximum:;
 }
