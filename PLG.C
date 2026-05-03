@@ -25,6 +25,7 @@
 void AlternativeplgAct(PLGparse *state, PLGitem *iTEM)
 {
 Alternative 	*alt = 0;
+PLGitem 		*atLabel = 0;
 	if ( !state->currentRule )
 		{
 		::fprintf(stderr,"AlternativeplgAct: no currentRule — RuleplgNow must run first\n");
@@ -33,7 +34,23 @@ Alternative 	*alt = 0;
 	alt = new Alternative();
 	state->currentRule->addAlternative(alt);
 	state->currentAlt = alt;
-	::printf("AlternativeplgAct fired: added empty alt to rule '%s'\n",state->currentRule->name);
+	// Stash any labeled-capture name so the next ElementplgAct can apply
+	// it to the element it creates. Cleared after that ElementplgAct runs.
+	state->pendingLabel = 0;
+	if ( iTEM && iTEM->children )
+		{
+		// iTEM.children["atLabel"] is the Label meta-rule match (`Name '='`).
+		// To get just the Name string, drill into Label's own children
+		// where the Name is also captured under "atLabel".
+		atLabel = (PLGitem*)iTEM->children->get("atLabel");
+		if ( atLabel && atLabel->children )
+			{
+			PLGitem 	*nameItem = (PLGitem*)atLabel->children->get("atLabel");
+			if ( nameItem )
+				state->pendingLabel = nameItem->toString();
+			}
+		}
+	::printf("AlternativeplgAct fired: added empty alt to rule '%s' pendingLabel=%s\n",state->currentRule->name,state->pendingLabel);
 }
 
 /*******************************************************************************
@@ -268,8 +285,14 @@ int 		handled = 0;
 		prule = state->getRule(name);
 		elem->ruleRef = prule;
 		}
+	// Apply any pending label from AlternativeplgAct (the `name=` form).
+	if ( state->pendingLabel )
+		{
+		elem->label = state->pendingLabel;
+		state->pendingLabel = 0;
+		}
 	state->currentAlt->elements->add(elem);
-	::printf("ElementplgAct fired: kind=%u text='%s' added to alt in rule '%s'\n",elem->kind,text,state->currentRule->name);
+	::printf("ElementplgAct fired: kind=%u text='%s' label='%s' added to alt in rule '%s'\n",elem->kind,text,elem->label,state->currentRule->name);
 }
 
 /*******************************************************************************
@@ -383,6 +406,77 @@ PLG::PLG(char *input)
 	parser->setInput(input);
 }
 
+/*******************************************************************************
+	dumpRules — walk a rules table and print each rule's alternatives and
+	their elements. Used to verify callback-built rule structures look
+	right (kinds, min/max, labels, set/litText/ruleRef contents).
+*******************************************************************************/
+void PLG::dumpRules(BaseHash *table)
+{
+PLGrule 		*rule = 0;
+Alternative 	*alt = 0;
+Element 		*elem = 0;
+DoubleLink 		*altLink = 0;
+DoubleLink 		*elemLink = 0;
+int 			altNum = 0;
+int 			elemNum = 0;
+char 			*kindName = 0;
+char 			*data = 0;
+	if ( !table )
+		return;
+	::printf("=== rule structures ===\n");
+	table->hashList->resetIterator();
+	while ( rule = (PLGrule*)table->hashList->next() )
+		{
+		::printf("rule '%s' (%d alts):\n",rule->name,rule->alternatives->length);
+		altNum = 0;
+		for ( altLink = rule->alternatives->first; altLink; altLink = altLink->next )
+			{
+			alt = (Alternative*)altLink->value;
+			altNum++;
+			::printf("  alt %d:\n",altNum);
+			elemNum = 0;
+			for ( elemLink = alt->elements->first; elemLink; elemLink = elemLink->next )
+				{
+				elem = (Element*)elemLink->value;
+				elemNum++;
+				kindName = "?";
+				data = "";
+				if ( elem->kind == 1 )
+					{
+					kindName = "kLit";
+					if ( elem->litText )
+						data = elem->litText;
+					}
+				if ( elem->kind == 3 )
+					{
+					kindName = "kSet";
+					if ( elem->setRef && elem->setRef->name )
+						data = elem->setRef->name;
+					}
+				if ( elem->kind == 4 )
+					kindName = "kAny";
+				if ( elem->kind == 5 )
+					kindName = "kEof";
+				if ( elem->kind == 6 )
+					{
+					kindName = "kRuleRef";
+					if ( elem->ruleRef )
+						data = elem->ruleRef->name;
+					}
+				if ( elem->kind == 7 )
+					kindName = "kKeyTable";
+				if ( elem->kind == 8 )
+					kindName = "kCondition";
+				if ( elem->kind == 9 )
+					kindName = "kVariable";
+				::printf("    elem %d: %s(%s) min=%d max=%d label=%s\n",elemNum,kindName,data,elem->minimum,elem->maximum,elem->label);
+				}
+			}
+		}
+	::printf("=== end rule structures ===\n");
+}
+
 void PLG::init()
 {
 	parser = new PLGparse();
@@ -447,9 +541,33 @@ PLGrule 	*startRule = (PLGrule*)parser->rules->get("Start");
 	::printf("=== fresh setTable after parse ===\n");
 	parser->setTable->listKeys();
 	::printf("=== end fresh tables ===\n");
-	// Restore meta-grammar tables for generateRules.
-	parser->rules = metaRules;
-	parser->setTable = metaSetTable;
+	dumpRules(parser->rules);
+	// Demo: if the parsed table contains a "Test" rule, run it against
+	// a tiny input ("42") and dump the result's children to prove that
+	// labeled captures land in result.children. divertInput pushes a
+	// fresh buffer; revertInput restores Testing.g's input afterwards.
+PLGrule 	*testRule = (PLGrule*)parser->rules->get("Test");
+	if ( testRule )
+		{
+		::printf("=== running parsed Test rule on '42' ===\n");
+		parser->divertInput("42");
+		PLGitem *testResult = testRule->match(parser);
+		if ( testResult )
+			{
+			::printf("Test matched %ld chars: '%s'\n",testResult->itemLength,testResult->toString());
+			if ( testResult->children )
+				{
+				PLGitem 	*v = (PLGitem*)testResult->children->get("value");
+				if ( v )
+					::printf("  testResult.children['value'] = '%s'\n",v->toString());
+				else	::printf("  no 'value' in children\n");
+				}
+			else	::printf("  no children on result\n");
+			}
+		else	::printf("Test rule did not match '42'\n");
+		parser->revertInput();
+		::printf("=== end Test demo ===\n");
+		}
 	// Build output path: foo.g -> foo.twk
 	outFile = (char*)::malloc(::strlen(filename) + 8);
 	::strcpy(outFile,filename);
@@ -459,12 +577,19 @@ PLGrule 	*startRule = (PLGrule*)parser->rules->get("Start");
 		*dot = '\0';
 		}
 	::strcat(outFile,".twk");
+	// Generate from the FRESH parser.rules (the rules parsed out of
+	// Testing.g) BEFORE restoring the meta-grammar. This is the real
+	// bootstrap output: setRules code derived from the user's grammar
+	// file, not a copy of the meta-grammar.
 	twkOut = ::bufferFactory3("twk-output",50000);
 	parser->generateRules(twkOut);
 	twkOut->setFile(outFile);
 	twkOut->flush();
 	::printf("wrote %s\n",outFile);
 	::free(outFile);
+	// Restore meta-grammar tables (so future parses still work).
+	parser->rules = metaRules;
+	parser->setTable = metaSetTable;
 }
 
 /*******************************************************************************
@@ -973,6 +1098,7 @@ void PLG::setRules()
 	parser->addTest(1,"\n","",1,1,"defaultSKIP");
 	parser->currentRule->alternatives->add(parser->currentAlt);
 }
+// Ignoring declaration of unused variable key in method: dumpRules(BaseHash*)
 // Ignoring declaration of unused variable alt in method: setRules()
 // Ignoring declaration of unused variable elem in method: setRules()
 /*	Warning: the following methods were referenced but not declared

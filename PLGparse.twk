@@ -25,6 +25,7 @@ BaseHash    rules,
             keyWordTable,
             conditionTable,
             variableTable;
+String      pendingLabel;
 boolean
     debugRulePLG
     debugGuardPLG

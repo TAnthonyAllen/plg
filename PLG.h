@@ -48,6 +48,7 @@ struct
 PLGparse *parser;
 PLG();
 PLG(char *input);
+void dumpRules(BaseHash *table);
 void init();
 void process(char *filename);
 void run();

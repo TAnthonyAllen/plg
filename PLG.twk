@@ -183,10 +183,33 @@ PLGrule startRule = parser.rules["Start"];
     cout "=== fresh setTable after parse ===":;
     parser.setTable.listKeys();
     cout "=== end fresh tables ===":;
+    dumpRules(parser.rules);
 
-    // Restore meta-grammar tables for generateRules.
-    parser.rules        = metaRules;
-    parser.setTable     = metaSetTable;
+    // Demo: if the parsed table contains a "Test" rule, run it against
+    // a tiny input ("42") and dump the result's children to prove that
+    // labeled captures land in result.children. divertInput pushes a
+    // fresh buffer; revertInput restores Testing.g's input afterwards.
+PLGrule testRule = parser.rules["Test"];
+    if testRule
+        {
+        cout "=== running parsed Test rule on '42' ===":;
+        parser.divertInput("42");
+        PLGitem testResult = testRule.match(parser);
+        if testResult
+            {
+            cout "Test matched " testResult.itemLength " chars: '" testResult.toString() "'":;
+            if testResult.children
+                {
+                PLGitem v = testResult.children["value"];
+                if v  cout "  testResult.children['value'] = '" v.toString() "'":;
+                else cout "  no 'value' in children":;
+                }
+            else cout "  no children on result":;
+            }
+        else cout "Test rule did not match '42'":;
+        parser.revertInput();
+        cout "=== end Test demo ===":;
+        }
 
     // Build output path: foo.g -> foo.twk
     outFile = malloc(strlen(filename) + 8);
@@ -196,12 +219,83 @@ PLGrule startRule = parser.rules["Start"];
         { *dot = '\0'; }
     strcat(outFile, ".twk");
 
+    // Generate from the FRESH parser.rules (the rules parsed out of
+    // Testing.g) BEFORE restoring the meta-grammar. This is the real
+    // bootstrap output: setRules code derived from the user's grammar
+    // file, not a copy of the meta-grammar.
     twkOut = new("twk-output", 50000);
     parser.generateRules(twkOut);
     twkOut.setFile(outFile);
     twkOut.flush();
     cout "wrote " outFile:;
     free(outFile);
+
+    // Restore meta-grammar tables (so future parses still work).
+    parser.rules        = metaRules;
+    parser.setTable     = metaSetTable;
+}
+
+/*******************************************************************************
+	dumpRules — walk a rules table and print each rule's alternatives and
+	their elements. Used to verify callback-built rule structures look
+	right (kinds, min/max, labels, set/litText/ruleRef contents).
+*******************************************************************************/
+void dumpRules(BaseHash table)
+{
+PLGrule     rule;
+Alternative alt;
+Element     elem;
+DoubleLink  altLink;
+DoubleLink  elemLink;
+String      key;
+int         altNum;
+int         elemNum;
+String      kindName;
+String      data;
+    if !table return;
+    cout "=== rule structures ===":;
+    table.resetIterator();
+    while rule = table.next()
+        {
+        cout "rule '" rule.name "' (" rule.alternatives.length() " alts):":;
+        altNum = 0;
+        for altLink = rule.alternatives.first
+            {
+            alt = altLink.value;
+            altNum++;
+            cout "  alt " altNum ":":;
+            elemNum = 0;
+            for elemLink = alt.elements.first
+                {
+                elem = elemLink.value;
+                elemNum++;
+                kindName = "?";
+                data     = "";
+                if elem.kind == 1
+                    {
+                    kindName = "kLit";
+                    if elem.litText  data = elem.litText;
+                    }
+                if elem.kind == 3
+                    {
+                    kindName = "kSet";
+                    if elem.setRef && elem.setRef.name  data = elem.setRef.name;
+                    }
+                if elem.kind == 4   kindName = "kAny";
+                if elem.kind == 5   kindName = "kEof";
+                if elem.kind == 6
+                    {
+                    kindName = "kRuleRef";
+                    if elem.ruleRef  data = elem.ruleRef.name;
+                    }
+                if elem.kind == 7   kindName = "kKeyTable";
+                if elem.kind == 8   kindName = "kCondition";
+                if elem.kind == 9   kindName = "kVariable";
+                cout "    elem " elemNum ": " kindName "(" data ") min=" elem.minimum " max=" elem.maximum " label=" elem.label:;
+                }
+            }
+        }
+    cout "=== end rule structures ===":;
 }
 
 /*******************************************************************************
@@ -1150,6 +1244,7 @@ void RuleOptionsplgAct(PLGparse state, PLGitem iTEM)
 void AlternativeplgAct(PLGparse state, PLGitem iTEM)
 {
 Alternative alt;
+PLGitem     atLabel;
     if !state.currentRule
         {
         cerr "AlternativeplgAct: no currentRule — RuleplgNow must run first":;
@@ -1158,7 +1253,23 @@ Alternative alt;
     alt = new Alternative();
     state.currentRule.addAlternative(alt);
     state.currentAlt = alt;
-    cout "AlternativeplgAct fired: added empty alt to rule '" state.currentRule.name "'":;
+    // Stash any labeled-capture name so the next ElementplgAct can apply
+    // it to the element it creates. Cleared after that ElementplgAct runs.
+    state.pendingLabel = null;
+    if iTEM && iTEM.children
+        {
+        // iTEM.children["atLabel"] is the Label meta-rule match (`Name '='`).
+        // To get just the Name string, drill into Label's own children
+        // where the Name is also captured under "atLabel".
+        atLabel = iTEM.children["atLabel"];
+        if atLabel && atLabel.children
+            {
+            PLGitem nameItem = atLabel.children["atLabel"];
+            if nameItem
+                state.pendingLabel = nameItem.toString();
+            }
+        }
+    cout "AlternativeplgAct fired: added empty alt to rule '" state.currentRule.name "' pendingLabel=" state.pendingLabel:;
 }
 
 /*******************************************************************************
@@ -1315,8 +1426,14 @@ int         handled = 0;
         elem.ruleRef = prule;
         }
 
+    // Apply any pending label from AlternativeplgAct (the `name=` form).
+    if state.pendingLabel
+        {
+        elem.label = state.pendingLabel;
+        state.pendingLabel = null;
+        }
     state.currentAlt.elements += elem;
-    cout "ElementplgAct fired: kind=" elem.kind " text='" text "' added to alt in rule '" state.currentRule.name "'":;
+    cout "ElementplgAct fired: kind=" elem.kind " text='" text "' label='" elem.label "' added to alt in rule '" state.currentRule.name "'":;
 }
 
 /*******************************************************************************

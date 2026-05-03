@@ -66,6 +66,7 @@ PLGparse::PLGparse()
 	skipStack = 0;
 	inputStack = 0;
 	depth = 0;
+	pendingLabel = 0;
 	alternateSet = 0;
 	characterSet = 0;
 	commandSet = 0;
@@ -103,6 +104,7 @@ PLGparse::PLGparse(char *input)
 	skipStack = 0;
 	inputStack = 0;
 	depth = 0;
+	pendingLabel = 0;
 	alternateSet = 0;
 	characterSet = 0;
 	commandSet = 0;

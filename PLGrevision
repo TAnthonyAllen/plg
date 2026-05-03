@@ -160,6 +160,7 @@ BaseHash    rules,
             keyWordTable,
             conditionTable,
             variableTable;
+String      pendingLabel;
 PLGset      alternateSet;
 PLGset      characterSet;
 PLGset      commandSet;

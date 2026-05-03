@@ -30,6 +30,7 @@ BaseHash *setTable;
 BaseHash *keyWordTable;
 BaseHash *conditionTable;
 BaseHash *variableTable;
+char *pendingLabel;
 PLGset *alternateSet;
 PLGset *characterSet;
 PLGset *commandSet;
