@@ -132,6 +132,7 @@ PLGitem applyRepetition(PLGparse state, PLGitem firstResult)
 
 PLGitem head = firstResult;
 PLGitem tail = head;
+DoubleLink dlink;
 int count = 1;
 cout "Element applyRepetition":;
     while count < maximum {
@@ -143,6 +144,14 @@ cout `"applyRepetition matchByKind kind=" kind " cursor=" state.cursor:;
             { restore(saved); break; }
         tail.next = nextItem;
         tail = nextItem;
+        // Cascade deferred entries from each repeat-match into head so
+        // Alternative.match sees the full set, not just the first match's.
+        if nextItem.deferred
+            {
+            if !head.deferred  head.deferred = new DoubleLinkList();
+            for dlink = nextItem.deferred.first
+                head.deferred += dlink.value;
+            }
         count++; }
     head.length = state.cursor - head.start;
     if count < minimum

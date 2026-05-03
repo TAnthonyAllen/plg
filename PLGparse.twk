@@ -21,7 +21,10 @@ Stak        skipStack,
             inputStack;
 int         depth;
 BaseHash    rules,
-            setTable;
+            setTable,
+            keyWordTable,
+            conditionTable,
+            variableTable;
 boolean
     debugRulePLG
     debugGuardPLG
@@ -35,8 +38,11 @@ boolean
 *******************************************************************************/
 PLGparse()
 {
-    rules       = new;
-    setTable    = new;
+    rules           = new;
+    setTable        = new;
+    keyWordTable    = new;
+    conditionTable  = new;
+    variableTable   = new;
     if !itemEmpty
         {
         itemEmpty          = new;
@@ -47,12 +53,15 @@ PLGparse()
 PLGparse(String input)
 {
 use buffer
-    buffer      = new;
-    buffer      += input;
-    cursor      = start;
-    eof         = end;
-    rules       = new;
-    setTable    = new;
+    buffer          = new;
+    buffer          += input;
+    cursor          = start;
+    eof             = end;
+    rules           = new;
+    setTable        = new;
+    keyWordTable    = new;
+    conditionTable  = new;
+    variableTable   = new;
     if !itemEmpty
         {
         itemEmpty = new;

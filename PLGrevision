@@ -156,7 +156,10 @@ Stak        skipStack,
             inputStack;
 int         depth;
 BaseHash    rules,
-            setTable;
+            setTable,
+            keyWordTable,
+            conditionTable,
+            variableTable;
 PLGset      alternateSet;
 PLGset      characterSet;
 PLGset      commandSet;

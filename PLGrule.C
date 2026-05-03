@@ -158,10 +158,20 @@ char 			*saved = 0;
 					immediate(state,result);
 				if ( defer )
 					{
+					DoubleLinkList 	*childEntries = 0;
+					DoubleLink 		*dlink = 0;
 					result->deferRule = this;
-					if ( !result->deferred )
-						result->deferred = new DoubleLinkList();
+					// Prepend (this, result) so the rule's defer fires
+					// BEFORE its children's defers — preorder cascade.
+					// AlternativeplgAct must run before its Elements'
+					// ElementplgAct so currentAlt is set when Elements
+					// arrive.
+					childEntries = result->deferred;
+					result->deferred = new DoubleLinkList();
 					result->deferred->add(result);
+					if ( childEntries )
+						for ( dlink = childEntries->first; dlink; dlink = dlink->next )
+							result->deferred->add(dlink->value);
 					}
 				return result;
 				}

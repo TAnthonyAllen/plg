@@ -9,7 +9,9 @@
 #include "PLGset.h"
 #include "Stak.h"
 #include "BaseHash.h"
+#include "Element.h"
 #include "Buffer.h"
+#include "KeyTable.h"
 #include "PLGparse.h"
 #include "PLGitem.h"
 #include "PLG.h"
@@ -32,6 +34,160 @@ Alternative 	*alt = 0;
 	state->currentRule->addAlternative(alt);
 	state->currentAlt = alt;
 	::printf("AlternativeplgAct fired: added empty alt to rule '%s'\n",state->currentRule->name);
+}
+
+/*******************************************************************************
+	ElementplgAct — fires after an Element meta-rule match completes
+	(deferred). Discriminates on the captured atElement's first character
+	to determine kind, fills kind-specific data, and appends the new
+	Element to currentAlt.elements. min/max default to 1; ElementType's
+	defer handles repetition (separate task). Label handling is also
+	separate.
+
+	Discrimination:
+	  ' or "    QuotedString  -> kLit (1), litText = quoted content
+	  [         StringSet     -> kSet (3), setRef = state.getSet(content)
+	  .         (~ . form)    -> kAny (4)
+	  $         (~ $ form)    -> kEof (5)
+	  letter    Name          -> table lookup chain:
+	                              keyWordTable    -> kKeyTable (7)
+	                              conditionTable  -> kCondition (8)
+	                              variableTable   -> kVariable (9)
+	                              setTable        -> kSet (3)
+	                              else            -> kRuleRef (6)
+*******************************************************************************/
+void ElementplgAct(PLGparse *state, PLGitem *iTEM)
+{
+Element 	*elem = 0;
+PLGitem 	*atElement = 0;
+PLGitem 	*textItem = 0;
+char 		*text = 0;
+char 		*spec = 0;
+char 		*litText = 0;
+char 		*name = 0;
+char 		first = 0;
+int 		len = 0;
+void 		*ptr = 0;
+PLGset 		*pset = 0;
+PLGrule 	*prule = 0;
+int 		handled = 0;
+	if ( !state->currentAlt )
+		{
+		::fprintf(stderr,"ElementplgAct: no currentAlt — AlternativeplgAct must run first\n");
+		return;
+		}
+	if ( !iTEM || !iTEM->children )
+		return;
+	atElement = (PLGitem*)iTEM->children->get("atElement");
+	if ( !atElement )
+		{
+		::fprintf(stderr,"ElementplgAct: no atElement child\n");
+		return;
+		}
+	text = atElement->toString();
+	if ( !text || !*text )
+		{
+		::fprintf(stderr,"ElementplgAct: empty atElement text\n");
+		return;
+		}
+	first = *text;
+	elem = new Element();
+	elem->minimum = 1;
+	elem->maximum = 1;
+	// QuotedString -> kLit; strip surrounding quotes
+	if ( !handled && (first == '\'' || first == '"') )
+		{
+		elem->kind = 1;
+		len = ::strlen(text);
+		if ( len >= 2 )
+			{
+			litText = (char*)::malloc(len - 1);
+			::strncpy(litText,text + 1,len - 2);
+			*(litText + len - 2) = 0;
+			elem->litText = litText;
+			}
+		handled = 1;
+		}
+	// Inline StringSet -> kSet; prefer captured "text" child, else strip brackets
+	if ( !handled && first == '[' )
+		{
+		elem->kind = 3;
+		textItem = (PLGitem*)atElement->children->get("text");
+		if ( textItem )
+			spec = textItem->toString();
+		else {
+			len = ::strlen(text);
+			if ( len >= 2 )
+				{
+				spec = (char*)::malloc(len - 1);
+				::strncpy(spec,text + 1,len - 2);
+				*(spec + len - 2) = 0;
+				}
+			else	spec = "";
+			}
+		elem->setRef = state->getSet(spec);
+		handled = 1;
+		}
+	if ( !handled && first == '.' )
+		{
+		elem->kind = 4;
+		handled = 1;
+		}
+	if ( !handled && first == '$' )
+		{
+		elem->kind = 5;
+		handled = 1;
+		}
+	// Name -> lookup chain (keyWord -> condition -> variable -> set -> rule)
+	if ( !handled )
+		{
+		name = text;
+		ptr = state->keyWordTable->get(name);
+		if ( ptr )
+			{
+			elem->kind = 7;
+			elem->tableRef = (KeyTable*)ptr;
+			handled = 1;
+			}
+		}
+	if ( !handled )
+		{
+		ptr = state->conditionTable->get(name);
+		if ( ptr )
+			{
+			elem->kind = 8;
+			elem->condFunc = ptr;
+			handled = 1;
+			}
+		}
+	if ( !handled )
+		{
+		ptr = state->variableTable->get(name);
+		if ( ptr )
+			{
+			elem->kind = 9;
+			elem->varPtr = (char**)ptr;
+			handled = 1;
+			}
+		}
+	if ( !handled )
+		{
+		pset = (PLGset*)state->setTable->get(name);
+		if ( pset )
+			{
+			elem->kind = 3;
+			elem->setRef = pset;
+			handled = 1;
+			}
+		}
+	if ( !handled )
+		{
+		elem->kind = 6;
+		prule = state->getRule(name);
+		elem->ruleRef = prule;
+		}
+	state->currentAlt->elements->add(elem);
+	::printf("ElementplgAct fired: kind=%u text='%s' added to alt in rule '%s'\n",elem->kind,text,state->currentRule->name);
 }
 
 /*******************************************************************************
@@ -529,7 +685,7 @@ void PLG::setRules()
 	parser->currentRule->alternatives->add(parser->currentAlt);
 	parser->currentRule = parser->getRule("Element");
 	//currentRule.immediate = ElementplgNow;
-	//currentRule.defer = ElementplgAct;
+	parser->currentRule->defer = ::ElementplgAct;
 	//currentRule.next = getRule("Element2");
 	parser->currentAlt = new Alternative();
 	parser->addTest(6,"Command","",-1,1,"defaultSKIP");

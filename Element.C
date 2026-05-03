@@ -1,12 +1,14 @@
 #include <string.h>
 #include <stdio.h>
+#include "DoubleLinkList.h"
 #include "PLGrule.h"
-#include "PLGitem.h"
+#include "DoubleLink.h"
 #include "PLGset.h"
 #include "Buffer.h"
 #include "KeyTableItem.h"
 #include "KeyTable.h"
 #include "PLGparse.h"
+#include "PLGitem.h"
 #include "Element.h"
 
 PLGitem *Element::applyRepetition(PLGparse *state, PLGitem *firstResult)
@@ -19,6 +21,7 @@ PLGitem *Element::applyRepetition(PLGparse *state, PLGitem *firstResult)
 		}
 PLGitem *head = firstResult;
 PLGitem *tail = head;
+DoubleLink *dlink = 0;
 int count = 1;
 	::printf("Element applyRepetition\n");
 	while ( count < maximum )
@@ -34,6 +37,15 @@ int count = 1;
 			}
 		tail->itemNext = nextItem;
 		tail = nextItem;
+		// Cascade deferred entries from each repeat-match into head so
+		// Alternative.match sees the full set, not just the first match's.
+		if ( nextItem->deferred )
+			{
+			if ( !head->deferred )
+				head->deferred = new DoubleLinkList();
+			for ( dlink = nextItem->deferred->first; dlink; dlink = dlink->next )
+				head->deferred->add(dlink->value);
+			}
 		count++;
 		}
 	head->itemLength = state->cursor - head->itemStart;

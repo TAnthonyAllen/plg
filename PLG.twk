@@ -720,7 +720,7 @@ singleQuote  = getSet("singleQuote","'");
     
     currentRule = getRule("Element");
     //currentRule.immediate = ElementplgNow;
-    //currentRule.defer = ElementplgAct;
+    currentRule.defer = ElementplgAct;
     //currentRule.next = getRule("Element2");
     
     currentAlt = new Alternative();
@@ -1159,4 +1159,162 @@ Alternative alt;
     state.currentRule.addAlternative(alt);
     state.currentAlt = alt;
     cout "AlternativeplgAct fired: added empty alt to rule '" state.currentRule.name "'":;
+}
+
+/*******************************************************************************
+	ElementplgAct — fires after an Element meta-rule match completes
+	(deferred). Discriminates on the captured atElement's first character
+	to determine kind, fills kind-specific data, and appends the new
+	Element to currentAlt.elements. min/max default to 1; ElementType's
+	defer handles repetition (separate task). Label handling is also
+	separate.
+
+	Discrimination:
+	  ' or "    QuotedString  -> kLit (1), litText = quoted content
+	  [         StringSet     -> kSet (3), setRef = state.getSet(content)
+	  .         (~ . form)    -> kAny (4)
+	  $         (~ $ form)    -> kEof (5)
+	  letter    Name          -> table lookup chain:
+	                              keyWordTable    -> kKeyTable (7)
+	                              conditionTable  -> kCondition (8)
+	                              variableTable   -> kVariable (9)
+	                              setTable        -> kSet (3)
+	                              else            -> kRuleRef (6)
+*******************************************************************************/
+void ElementplgAct(PLGparse state, PLGitem iTEM)
+{
+Element     elem;
+PLGitem     atElement;
+PLGitem     textItem;
+String      text;
+String      spec;
+String      litText;
+String      name;
+char        first;
+int         len;
+void*       ptr;
+PLGset      pset;
+PLGrule     prule;
+int         handled = 0;
+    if !state.currentAlt
+        {
+        cerr "ElementplgAct: no currentAlt — AlternativeplgAct must run first":;
+        return;
+        }
+    if !iTEM || !iTEM.children
+        return;
+    atElement = iTEM.children["atElement"];
+    if !atElement
+        {
+        cerr "ElementplgAct: no atElement child":;
+        return;
+        }
+    text = atElement.toString();
+    if !text || !*text
+        {
+        cerr "ElementplgAct: empty atElement text":;
+        return;
+        }
+    first = *text;
+    elem = new Element();
+    elem.minimum = 1;
+    elem.maximum = 1;
+
+    // QuotedString -> kLit; strip surrounding quotes
+    if !handled && (first == '\'' || first == '"')
+        {
+        elem.kind = 1;
+        len = strlen(text);
+        if len >= 2
+            {
+            litText = (char*)malloc(len - 1);
+            strncpy(litText, text + 1, len - 2);
+            *(litText + len - 2) = 0;
+            elem.litText = litText;
+            }
+        handled = true;
+        }
+    // Inline StringSet -> kSet; prefer captured "text" child, else strip brackets
+    if !handled && first == '['
+        {
+        elem.kind = 3;
+        textItem = atElement.children["text"];
+        if textItem
+            spec = textItem.toString();
+        else
+            {
+            len = strlen(text);
+            if len >= 2
+                {
+                spec = (char*)malloc(len - 1);
+                strncpy(spec, text + 1, len - 2);
+                *(spec + len - 2) = 0;
+                }
+            else
+                spec = "";
+            }
+        elem.setRef = state.getSet(spec);
+        handled = true;
+        }
+    if !handled && first == '.'
+        {
+        elem.kind = 4;
+        handled = true;
+        }
+    if !handled && first == '$'
+        {
+        elem.kind = 5;
+        handled = true;
+        }
+    // Name -> lookup chain (keyWord -> condition -> variable -> set -> rule)
+    if !handled
+        {
+        name = text;
+        ptr = state.keyWordTable[name];
+        if ptr
+            {
+            elem.kind = 7;
+            elem.tableRef = (KeyTable*)ptr;
+            handled = true;
+            }
+        }
+    if !handled
+        {
+        ptr = state.conditionTable[name];
+        if ptr
+            {
+            elem.kind = 8;
+            elem.condFunc = ptr;
+            handled = true;
+            }
+        }
+    if !handled
+        {
+        ptr = state.variableTable[name];
+        if ptr
+            {
+            elem.kind = 9;
+            elem.varPtr = (char**)ptr;
+            handled = true;
+            }
+        }
+    if !handled
+        {
+        pset = state.setTable[name];
+        if pset
+            {
+            elem.kind = 3;
+            elem.setRef = pset;
+            handled = true;
+            }
+        }
+    if !handled
+        {
+        elem.kind = 6;
+        prule = state.getRule(name);
+        elem.ruleRef = prule;
+        }
+
+    state.currentAlt.elements += elem;
+    cout "ElementplgAct fired: kind=" elem.kind " text='" text "' added to alt in rule '" state.currentRule.name "'":;
 }

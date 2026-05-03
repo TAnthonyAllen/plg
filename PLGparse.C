@@ -82,6 +82,9 @@ PLGparse::PLGparse()
 	skipping = 0;
 	rules = new BaseHash();
 	setTable = new BaseHash();
+	keyWordTable = new BaseHash();
+	conditionTable = new BaseHash();
+	variableTable = new BaseHash();
 	if ( !PLGitem::itemEmpty )
 		{
 		PLGitem::itemEmpty = new PLGitem();
@@ -120,6 +123,9 @@ PLGparse::PLGparse(char *input)
 	eof = buffer->end;
 	rules = new BaseHash();
 	setTable = new BaseHash();
+	keyWordTable = new BaseHash();
+	conditionTable = new BaseHash();
+	variableTable = new BaseHash();
 	if ( !PLGitem::itemEmpty )
 		{
 		PLGitem::itemEmpty = new PLGitem();
