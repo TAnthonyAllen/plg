@@ -15,11 +15,21 @@
 #include "PLG.h"
 
 /*******************************************************************************
+	RuleOptionsplgAct — fires after a RuleOptions match completes (deferred).
+	Stub for now; real implementation will populate the current rule's
+	alternatives from the captured RuleOption sub-items.
+*******************************************************************************/
+void RuleOptionsplgAct(PLGparse *state, PLGitem *iTEM)
+{
+	::printf("RuleOptionsplgAct fired\n");
+}
+
+/*******************************************************************************
 	RuleplgNow — immediate action fired when a Rule alternative matches in
 	Testing.g (or any .g file the parser is processing). Looks up the
 	"ruleName" capture, calls state.getRule() so a fresh rule entry is
-	created in parser.rules. Trimmed: skips options.runDeferred() — that
-	cascade requires runDeferred infrastructure not yet implemented.
+	created in parser.rules, then cascades the deferred action chain
+	(RuleOptionsplgAct etc.) for the rule's body.
 *******************************************************************************/
 int RuleplgNow(PLGparse *state, PLGitem *iTEM)
 {
@@ -33,6 +43,7 @@ char 		*name = 0;
 	name = ruleName->toString();
 	::printf("RuleplgNow: matched rule '%s'\n",name);
 	state->currentRule = state->getRule(name);
+	iTEM->runDeferred(state);
 	return 1;
 }
 
@@ -587,7 +598,7 @@ void PLG::setRules()
 	parser->addTest(6,"Alternative","atAlternative",1,999999,"defaultSKIP");
 	parser->currentRule->alternatives->add(parser->currentAlt);
 	parser->currentRule = parser->getRule("RuleOptions");
-	//currentRule.defer = RuleOptionsplgAct;
+	parser->currentRule->defer = ::RuleOptionsplgAct;
 	parser->currentAlt = new Alternative();
 	parser->addTest(6,"RuleOption","first",1,1,"defaultSKIP");
 	parser->addTest(6,"OptionClause","others",0,999999,"defaultSKIP");

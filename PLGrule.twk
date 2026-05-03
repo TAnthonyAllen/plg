@@ -114,6 +114,12 @@ String      saved;
                 {
                 cout "  " name " alt " altNum " SUCCEEDED -> offset " (state.cursor - state.buffer.start):;
                 if immediate  immediate(state, result);
+                if defer
+                    {
+                    result.deferRule = this;
+                    if !result.deferred  result.deferred = new DoubleLinkList();
+                    result.deferred += result;
+                    }
                 return result;
                 }
             cout "  " name " alt " altNum " ZERO-ADVANCE — treating as fail":;

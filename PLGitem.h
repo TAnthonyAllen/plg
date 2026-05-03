@@ -1,4 +1,7 @@
 class BaseHash;
+class DoubleLinkList;
+class PLGrule;
+class PLGparse;
 /*******************************************************************************
 	Class that embodies an item (like a PLGitem)
 *******************************************************************************/
@@ -18,10 +21,13 @@ struct
 	unsigned int conditionResult:1;
 	};
 char savedChar;
+DoubleLinkList *deferred;
+PLGrule *deferRule;
 static PLGitem *itemEmpty;
 PLGitem();
 PLGitem(char *s);
 PLGitem(char *start, long length);
+void runDeferred(PLGparse *state);
 char *string();
 char *toString();
 void unString();

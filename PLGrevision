@@ -120,12 +120,15 @@ PLGitem     itemNext;
 void*       itemValue;
 boolean     conditionResult;
 char        savedChar;
+DoubleLinkList  deferred;
+PLGrule         deferRule;
     PLGitem();
     PLGitem(String start, long length);
     PLGitem(String s);
     String string();
     void unString();
     String toString();
+    void runDeferred(PLGparse state);
 
 static PLGitem  itemEmpty;
 alias

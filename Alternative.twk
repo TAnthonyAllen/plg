@@ -37,6 +37,7 @@ int match(PLGparse state, PLGitem &out)
 {
 PLGitem     collected = new;
 DoubleLink  link = null;
+DoubleLink  dlink = null;
 Element     elem;
 int         result = true;
 cout "Alternative match elements: " elements.length():;
@@ -54,10 +55,22 @@ cout `"element kind:",elem.kind:;
                 }
             // optional element didn't match — keep going, cursor unchanged
             }
-        else if item.label
+        else
             {
-            if !collected.children  collected.children = new;
-            collected.children[item.label] = item;
+            if item.label
+                {
+                if !collected.children  collected.children = new;
+                collected.children[item.label] = item;
+                }
+            // Cascade deferred entries up — each sub-match may have
+            // accumulated rule defers that need to fire after the
+            // enclosing rule completes.
+            if item.deferred
+                {
+                if !collected.deferred  collected.deferred = new DoubleLinkList();
+                for dlink = item.deferred.first
+                    collected.deferred += dlink.value;
+                }
             }
         }
     if result {

@@ -38,6 +38,7 @@ int Alternative::match(PLGparse *state, PLGitem *&out)
 {
 PLGitem 	*collected = new PLGitem();
 DoubleLink 	*link = 0;
+DoubleLink 	*dlink = 0;
 Element 	*elem = 0;
 int 		result = 1;
 	::printf("Alternative match elements: %d\n",elements->length);
@@ -56,12 +57,23 @@ int 		result = 1;
 				}
 			// optional element didn't match — keep going, cursor unchanged
 			}
-		else
-		if ( item->itemLabel )
-			{
-			if ( !collected->children )
-				collected->children = new BaseHash();
-			collected->children->add(item->itemLabel,item);
+		else {
+			if ( item->itemLabel )
+				{
+				if ( !collected->children )
+					collected->children = new BaseHash();
+				collected->children->add(item->itemLabel,item);
+				}
+			// Cascade deferred entries up — each sub-match may have
+			// accumulated rule defers that need to fire after the
+			// enclosing rule completes.
+			if ( item->deferred )
+				{
+				if ( !collected->deferred )
+					collected->deferred = new DoubleLinkList();
+				for ( dlink = item->deferred->first; dlink; dlink = dlink->next )
+					collected->deferred->add(dlink->value);
+				}
 			}
 		}
 	if ( result )

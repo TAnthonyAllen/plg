@@ -22,11 +22,11 @@ void ActionOptionplgAct(PLGitem iTEM);
 void ActionOption2plgAct(PLGitem iTEM);
 int ActionRuleplgNow(PLGitem iTEM);
 void Alternative2plgAct(PLGitem iTEM);
-void AlternativeplgAct(PLGitem iTEM);
+void AlternativeplgAct(PLGparse state, PLGitem iTEM);
 void BlockplgAct(PLGitem iTEM);
 void ClauseplgAct(PLGitem iTEM);
 int ElementplgNow(PLGitem iTEM);
-void ElementplgAct(PLGitem iTEM);
+void ElementplgAct(PLGparse state, PLGitem iTEM);
 void Element2plgAct(PLGitem iTEM);
 void Element3plgAct(PLGitem iTEM);
 void Element4plgAct(PLGitem iTEM);
@@ -39,8 +39,8 @@ int IncludeplgNow(PLGitem iTEM);
 int Include2plgNow(PLGitem iTEM);
 int Include3plgNow(PLGitem iTEM);
 int RuleplgNow(PLGparse state, PLGitem iTEM);
-void RuleOptionplgAct(PLGitem iTEM);
-void RuleOptionsplgAct(PLGitem iTEM);
+void RuleOptionplgAct(PLGparse state, PLGitem iTEM);
+void RuleOptionsplgAct(PLGparse state, PLGitem iTEM);
 int SetVariableplgNow(PLGitem iTEM);
 int SetVariable3plgNow(PLGitem iTEM);
 int SetVariable5plgNow(PLGitem iTEM);
@@ -887,7 +887,7 @@ singleQuote  = getSet("singleQuote","'");
     currentRule.alternatives += currentAlt;
     
     currentRule = getRule("RuleOptions");
-    //currentRule.defer = RuleOptionsplgAct;
+    currentRule.defer = RuleOptionsplgAct;
     
     currentAlt = new Alternative();
     
@@ -1112,8 +1112,8 @@ singleQuote  = getSet("singleQuote","'");
 	RuleplgNow — immediate action fired when a Rule alternative matches in
 	Testing.g (or any .g file the parser is processing). Looks up the
 	"ruleName" capture, calls state.getRule() so a fresh rule entry is
-	created in parser.rules. Trimmed: skips options.runDeferred() — that
-	cascade requires runDeferred infrastructure not yet implemented.
+	created in parser.rules, then cascades the deferred action chain
+	(RuleOptionsplgAct etc.) for the rule's body.
 *******************************************************************************/
 int RuleplgNow(PLGparse state, PLGitem iTEM)
 {
@@ -1127,5 +1127,16 @@ String  name;
     name = ruleName.toString();
     cout "RuleplgNow: matched rule '" name "'":;
     state.currentRule = state.getRule(name);
+    iTEM.runDeferred(state);
     return true;
+}
+
+/*******************************************************************************
+	RuleOptionsplgAct — fires after a RuleOptions match completes (deferred).
+	Stub for now; real implementation will populate the current rule's
+	alternatives from the captured RuleOption sub-items.
+*******************************************************************************/
+void RuleOptionsplgAct(PLGparse state, PLGitem iTEM)
+{
+    cout "RuleOptionsplgAct fired":;
 }

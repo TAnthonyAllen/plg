@@ -156,6 +156,13 @@ char 			*saved = 0;
 				::printf("  %s alt %d SUCCEEDED -> offset %lu\n",name,altNum,(state->cursor - state->buffer->start));
 				if ( immediate )
 					immediate(state,result);
+				if ( defer )
+					{
+					result->deferRule = this;
+					if ( !result->deferred )
+						result->deferred = new DoubleLinkList();
+					result->deferred->add(result);
+					}
 				return result;
 				}
 			::printf("  %s alt %d ZERO-ADVANCE — treating as fail\n",name,altNum);

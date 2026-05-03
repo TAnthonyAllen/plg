@@ -16,6 +16,8 @@ boolean     conditionResult;
 PLGitem     next;
 void*       value;
 char        savedChar;
+DoubleLinkList  deferred;
+PLGrule         deferRule;
 static PLGitem     itemEmpty;
 
 /*****************************************************************************
@@ -71,5 +73,25 @@ char	*text = (char*)malloc(itemLength + 1);
     strncpy(text,itemStart,itemLength);
     *(text + itemLength) = 0;
     return text;
+}
+
+/*****************************************************************************
+    runDeferred — walk this item's deferred list (each entry is a PLGitem
+    whose deferRule field names the rule whose defer callback to fire).
+    Cascade is built bottom-up: PLGrule.match adds (rule, result) to
+    result.deferred when the rule has a defer callback; Alternative.match
+    bubbles sub-item entries up into the collected item's deferred list.
+*****************************************************************************/
+void runDeferred(PLGparse state)
+{
+DoubleLink  link;
+PLGitem     item;
+    if !deferred return;
+    for link = deferred.first
+        {
+        item = link.value;
+        if item && item.deferRule
+            item.deferRule.defer(state, item);
+        }
 }
 }

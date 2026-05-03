@@ -1,7 +1,11 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include "DoubleLinkList.h"
+#include "PLGrule.h"
+#include "DoubleLink.h"
 #include "BaseHash.h"
+#include "PLGparse.h"
 #include "PLGitem.h"
 PLGitem *PLGitem::itemEmpty;
 
@@ -17,6 +21,8 @@ PLGitem::PLGitem()
 	itemValue = (void*)0;
 	conditionResult = 0;
 	savedChar = 0;
+	deferred = 0;
+	deferRule = 0;
 	itemStart = 0;
 	itemLength = 0;
 }
@@ -30,6 +36,8 @@ PLGitem::PLGitem(char *s)
 	itemValue = (void*)0;
 	conditionResult = 0;
 	savedChar = 0;
+	deferred = 0;
+	deferRule = 0;
 	itemStart = s;
 	itemLength = ::strlen(s);
 }
@@ -43,8 +51,31 @@ PLGitem::PLGitem(char *start, long length)
 	itemValue = (void*)0;
 	conditionResult = 0;
 	savedChar = 0;
+	deferred = 0;
+	deferRule = 0;
 	itemStart = start;
 	itemLength = length;
+}
+
+/*****************************************************************************
+    runDeferred — walk this item's deferred list (each entry is a PLGitem
+    whose deferRule field names the rule whose defer callback to fire).
+    Cascade is built bottom-up: PLGrule.match adds (rule, result) to
+    result.deferred when the rule has a defer callback; Alternative.match
+    bubbles sub-item entries up into the collected item's deferred list.
+*****************************************************************************/
+void PLGitem::runDeferred(PLGparse *state)
+{
+DoubleLink 	*link = 0;
+PLGitem 	*item = 0;
+	if ( !deferred )
+		return;
+	for ( link = deferred->first; link; link = link->next )
+		{
+		item = (PLGitem*)link->value;
+		if ( item && item->deferRule )
+			item->deferRule->defer(state,item);
+		}
 }
 
 /*****************************************************************************
