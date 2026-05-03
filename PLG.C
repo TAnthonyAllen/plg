@@ -15,6 +15,26 @@
 #include "PLG.h"
 
 /*******************************************************************************
+	AlternativeplgAct — fires after an Alternative meta-rule match completes
+	(deferred). Creates a new C++ Alternative object, appends it to the
+	currentRule (set up by RuleplgNow), and parks it on state.currentAlt so
+	a future ElementplgAct can populate its elements list.
+*******************************************************************************/
+void AlternativeplgAct(PLGparse *state, PLGitem *iTEM)
+{
+Alternative 	*alt = 0;
+	if ( !state->currentRule )
+		{
+		::fprintf(stderr,"AlternativeplgAct: no currentRule — RuleplgNow must run first\n");
+		return;
+		}
+	alt = new Alternative();
+	state->currentRule->addAlternative(alt);
+	state->currentAlt = alt;
+	::printf("AlternativeplgAct fired: added empty alt to rule '%s'\n",state->currentRule->name);
+}
+
+/*******************************************************************************
 	RuleOptionsplgAct — fires after a RuleOptions match completes (deferred).
 	Stub for now; real implementation will populate the current rule's
 	alternatives from the captured RuleOption sub-items.
@@ -465,7 +485,7 @@ void PLG::setRules()
 	parser->addTest(6,"ActionEnd","body",0,1,"");
 	parser->currentRule->alternatives->add(parser->currentAlt);
 	parser->currentRule = parser->getRule("Alternative");
-	//currentRule.defer = AlternativeplgAct;
+	parser->currentRule->defer = ::AlternativeplgAct;
 	// (was: FAIL AlternativeBlock4 — inlined as two alts since
 	//  AlternativeBlock4 was an anonymous alternation Name|QuotedString)
 	parser->currentAlt = new Alternative();

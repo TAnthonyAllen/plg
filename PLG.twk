@@ -655,7 +655,7 @@ singleQuote  = getSet("singleQuote","'");
     currentRule.alternatives += currentAlt;
     
     currentRule = getRule("Alternative");
-    //currentRule.defer = AlternativeplgAct;
+    currentRule.defer = AlternativeplgAct;
     // (was: FAIL AlternativeBlock4 — inlined as two alts since
     //  AlternativeBlock4 was an anonymous alternation Name|QuotedString)
     currentAlt = new Alternative();
@@ -1139,4 +1139,24 @@ String  name;
 void RuleOptionsplgAct(PLGparse state, PLGitem iTEM)
 {
     cout "RuleOptionsplgAct fired":;
+}
+
+/*******************************************************************************
+	AlternativeplgAct — fires after an Alternative meta-rule match completes
+	(deferred). Creates a new C++ Alternative object, appends it to the
+	currentRule (set up by RuleplgNow), and parks it on state.currentAlt so
+	a future ElementplgAct can populate its elements list.
+*******************************************************************************/
+void AlternativeplgAct(PLGparse state, PLGitem iTEM)
+{
+Alternative alt;
+    if !state.currentRule
+        {
+        cerr "AlternativeplgAct: no currentRule — RuleplgNow must run first":;
+        return;
+        }
+    alt = new Alternative();
+    state.currentRule.addAlternative(alt);
+    state.currentAlt = alt;
+    cout "AlternativeplgAct fired: added empty alt to rule '" state.currentRule.name "'":;
 }

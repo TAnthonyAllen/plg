@@ -53,5 +53,6 @@ void process(char *filename);
 void run();
 void setRules();
 };
+void AlternativeplgAct(PLGparse *state, PLGitem *iTEM);
 void RuleOptionsplgAct(PLGparse *state, PLGitem *iTEM);
 int RuleplgNow(PLGparse *state, PLGitem *iTEM);
