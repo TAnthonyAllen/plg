@@ -19,7 +19,9 @@ settings:
     GCC_C_LANGUAGE_STANDARD: "gnu11"
 
 # Pull in the support project so we can depend on (and link against) its
-# static library target.
+# static library target. The Support/ browse group below is navigation
+# only — the actual link comes from this projectReferences + the
+# target's dependencies entry.
 projectReferences:
   Support:
     path: ../../../support/support.xcodeproj
@@ -28,31 +30,154 @@ targets:
   plg:
     type: tool
     platform: macOS
+    dependencies:
+      - target: Support/support
     sources:
-      # ── Sources (.C) — plg's own files only ──────────────────────────
+      # ── PLG own — C++ (compiled) ───────────────────────────────────
       - path: .
-        name: plg
-        group: Sources
+        group: PLG/C++
         buildPhase: sources
         includes: ["*.C"]
 
-      # ── Headers (.h) — plg's own files only ─────────────────────────
+      # ── PLG own — headers (browse) ─────────────────────────────────
       - path: .
-        name: plg
-        group: Headers
+        group: PLG/C++
         buildPhase: none
         includes: ["*.h"]
 
-      # ── TAWK source — plg's own files only ──────────────────────────
+      # ── PLG own — Tawk source (browse) ─────────────────────────────
       - path: .
-        name: plg
-        group: TAWK
+        group: PLG/Tawk
         buildPhase: none
-        includes: ["*.twk", "PLGrevision"]
+        includes: ["*.twk", "plgDirectives"]
 
-    # Build/link against support.a from the support project.
-    dependencies:
-      - target: Support/support
+      # ── PLG own — plgDirectives lives one level up ─────────────────
+      - path: ../plgDirectives
+        group: PLG/Tawk
+        buildPhase: none
+        optional: true
+
+      # ── Tok (TAWK transpiler — browse only) ────────────────────────
+      - path: ../../Tokf
+        group: Tok/C++
+        buildPhase: none
+        includes: ["*.C"]
+        optional: true
+      - path: ../../Tokf
+        group: Tok/Tawk
+        buildPhase: none
+        includes: ["*.twk", "Expression.h"]
+        excludes: ["Expression.twk"]
+        optional: true
+      - path: ../../Tokf
+        group: Tok/Grammer
+        buildPhase: none
+        includes: ["*.g"]
+        optional: true
+
+      # ── Incant (Groups source — browse only) ───────────────────────
+      - path: ../../Groups
+        group: Incant/C++
+        buildPhase: none
+        includes: ["*.mm"]
+        optional: true
+      - path: ../../Groups
+        group: Incant/Tawk
+        buildPhase: none
+        includes:
+          - "GroupBody.twk"
+          - "GroupControl.twk"
+          - "GroupDraw.twk"
+          - "GroupItem.twk"
+          - "GroupList.twk"
+          - "GroupMain.twk"
+          - "GroupRules.twk"
+          - "groups.twk"
+          - "GroupStak.twk"
+          - "Layout.twk"
+          - "RuleStuff.twk"
+          - "Stylish.twk"
+          - "Debug.rtn"
+          - "Generate.rtn"
+          - "GroupActions.rtn"
+        optional: true
+      - path: ../../Groups/XML/WorkingOn
+        group: Incant/Grammar
+        buildPhase: none
+        type: group
+        optional: true
+
+      # ── Support (Frame source — browse only, NOT compiled) ─────────
+      - path: ../../../support/Frame
+        group: Support/C++
+        buildPhase: none
+        includes:
+          - "BaseEntry.C"
+          - "BaseHash.C"
+          - "Buffer.C"
+          - "DispatchQ.C"
+          - "DoubleLink.C"
+          - "DoubleLinkList.C"
+          - "OCroutines.mm"
+          - "PLGset.C"
+          - "SearchItem.C"
+          - "SearchNode.C"
+          - "SearchTree.C"
+          - "Stak.C"
+          - "Tape.C"
+          - "TapeSegment.C"
+        optional: true
+      - path: ../../../support/Frame
+        group: Support/Tawk
+        buildPhase: none
+        includes:
+          - "BaseHash.twk"
+          - "Buffer.twk"
+          - "DispatchQ.twk"
+          - "DoubleLink.rtn"
+          - "DoubleLink.twk"
+          - "DoubleLinkList.rtn"
+          - "DoubleLinkList.twk"
+          - "OCroutines.twk"
+          - "PLGset.twk"
+          - "SearchItem.twk"
+          - "SearchNode.twk"
+          - "SearchTree.twk"
+          - "Stak.twk"
+          - "StringRoutines.twk"
+          - "Tape.twk"
+          - "TapeSegment.twk"
+        optional: true
+
+      # ── Include (support externals + project markdown) ─────────────
+      - path: ../../../support/Include
+        group: Include
+        buildPhase: none
+        includes:
+          - "BOT.ext"
+          - "changes"
+          - "db.ext"
+          - "frame"
+          - "globals"
+          - "groups.ext"
+          - "GUIexternals"
+          - "IOSframe"
+          - "jit"
+          - "maps"
+          - "OCframe"
+          - "pdf.ext"
+          - "plg.ext"
+          - "tok.ext"
+        optional: true
+      - path: CLAUDE.md
+        group: Include
+        buildPhase: none
+      - path: PLGrevision
+        group: Include
+        buildPhase: none
+      - path: projectBible.md
+        group: Include
+        buildPhase: none
 
     settings:
       base:
