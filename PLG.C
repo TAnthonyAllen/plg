@@ -122,6 +122,21 @@ char 		opt = 0;
 		}
 	if ( opt == '%' )
 		elem->isIgnored = 1;
+	if ( opt == '{' )
+		{
+		elem->minimum = 0;
+		elem->maximum = 1;
+		elem->processUpTo = 1;
+		elem->skipSet = 0;
+		}
+	if ( opt == '}' )
+		{
+		elem->minimum = 0;
+		elem->maximum = 1;
+		elem->processUpTo = 1;
+		elem->skipOverMatch = 1;
+		elem->skipSet = 0;
+		}
 	::printf("ElementTypeplgAct: opt='%c' min=%d max=%d\n",opt,elem->minimum,elem->maximum);
 }
 
@@ -149,7 +164,6 @@ void ElementplgAct(PLGparse *state, PLGitem *iTEM)
 {
 Element 	*elem = 0;
 PLGitem 	*atElement = 0;
-PLGitem 	*textItem = 0;
 char 		*text = 0;
 char 		*spec = 0;
 char 		*litText = 0;
@@ -200,20 +214,18 @@ int 		handled = 0;
 	// Inline StringSet -> kSet; prefer captured "text" child, else strip brackets
 	if ( !handled && first == '[' )
 		{
+		// Inline StringSet: bracket-strip atElement.toString() to get the
+		// spec. (Don't use children["text"] — its first-char skip drops a
+		// significant leading space, e.g. `[ \f\r\t\n]` becomes `\f\r\t\n`.)
 		elem->kind = 3;
-		textItem = (PLGitem*)atElement->children->get("text");
-		if ( textItem )
-			spec = textItem->toString();
-		else {
-			len = ::strlen(text);
-			if ( len >= 2 )
-				{
-				spec = (char*)::malloc(len - 1);
-				::strncpy(spec,text + 1,len - 2);
-				*(spec + len - 2) = 0;
-				}
-			else	spec = "";
+		len = ::strlen(text);
+		if ( len >= 2 )
+			{
+			spec = (char*)::malloc(len - 1);
+			::strncpy(spec,text + 1,len - 2);
+			*(spec + len - 2) = 0;
 			}
+		else	spec = "";
 		elem->setRef = state->getSet(spec);
 		handled = 1;
 		}
@@ -286,6 +298,50 @@ int 		handled = 0;
 }
 
 /*******************************************************************************
+	RuleplgNow — immediate action fired when a Rule alternative matches in
+	Testing.g (or any .g file the parser is processing). Looks up the
+	"ruleName" capture, calls state.getRule() so a fresh rule entry is
+	created in parser.rules, then cascades the deferred action chain
+	(RuleOptionsplgAct etc.) for the rule's body.
+*******************************************************************************/
+int ForwardDeclplgNow(PLGparse *state, PLGitem *iTEM)
+{
+PLGitem 	*n = 0;
+char 		*name = 0;
+char 		*s = 0;
+int 		i = 0;
+char 		*first = 0;
+	if ( !iTEM || !iTEM->children )
+		return 0;
+	n = (PLGitem*)iTEM->children->get("names");
+	if ( !n )
+		return 0;
+	// Head's length was overwritten by Element.applyRepetition to span
+	// the full repetition. Extract the head's NAME (alpha-prefix) by
+	// scanning from its start until the first non-name char.
+	s = n->itemStart;
+	i = 0;
+	while ( *(s + i) && (((*(s + i) >= 'A') && (*(s + i) <= 'Z')) || ((*(s + i) >= 'a') && (*(s + i) <= 'z')) || ((*(s + i) >= '0') && (*(s + i) <= '9')) || (*(s + i) == '_')) )
+		i++;
+	first = (char*)::malloc(i + 1);
+	::strncpy(first,s,i);
+	*(first + i) = 0;
+	::printf("ForwardDeclplgNow: pre-registering '%s'\n",first);
+	state->getRule(first);
+	// Subsequent matches are linked via head.next — each has its own
+	// proper start/length, so toString() works correctly.
+	n = n->itemNext;
+	while ( n )
+		{
+		name = n->toString();
+		::printf("ForwardDeclplgNow: pre-registering '%s'\n",name);
+		state->getRule(name);
+		n = n->itemNext;
+		}
+	return 1;
+}
+
+/*******************************************************************************
 	RuleOptionplgAct — fires after a RuleOption match completes (deferred).
 	A plg "RuleOption" is a SEQUENCE of plg-Alternatives separated by `|`
 	at the RuleOptions level. Each RuleOption maps to ONE C++ Alternative
@@ -317,13 +373,6 @@ void RuleOptionsplgAct(PLGparse *state, PLGitem *iTEM)
 	::printf("RuleOptionsplgAct fired\n");
 }
 
-/*******************************************************************************
-	RuleplgNow — immediate action fired when a Rule alternative matches in
-	Testing.g (or any .g file the parser is processing). Looks up the
-	"ruleName" capture, calls state.getRule() so a fresh rule entry is
-	created in parser.rules, then cascades the deferred action chain
-	(RuleOptionsplgAct etc.) for the rule's body.
-*******************************************************************************/
 int RuleplgNow(PLGparse *state, PLGitem *iTEM)
 {
 PLGitem 	*ruleName = 0;
@@ -684,9 +733,13 @@ void PLG::setRules()
 	parser->currentRule = parser->getRule("Header");
 	//currentRule.immediate = HeaderplgNow;
 	parser->currentRule->doNotGuard = 1;
+	// Header items live before the first `%%`. Each Header is an Include
+	// directive or a Comment. Header* in Start handles repetition.
 	parser->currentAlt = new Alternative();
-	parser->addTest(1,"%%","head",0,1,"");
-	parser->addTest(6,"Extender","name",0,1,"defaultSKIP");
+	parser->addTest(6,"Include","",1,1,"defaultSKIP");
+	parser->currentRule->alternatives->add(parser->currentAlt);
+	parser->currentAlt = new Alternative();
+	parser->addTest(6,"Comment","",1,1,"defaultSKIP");
 	parser->currentRule->alternatives->add(parser->currentAlt);
 	parser->currentRule = parser->getRule("ActionEnd");
 	parser->currentSet = parser->getSet(".|;");
@@ -704,6 +757,25 @@ void PLG::setRules()
 	parser->currentAlt = new Alternative();
 	parser->addTest(1,"%%","",1,1,"defaultSKIP");
 	parser->addTest(4,"","code",1,999999,"defaultSKIP");
+	parser->currentRule->alternatives->add(parser->currentAlt);
+	// Trailer: everything after the second `%%`. Any chars to EOF.
+	// Doesn't begin with `%%` — the second `%%` is consumed by Start.
+	parser->currentRule = parser->getRule("Trailer");
+	parser->currentRule->doNotGuard = 1;
+	parser->currentAlt = new Alternative();
+	parser->addTest(4,"","code",1,999999,"");
+	parser->currentRule->alternatives->add(parser->currentAlt);
+	// ForwardDecl: `Rules <names>+ ;` pre-registers rule names so
+	// subsequent Rule definitions referencing them succeed even if
+	// those rules haven't been seen yet. ForwardDeclplgNow fires
+	// immediately and calls state.getRule(name) for each name.
+	parser->currentRule = parser->getRule("ForwardDecl");
+	parser->currentRule->immediate = ::ForwardDeclplgNow;
+	parser->currentRule->doNotGuard = 1;
+	parser->currentAlt = new Alternative();
+	parser->addTest(1,"Rules","",1,1,"defaultSKIP");
+	parser->addTest(6,"Name","names",1,999999,"defaultSKIP");
+	parser->addTest(1,";","",1,1,"defaultSKIP");
 	parser->currentRule->alternatives->add(parser->currentAlt);
 	parser->currentRule = parser->getRule("Alpha");
 	parser->currentSet = parser->getSet("a-zA-Z0-9_.");
@@ -744,12 +816,18 @@ void PLG::setRules()
 	parser->currentRule = parser->getRule("CommentPartBoDY");
 	//currentRule.immediate = balancEbody;
 	//currentRule.next = getRule("CommentPartAny");
+	parser->currentRule->doNotGuard = 1;
+	// Match any char that isn't the start of a closing `*/` marker:
+	//   alt 1: any char except `*`
+	//   alt 2: `*` followed by any char except `/`
+	// This way Body+ stops cleanly when it reaches `*/`, leaving the
+	// closer for CommentPartBalancE's mandatory `*/` element to consume.
 	parser->currentAlt = new Alternative();
-	parser->addTest(1,"/*","begin",0,1,"");
-	parser->addTest(1,"*/","end",0,1,"");
+	parser->addTest(3,"^*","",1,1,"");
 	parser->currentRule->alternatives->add(parser->currentAlt);
 	parser->currentAlt = new Alternative();
-	parser->addTest(4,"","",1,1,"");
+	parser->addTest(1,"*","",1,1,"");
+	parser->addTest(3,"^/","",1,1,"");
 	parser->currentRule->alternatives->add(parser->currentAlt);
 	parser->currentRule = parser->getRule("QuotedStringBlock1Block2");
 	// Source had `currentSet = getSet("'"); saveTest.setAlternate(currentTest);`
@@ -930,7 +1008,7 @@ void PLG::setRules()
 	parser->addTest(1,"","",1,1,"defaultSKIP");
 	parser->currentRule->alternatives->add(parser->currentAlt);
 	parser->currentAlt = new Alternative();
-	parser->addTest(3,"*+?!%","option",1,1,"defaultSKIP");
+	parser->addTest(3,"*+?!%{}","option",1,1,"defaultSKIP");
 	parser->currentRule->alternatives->add(parser->currentAlt);
 	parser->currentRule = parser->getRule("ForwardReference");
 	//currentRule.immediate = ForwardReferenceplgNow;
@@ -950,13 +1028,21 @@ void PLG::setRules()
 	parser->currentRule = parser->getRule("Include");
 	//currentRule.immediate = IncludeplgNow;
 	//currentRule.next = getRule("Include2");
+	// Bare form: `include Name` (no parens) — used at top of plg.g.
+	parser->currentAlt = new Alternative();
+	parser->addTest(1,"include","",1,1,"defaultSKIP");
+	parser->addTest(6,"Name","file",1,1,"defaultSKIP");
+	parser->currentRule->alternatives->add(parser->currentAlt);
+	// Paren forms: capture filename via ^) set between `(` and `)`.
 	parser->currentAlt = new Alternative();
 	parser->addTest(1,"include(","",1,1,"defaultSKIP");
-	parser->addTest(1,")","file",0,1,"");
+	parser->addTest(3,"^)","file",1,999999,"");
+	parser->addTest(1,")","",1,1,"");
 	parser->currentRule->alternatives->add(parser->currentAlt);
 	parser->currentAlt = new Alternative();
 	parser->addTest(1,"insert(","",1,1,"defaultSKIP");
-	parser->addTest(1,")","file",0,1,"");
+	parser->addTest(3,"^)","file",1,999999,"");
+	parser->addTest(1,")","",1,1,"");
 	parser->currentRule->alternatives->add(parser->currentAlt);
 	parser->currentAlt = new Alternative();
 	parser->addTest(1,"-%","",1,1,"defaultSKIP");
@@ -1043,9 +1129,19 @@ void PLG::setRules()
 	parser->currentRule = parser->getRule("Start");
 	//currentRule.immediate = StartplgNow;
 	//currentRule.next = getRule("Start2");
+	// Yacc-style three-section structure:
+	//   Header*  '%%'  Body+  '%%'?  Trailer?
+	// Header* matches pre-`%%` declarations (Include, Comment).
+	// First `%%` opens the rules section.
+	// Body+ matches rule definitions.
+	// Optional second `%%` closes the rules section.
+	// Trailer? consumes anything after the second `%%` (e.g. C++ main).
 	parser->currentAlt = new Alternative();
-	parser->addTest(6,"Header","",0,1,"defaultSKIP");
+	parser->addTest(6,"Header","",0,999999,"defaultSKIP");
+	parser->addTest(1,"%%","",1,1,"defaultSKIP");
 	parser->addTest(6,"Body","",1,999999,"defaultSKIP");
+	parser->addTest(1,"%%","",0,1,"defaultSKIP");
+	parser->addTest(6,"Trailer","",0,1,"defaultSKIP");
 	parser->currentRule->alternatives->add(parser->currentAlt);
 	parser->currentAlt = new Alternative();
 	parser->addTest(6,"Start2Block6","error",1,1,"defaultSKIP");
@@ -1072,18 +1168,29 @@ void PLG::setRules()
 	parser->currentAlt = new Alternative();
 	parser->addTest(6,"Comment","comment",1,1,"defaultSKIP");
 	parser->currentRule->alternatives->add(parser->currentAlt);
+	// ForwardDecl ahead of SetVariable so the `Rules <names>;` form
+	// fires ForwardDeclplgNow (pre-registers names) instead of being
+	// silently swallowed by SetVariable's alt 2.
+	parser->currentAlt = new Alternative();
+	parser->addTest(6,"ForwardDecl","",1,1,"defaultSKIP");
+	parser->currentRule->alternatives->add(parser->currentAlt);
+	// Rule moved AHEAD of SetVariable so the `Set X` keyword in
+	// SetVariable's alts doesn't greedy-match the prefix of an
+	// identifier like `SetVariable`. The banged `!`/noSkip `&` modifiers
+	// that should give SetVariable's keywords a word-boundary check
+	// are not yet propagated through addTest — TODO restore them.
+	parser->currentAlt = new Alternative();
+	parser->addTest(6,"Rule","atRule",1,1,"defaultSKIP");
+	parser->currentRule->alternatives->add(parser->currentAlt);
 	parser->currentAlt = new Alternative();
 	parser->addTest(6,"SetVariable","",1,1,"defaultSKIP");
 	parser->currentRule->alternatives->add(parser->currentAlt);
 	parser->currentAlt = new Alternative();
 	parser->addTest(6,"Include","",1,1,"defaultSKIP");
 	parser->currentRule->alternatives->add(parser->currentAlt);
-	parser->currentAlt = new Alternative();
-	parser->addTest(6,"Tail","",1,1,"defaultSKIP");
-	parser->currentRule->alternatives->add(parser->currentAlt);
-	parser->currentAlt = new Alternative();
-	parser->addTest(6,"Rule","atRule",1,1,"defaultSKIP");
-	parser->currentRule->alternatives->add(parser->currentAlt);
+	// Tail removed from Body alts: `%%` now bounds the rules section
+	// at Start level, not via a Body alternative that swallows the rest.
+	// (ForwardDecl alt is registered ahead of SetVariable above.)
 	parser->currentAlt = new Alternative();
 	parser->addTest(6,"ActionRule","",1,1,"defaultSKIP");
 	parser->currentRule->alternatives->add(parser->currentAlt);
@@ -1116,3 +1223,4 @@ void PLG::setRules()
 /*	Warning: the following methods were referenced but not declared
 	strrchr(char*,char)
 */
+// Ignoring declaration of unused variable textItem in method: ElementplgAct(PLGparse*,PLGitem*)

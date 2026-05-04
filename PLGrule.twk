@@ -134,10 +134,15 @@ String      saved;
                 return result;
                 }
             cout "  " name " alt " altNum " ZERO-ADVANCE — treating as fail":;
+            // Restore cursor — Alternative.match may have advanced
+            // through partial matches before its required element failed.
+            // Without this, the next alt starts at the wrong position.
+            state.cursor = saved;
             }
         else
             {
             cout "  " name " alt " altNum " FAILED at offset " (state.cursor - state.buffer.start) " (was " (saved - state.buffer.start) ")":;
+            state.cursor = saved;
             }
         }
     cout "  " name " ALL " altCount " alts failed":;

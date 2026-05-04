@@ -16,6 +16,8 @@ PLGset          guardSet;           // FIRST set, computed once
 boolean         banged
                 isIgnored
                 noSkip
+                processUpTo
+                skipOverMatch
                 kind:4[kLit kChr kSet kAny kEof kRuleRef kKeyTable kCondition kVariable kUpTo kBalanced]
                 ;
 // Kind-specific data — only one of these is meaningful, depending on kind
@@ -46,9 +48,9 @@ void generate(Buffer output)
     switch(kind) {
         case kLit:
             print "elem->kind = kLit;":;
-            print "elem->litText = \"":;
+            print "elem->litText = \"";
             PLGset.printText(litText, output);
-            print "\";\n":;
+            print "\";":;
             break;
         case kChr:
             print "elem->kind = kChr;":;
@@ -137,6 +139,12 @@ int count = 1;
 cout "Element applyRepetition":;
     while count < maximum {
         String saved = snapshot();
+        // Skip between repeats only for sub-rule (kRuleRef) repetitions,
+        // where each iteration is its own rule call separated by
+        // whitespace (e.g. Name+ across newlines). Char-level repetitions
+        // (kSet, kLit, etc.) must NOT skip between matches — that would
+        // let `[a-zA-Z]+` swallow whitespace inside what should be one name.
+        if !noSkip && kind == 6  skip();   // 6 = kRuleRef (kRuleRef macro is a test, not a value)
         // Re-run the element's kind-specific matcher
 cout `"applyRepetition matchByKind kind=" kind " cursor=" state.cursor:;
         PLGitem nextItem = matchByKind(state);

@@ -57,6 +57,7 @@ void setRules();
 void AlternativeplgAct(PLGparse *state, PLGitem *iTEM);
 void ElementTypeplgAct(PLGparse *state, PLGitem *iTEM);
 void ElementplgAct(PLGparse *state, PLGitem *iTEM);
+int ForwardDeclplgNow(PLGparse *state, PLGitem *iTEM);
 void RuleOptionplgAct(PLGparse *state, PLGitem *iTEM);
 void RuleOptionsplgAct(PLGparse *state, PLGitem *iTEM);
 int RuleplgNow(PLGparse *state, PLGitem *iTEM);

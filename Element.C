@@ -27,6 +27,14 @@ int count = 1;
 	while ( count < maximum )
 		{
 		char 	*saved = state->snapshot();
+		// Skip between repeats only for sub-rule (kRuleRef) repetitions,
+		// where each iteration is its own rule call separated by
+		// whitespace (e.g. Name+ across newlines). Char-level repetitions
+		// (kSet, kLit, etc.) must NOT skip between matches — that would
+		// let `[a-zA-Z]+` swallow whitespace inside what should be one name.
+		if ( !noSkip && kind == 6 )
+			state->skip();
+		// 6 = kRuleRef (kRuleRef macro is a test, not a value)
 		// Re-run the element's kind-specific matcher
 		::printf("\tapplyRepetition matchByKind kind=%u cursor=%s\n",kind,state->cursor);
 		PLGitem *nextItem = matchByKind(state);
@@ -75,9 +83,8 @@ void Element::generate(Buffer *output)
 			output->appendString("elem->kind = kLit;");
 			output->appendString("\n");
 			output->appendString("elem->litText = \"");
-			output->appendString("\n");
 			PLGset::printText(litText,output);
-			output->appendString("\";\n");
+			output->appendString("\";");
 			output->appendString("\n");
 			break;
 		case 2:

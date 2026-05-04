@@ -39,6 +39,7 @@ int IncludeplgNow(PLGitem iTEM);
 int Include2plgNow(PLGitem iTEM);
 int Include3plgNow(PLGitem iTEM);
 int RuleplgNow(PLGparse state, PLGitem iTEM);
+int ForwardDeclplgNow(PLGparse state, PLGitem iTEM);
 void RuleOptionplgAct(PLGparse state, PLGitem iTEM);
 void RuleOptionsplgAct(PLGparse state, PLGitem iTEM);
 int SetVariableplgNow(PLGitem iTEM);
@@ -412,14 +413,15 @@ singleQuote  = getSet("singleQuote","'");
     currentRule = getRule("Header");
     //currentRule.immediate = HeaderplgNow;
     currentRule.doNotGuard = true;
-    
+
+    // Header items live before the first `%%`. Each Header is an Include
+    // directive or a Comment. Header* in Start handles repetition.
     currentAlt = new Alternative();
-    
-    addTest(1, "%%", "head", 0, 1, "");
-    
-    
-    addTest(6, "Extender", "name", 0, 1, "defaultSKIP");
-    
+    addTest(6, "Include", "", 1, 1, "defaultSKIP");
+    currentRule.alternatives += currentAlt;
+
+    currentAlt = new Alternative();
+    addTest(6, "Comment", "", 1, 1, "defaultSKIP");
     currentRule.alternatives += currentAlt;
     
     currentRule = getRule("ActionEnd");
@@ -445,14 +447,35 @@ singleQuote  = getSet("singleQuote","'");
     
     currentRule = getRule("Tail");
     //currentRule.immediate = TailplgNow;
-    
+
     currentAlt = new Alternative();
-    
+
     addTest(1, "%%", "", 1, 1, "defaultSKIP");
-    
-    
+
+
     addTest(4, "", "code", 1, 999999, "defaultSKIP");
-    
+
+    currentRule.alternatives += currentAlt;
+
+    // Trailer: everything after the second `%%`. Any chars to EOF.
+    // Doesn't begin with `%%` — the second `%%` is consumed by Start.
+    currentRule = getRule("Trailer");
+    currentRule.doNotGuard = true;
+    currentAlt = new Alternative();
+    addTest(4, "", "code", 1, 999999, "");
+    currentRule.alternatives += currentAlt;
+
+    // ForwardDecl: `Rules <names>+ ;` pre-registers rule names so
+    // subsequent Rule definitions referencing them succeed even if
+    // those rules haven't been seen yet. ForwardDeclplgNow fires
+    // immediately and calls state.getRule(name) for each name.
+    currentRule = getRule("ForwardDecl");
+    currentRule.immediate = ForwardDeclplgNow;
+    currentRule.doNotGuard = true;
+    currentAlt = new Alternative();
+    addTest(1, "Rules", "",      1, 1,      "defaultSKIP");
+    addTest(6, "Name",  "names", 1, 999999, "defaultSKIP");
+    addTest(1, ";",     "",      1, 1,      "defaultSKIP");
     currentRule.alternatives += currentAlt;
     
     currentRule = getRule("Alpha");
@@ -528,19 +551,19 @@ singleQuote  = getSet("singleQuote","'");
     currentRule = getRule("CommentPartBoDY");
     //currentRule.immediate = balancEbody;
     //currentRule.next = getRule("CommentPartAny");
-    
+    currentRule.doNotGuard = true;
+
+    // Match any char that isn't the start of a closing `*/` marker:
+    //   alt 1: any char except `*`
+    //   alt 2: `*` followed by any char except `/`
+    // This way Body+ stops cleanly when it reaches `*/`, leaving the
+    // closer for CommentPartBalancE's mandatory `*/` element to consume.
     currentAlt = new Alternative();
-    
-    addTest(1, "/*", "begin", 0, 1, "");
-    
-    
-    addTest(1, "*/", "end", 0, 1, "");
-    
+    addTest(3, "^*", "", 1, 1, "");
     currentRule.alternatives += currentAlt;
     currentAlt = new Alternative();
-    
-    addTest(4, "", "", 1, 1, "");
-    
+    addTest(1, "*", "", 1, 1, "");
+    addTest(3, "^/", "", 1, 1, "");
     currentRule.alternatives += currentAlt;
     
     currentRule = getRule("QuotedStringBlock1Block2");
@@ -864,7 +887,7 @@ singleQuote  = getSet("singleQuote","'");
     currentRule.alternatives += currentAlt;
     currentAlt = new Alternative();
     
-    addTest(3, "*+?!%", "option", 1, 1, "defaultSKIP");
+    addTest(3, "*+?!%{}", "option", 1, 1, "defaultSKIP");
     
     currentRule.alternatives += currentAlt;
     
@@ -898,22 +921,24 @@ singleQuote  = getSet("singleQuote","'");
     currentRule = getRule("Include");
     //currentRule.immediate = IncludeplgNow;
     //currentRule.next = getRule("Include2");
-    
+
+    // Bare form: `include Name` (no parens) — used at top of plg.g.
     currentAlt = new Alternative();
-    
-    addTest(1, "include(", "", 1, 1, "defaultSKIP");
-    
-    
-    addTest(1, ")", "file", 0, 1, "");
-    
+    addTest(1, "include", "", 1, 1, "defaultSKIP");
+    addTest(6, "Name", "file", 1, 1, "defaultSKIP");
     currentRule.alternatives += currentAlt;
+
+    // Paren forms: capture filename via ^) set between `(` and `)`.
     currentAlt = new Alternative();
-    
+    addTest(1, "include(", "", 1, 1, "defaultSKIP");
+    addTest(3, "^)", "file", 1, 999999, "");
+    addTest(1, ")", "", 1, 1, "");
+    currentRule.alternatives += currentAlt;
+
+    currentAlt = new Alternative();
     addTest(1, "insert(", "", 1, 1, "defaultSKIP");
-    
-    
-    addTest(1, ")", "file", 0, 1, "");
-    
+    addTest(3, "^)", "file", 1, 999999, "");
+    addTest(1, ")", "", 1, 1, "");
     currentRule.alternatives += currentAlt;
     currentAlt = new Alternative();
     
@@ -1091,19 +1116,24 @@ singleQuote  = getSet("singleQuote","'");
     currentRule = getRule("Start");
     //currentRule.immediate = StartplgNow;
     //currentRule.next = getRule("Start2");
-    
+
+    // Yacc-style three-section structure:
+    //   Header*  '%%'  Body+  '%%'?  Trailer?
+    // Header* matches pre-`%%` declarations (Include, Comment).
+    // First `%%` opens the rules section.
+    // Body+ matches rule definitions.
+    // Optional second `%%` closes the rules section.
+    // Trailer? consumes anything after the second `%%` (e.g. C++ main).
     currentAlt = new Alternative();
-    
-    addTest(6, "Header", "", 0, 1, "defaultSKIP");
-    
-    
-    addTest(6, "Body", "", 1, 999999, "defaultSKIP");
-    
+    addTest(6, "Header",  "",     0, 999999, "defaultSKIP");
+    addTest(1, "%%",      "",     1, 1,      "defaultSKIP");
+    addTest(6, "Body",    "",     1, 999999, "defaultSKIP");
+    addTest(1, "%%",      "",     0, 1,      "defaultSKIP");
+    addTest(6, "Trailer", "",     0, 1,      "defaultSKIP");
     currentRule.alternatives += currentAlt;
+
     currentAlt = new Alternative();
-    
     addTest(6, "Start2Block6", "error", 1, 1, "defaultSKIP");
-    
     currentRule.alternatives += currentAlt;
     
     currentRule = getRule("StringSet");
@@ -1128,32 +1158,42 @@ singleQuote  = getSet("singleQuote","'");
     //currentRule.next = getRule("Body2");
     
     currentAlt = new Alternative();
-    
+
     addTest(6, "Comment", "comment", 1, 1, "defaultSKIP");
-    
+
     currentRule.alternatives += currentAlt;
+    // ForwardDecl ahead of SetVariable so the `Rules <names>;` form
+    // fires ForwardDeclplgNow (pre-registers names) instead of being
+    // silently swallowed by SetVariable's alt 2.
     currentAlt = new Alternative();
-    
-    addTest(6, "SetVariable", "", 1, 1, "defaultSKIP");
-    
+    addTest(6, "ForwardDecl", "", 1, 1, "defaultSKIP");
     currentRule.alternatives += currentAlt;
+
+    // Rule moved AHEAD of SetVariable so the `Set X` keyword in
+    // SetVariable's alts doesn't greedy-match the prefix of an
+    // identifier like `SetVariable`. The banged `!`/noSkip `&` modifiers
+    // that should give SetVariable's keywords a word-boundary check
+    // are not yet propagated through addTest — TODO restore them.
     currentAlt = new Alternative();
-    
-    addTest(6, "Include", "", 1, 1, "defaultSKIP");
-    
-    currentRule.alternatives += currentAlt;
-    currentAlt = new Alternative();
-    
-    addTest(6, "Tail", "", 1, 1, "defaultSKIP");
-    
-    currentRule.alternatives += currentAlt;
-    currentAlt = new Alternative();
-    
+
     addTest(6, "Rule", "atRule", 1, 1, "defaultSKIP");
-    
+
     currentRule.alternatives += currentAlt;
     currentAlt = new Alternative();
-    
+
+    addTest(6, "SetVariable", "", 1, 1, "defaultSKIP");
+
+    currentRule.alternatives += currentAlt;
+    currentAlt = new Alternative();
+
+    addTest(6, "Include", "", 1, 1, "defaultSKIP");
+
+    currentRule.alternatives += currentAlt;
+    // Tail removed from Body alts: `%%` now bounds the rules section
+    // at Start level, not via a Body alternative that swallows the rest.
+    // (ForwardDecl alt is registered ahead of SetVariable above.)
+    currentAlt = new Alternative();
+
     addTest(6, "ActionRule", "", 1, 1, "defaultSKIP");
     
     currentRule.alternatives += currentAlt;
@@ -1209,6 +1249,42 @@ singleQuote  = getSet("singleQuote","'");
 	created in parser.rules, then cascades the deferred action chain
 	(RuleOptionsplgAct etc.) for the rule's body.
 *******************************************************************************/
+int ForwardDeclplgNow(PLGparse state, PLGitem iTEM)
+{
+PLGitem n;
+String  name;
+String  s;
+int     i;
+char    *first;
+    if !iTEM || !iTEM.children
+        return false;
+    n = iTEM.children["names"];
+    if !n  return false;
+    // Head's length was overwritten by Element.applyRepetition to span
+    // the full repetition. Extract the head's NAME (alpha-prefix) by
+    // scanning from its start until the first non-name char.
+    s = n.start;
+    i = 0;
+    while *(s + i) && (((*(s + i) >= 'A') && (*(s + i) <= 'Z')) || ((*(s + i) >= 'a') && (*(s + i) <= 'z')) || ((*(s + i) >= '0') && (*(s + i) <= '9')) || (*(s + i) == '_'))
+        i++;
+    first = (char*)malloc(i + 1);
+    strncpy(first, s, i);
+    *(first + i) = 0;
+    cout "ForwardDeclplgNow: pre-registering '" first "'":;
+    state.getRule(first);
+    // Subsequent matches are linked via head.next — each has its own
+    // proper start/length, so toString() works correctly.
+    n = n.next;
+    while n
+        {
+        name = n.toString();
+        cout "ForwardDeclplgNow: pre-registering '" name "'":;
+        state.getRule(name);
+        n = n.next;
+        }
+    return true;
+}
+
 int RuleplgNow(PLGparse state, PLGitem iTEM)
 {
 PLGitem ruleName;
@@ -1360,22 +1436,19 @@ int         handled = 0;
     // Inline StringSet -> kSet; prefer captured "text" child, else strip brackets
     if !handled && first == '['
         {
+        // Inline StringSet: bracket-strip atElement.toString() to get the
+        // spec. (Don't use children["text"] — its first-char skip drops a
+        // significant leading space, e.g. `[ \f\r\t\n]` becomes `\f\r\t\n`.)
         elem.kind = 3;
-        textItem = atElement.children["text"];
-        if textItem
-            spec = textItem.toString();
-        else
+        len = strlen(text);
+        if len >= 2
             {
-            len = strlen(text);
-            if len >= 2
-                {
-                spec = (char*)malloc(len - 1);
-                strncpy(spec, text + 1, len - 2);
-                *(spec + len - 2) = 0;
-                }
-            else
-                spec = "";
+            spec = (char*)malloc(len - 1);
+            strncpy(spec, text + 1, len - 2);
+            *(spec + len - 2) = 0;
             }
+        else
+            spec = "";
         elem.setRef = state.getSet(spec);
         handled = true;
         }
@@ -1529,5 +1602,20 @@ char        opt;
         }
     if opt == '%'
         elem.isIgnored = true;
+    if opt == '{'
+        {
+        elem.minimum = 0;
+        elem.maximum = 1;
+        elem.processUpTo = true;
+        elem.skipSet = null;
+        }
+    if opt == '}'
+        {
+        elem.minimum = 0;
+        elem.maximum = 1;
+        elem.processUpTo = true;
+        elem.skipOverMatch = true;
+        elem.skipSet = null;
+        }
     cout "ElementTypeplgAct: opt='" opt "' min=" elem.minimum " max=" elem.maximum:;
 }

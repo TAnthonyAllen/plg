@@ -165,7 +165,7 @@ PLG is supposed to generate setRules() but needs setRules() to parse plg.g to ge
 4. **`new` type inference** inconsistent — `alt = new` sometimes fails to resolve to `new Alternative()`. Workaround: explicit `alt = new Alternative()`. Known quirk, not a blocker.
 5. **No `#include` in .h files** — inherited classes need parent .h included but TAWK never generates includes in .h files. Must add manually after every re-tawk.
 6. **Unused field warning** — TAWK silently drops unused declared fields instead of warning. Fix: emit warning, keep field.
-7. **`kSet` macro conflict** — `kSet(button)` is a test macro, not an assignable value. Kind assignment requires numeric literal. Fix: separate test macros from enum values.
+7. **`kSet` macro conflict** — `kSet(button)` is a test macro, not an assignable value. Kind assignment requires numeric literal. Fix: separate test macros from enum values. **Same trap applies to comparison**: `kind == kRuleRef` expands to `kind == (kind == 6)` (always false except for kind 0 or 1) — must use the numeric value (`kind == 6`) for comparisons too. Same root cause as the assignment issue: the kind-name macros are predicate-shaped, not value-shaped.
 8. **`extern "C"`** in tawk-generated files gets clobbered on re-tawk. Free functions needing C linkage must live in hand-written non-generated files.
 9. **No include search paths** — all includes must be absolute paths. No `-I` flag support. Add in TAWK refactor.
 10. **TAWK iteration trap** — `for (link = list->first; link; link = link->next)` already advances. Adding `link = link->next` inside the body causes double-advance and SIGSEGV on multi-alt rules. Never add manual advance inside the body.
@@ -299,11 +299,14 @@ These need thinking through before coding. Not implementation tasks — design c
 
 6. **Claude as GroupItem field type** — isCLAUDE data type alongside isSTRING, isNUMBER, isGROUP etc. Evaluates lazily — calls API, returns GroupItem. The AI is not a tool called from incant, it IS a field in incant.
 
+7. **Go-style channel messaging for distributed GroupItems** — steal Go's goroutine/channel pattern for async GroupItem messaging. A channel IS a GroupItem field — fire a message to a remote GroupItem, do other work, collect the response when it arrives. No callbacks, no promises, no async/await ceremony. Channels as first-class objects that can be passed, shared, selected on. Key application: isCLAUDE field type uses a channel GroupItem for async API calls — fire and collect, never block. HPDL — Hard Part Do Later. Ken Thompson would approve of the theft.
+
 ---
 
 ## Glossary
 
 - **HWF** — Hands Waving Furiously. Design mode with reduced constraint on anchor to reality. Valuable. Watch the cliff.
+- **HPDL** — Hard Part Do Later. Acknowledges something is important and inevitable but requires foundation work first. Not "won't do" — "will do when ready."
 - **POP** — Proof Of Pudding. Prove it works before committing. Anthony's shorthand.
 - **WSS** — We Shall See. The pragmatic response to any claim about what Xcode will or won't do.
 - **Lootenant WTF** — debugging assistant. Finds culprits. Earns commendations. (American pronunciation.)

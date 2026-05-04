@@ -37,6 +37,8 @@ PLGset          guardSet;           // FIRST set, computed once
 boolean         banged
                 isIgnored
                 noSkip
+                processUpTo
+                skipOverMatch
                 kind:4[kLit kChr kSet kAny kEof kRuleRef kKeyTable kCondition kVariable kUpTo kBalanced]
                 ;
 // Kind-specific data — only one of these is meaningful, depending on kind

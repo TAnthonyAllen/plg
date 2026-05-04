@@ -22,6 +22,8 @@ struct
 	unsigned int banged:1;
 	unsigned int isIgnored:1;
 	unsigned int noSkip:1;
+	unsigned int processUpTo:1;
+	unsigned int skipOverMatch:1;
 	unsigned int kind:4;
 	};
 #define kLit(button) (button == 1)

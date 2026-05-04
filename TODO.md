@@ -35,6 +35,9 @@
   - Goal: `.g` files become self-contained — no separate `.act` or `.rtn` files needed.
   - Conceptually parallel to incant field code blocks. Design approved, implementation pending.
 
+### PLG — Restore banged(!) and noSkip(&) propagation through addTest
+- [ ] addTest currently drops the `!` (banged) and `&` (noSkip) modifiers from element specs. plg.g uses `excludeSet!&` style word-boundary negative-lookaheads in SetVariable's keyword alts (`'Set'`, `'Variable'`, `'Rules'`, etc.); without these flags the literal greedy-matches the prefix of identifiers (e.g. `Set` matching the start of `SetVariable`). Workaround in place: Body alt order moves Rule ahead of SetVariable. Principled fix: thread `banged`/`noSkip` through the addTest signature (or via a separate addTest variant) so the original word-boundary semantics survive translation.
+
 ### PLG — known cosmetic issues (post-bootstrap)
 - [ ] kLit litText extraction picks up a leading `\n` in generated Testing.twk (e.g. `elem->litText = "\n,";` for `','`). Likely a stray byte in ElementplgAct's quote-stripping or in PLGset.printText escaping. Doesn't affect runtime correctness.
 - [ ] Set spec name loses leading space when serialized — e.g. `[ \f\r\t\n]` round-trips through generateRules as `getSet("\f\r\t\n")`. The runtime PLGset includes the space (input parses correctly); only the serialized name drops it. Likely PLGset.name field stripping or printText quirk.

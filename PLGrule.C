@@ -176,9 +176,14 @@ char 			*saved = 0;
 				return result;
 				}
 			::printf("  %s alt %d ZERO-ADVANCE — treating as fail\n",name,altNum);
+			// Restore cursor — Alternative.match may have advanced
+			// through partial matches before its required element failed.
+			// Without this, the next alt starts at the wrong position.
+			state->cursor = saved;
 			}
 		else {
 			::printf("  %s alt %d FAILED at offset %lu (was %lu)\n",name,altNum,(state->cursor - state->buffer->start),(saved - state->buffer->start));
+			state->cursor = saved;
 			}
 		}
 	::printf("  %s ALL %d alts failed\n",name,altCount);
