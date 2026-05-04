@@ -5,10 +5,15 @@
 
 ## 🔥 Immediate (current sprint)
 
-### PLG — Self-Hosting
-- [ ] Tests directory reorganization (Tokf/Tests, Parse/Tests — symlink to source)
-- [ ] Fix missing `ActionOption` / `ActionOption2` definition (diagnosis pending)
-- [ ] Self-host check — feed generated `plg.twk` back through tawk, compile, verify
+### PLG — Self-Hosting (in progress)
+- [x] Tests directory reorganization (Tokf/Tests, Parse/Tests — symlink to source)
+- [x] ActionOption / ActionOption2 diagnosis — see plg-bootstrap-session.md (Option A: action.g excluded from include chain pending Action-blocks feature)
+- [x] **Self-describing plg.g** — Start = Header* '%%' Body+ '%%'? Trailer?; Header = Include; new Trailer rule; bare-include alternative; FileName rule for path-style filenames
+- [x] **Generator handles `}` modifier** — emits kSet `^X` capture + kLit X terminator (matches OLD setRules pattern). Element.generate now bails before kind-switch when processUpTo is set
+- [x] **Grammar source moved into Parse/Revision/Grammar/** and tracked. (Lived in Parse/ untracked before, also caused case-collision with PLG.twk on first move attempt — Grammar/ subdir avoids it.)
+- [ ] **Comment rule needs CommentPart-style decomposition.** `body = ~.+ '*/'` is a kAny followed by kLit `*/` — kAny is greedy and doesn't backtrack when `*/` fails to follow. OLD setRules works around this with a `CommentPart` helper rule (multi-char terminator handling). Needed for self-host loop to close past first `/* */` comment block in plg.g. Generator change OR plgRules.g rewrite — design call.
+- [ ] **Action-blocks feature** — required before self-host can fully close cleanly (so action wiring round-trips automatically instead of needing the 8-line manual TEMPORARY BRIDGE).
+- [ ] Self-host check — re-attempt after Comment-rule + Action-blocks land
 - [ ] Grammar split — `plg.g` (structure), `action.g` (Action blocks), `plgRules.g` (shared rules)
 
 ### Incant — Conceptual Bible
