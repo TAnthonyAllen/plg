@@ -235,15 +235,44 @@ int 			noGuard = 0;
 			elem = (Element*)elemLink->value;
 			if ( elem )
 				{
+				// Banged elements (`!`, negative lookahead) — matching means
+				// failure, so their FIRST chars must NOT seed the guard. Skip
+				// contribution and continue walking the alternative.
+				if ( elem->banged )
+					{
+					if ( elem->minimum > 0 || elem->minimum == -1 )
+						break;
+					continue;
+					}
 				switch (elem->kind)
 					{
 					case 1:
 						if ( elem->litText )
 							guard->set(*elem->litText);
 						break;
+					case 2:
+						guard->set(elem->chrChar);
+						break;
 					case 3:
+						// Negated sets (`^X`) admit "almost any char" — we
+						// can't compactly union them into a positive FIRST
+						// set. Treat as noGuard so the rule isn't fast-
+						// rejected on legitimate matches.
 						if ( elem->setRef )
-							guard->set(elem->setRef);
+							{
+							if ( elem->setRef->negated )
+								noGuard = 1;
+							else	guard->set(elem->setRef);
+							}
+						break;
+					case 4:
+						// Matches any char — guard cannot fast-reject.
+						noGuard = 1;
+						break;
+					case 5:
+						// Matches end-of-input — no usable FIRST char to
+						// pre-screen on.
+						noGuard = 1;
 						break;
 					case 6:
 						if ( elem->ruleRef )
@@ -255,15 +284,24 @@ int 			noGuard = 0;
 							// descendant is doNotGuard
 							}
 						break;
+					default:
+						// kKeyTable, kCondition, kVariable, kUpTo, kBalanced —
+						// FIRST set isn't easily computable from the element
+						// alone. Conservative: noGuard, accept anything.
+						noGuard = 1;
+						break;
 					}
 				if ( elem->minimum > 0 )
 					break;
 				}
 			}
 		}
-	// If any alt's chain leads through a doNotGuard rule, this rule
-	// also can't be guarded — return null so callers don't fast-fail
-	// on what would otherwise be an empty (=reject-all) guardSet.
+	// If ANY alt's chain has a noGuard reason (kAny, negated set, banged-
+	// only chain, doNotGuard descendant, unknown kind), this rule also
+	// can't be reliably guarded — return null so callers don't fast-fail
+	// on what would otherwise be an empty (=reject-all) guardSet. Empty
+	// PLGset and null are NOT the same: empty rejects everything; null
+	// means "accept anything, decide at match time."
 	if ( noGuard )
 		{
 		guardSet = 0;
