@@ -65,11 +65,19 @@ int     kindNum;
         print "\", \"";
         if label    print label;
         print "\", 1, 999999, \"\");":;
+        // Propagate the noSkip flag from the source element. Source like
+        // `'\n'}&` has noSkip=true (from `&`); without setNoSkip on each
+        // emitted element, Element.match's default skip() runs before
+        // the kLit terminator and eats the very char it's supposed to
+        // match — Body's error fallback then can't consume single-line
+        // content + newline, parse halts.
+        if noSkip   print "setNoSkip();":;
         if skipOverMatch
             {
             print(output) "addTest(1, \"";
             PLGset.printText(litText, output);
             print "\", \"\", 1, 1, \"\");":;
+            if noSkip   print "setNoSkip();":;
             }
         return;
         }

@@ -92,12 +92,28 @@ int 	kindNum = 0;
 			output->appendString(label);
 		output->appendString("\", 1, 999999, \"\");");
 		output->appendString("\n");
+		// Propagate the noSkip flag from the source element. Source like
+		// `'\n'}&` has noSkip=true (from `&`); without setNoSkip on each
+		// emitted element, Element.match's default skip() runs before
+		// the kLit terminator and eats the very char it's supposed to
+		// match — Body's error fallback then can't consume single-line
+		// content + newline, parse halts.
+		if ( noSkip )
+			{
+			output->appendString("setNoSkip();");
+			output->appendString("\n");
+			}
 		if ( skipOverMatch )
 			{
 			output->appendString("addTest(1, \"");
 			PLGset::printText(litText,output);
 			output->appendString("\", \"\", 1, 1, \"\");");
 			output->appendString("\n");
+			if ( noSkip )
+				{
+				output->appendString("setNoSkip();");
+				output->appendString("\n");
+				}
 			}
 		return;
 		}
