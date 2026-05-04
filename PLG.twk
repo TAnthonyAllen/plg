@@ -40,6 +40,7 @@ int Include2plgNow(PLGitem iTEM);
 int Include3plgNow(PLGitem iTEM);
 int RuleplgNow(PLGparse state, PLGitem iTEM);
 int ForwardDeclplgNow(PLGparse state, PLGitem iTEM);
+int IncludeplgNow(PLGparse state, PLGitem iTEM);
 void RuleOptionplgAct(PLGparse state, PLGitem iTEM);
 void RuleOptionsplgAct(PLGparse state, PLGitem iTEM);
 int SetVariableplgNow(PLGitem iTEM);
@@ -154,6 +155,23 @@ BaseHash    metaSetTable;
         cerr "process: could not load " filename:;
         return;
         }
+    // Save the source-file directory on the parser so IncludeplgNow can
+    // resolve include filenames relative to the grammar file's location.
+    {
+    int slash = strlen(filename);
+    while slash > 0 && *(filename + slash - 1) != '/'
+        slash--;
+    if slash > 0
+        {
+        char *dir = (char*)malloc(slash + 1);
+        strncpy(dir, filename, slash);
+        *(dir + slash) = 0;
+        parser.sourceDir = dir;
+        }
+    else
+        parser.sourceDir = "";
+    cout "process: sourceDir = '" parser.sourceDir "'":;
+    }
 
     // Two-table pattern: save meta-grammar (the rules that *parse* .g files),
     // install fresh empty tables for action callbacks to populate during the
@@ -168,6 +186,11 @@ PLGrule startRule = parser.rules["Start"];
         cerr "process: no Start rule in meta-grammar":;
         return;
         }
+    // Stash the meta-grammar's Body rule so IncludeplgNow can sub-parse
+    // included content via Body.match — its rule pointer survives the
+    // table swap below even though name-lookup against parser.rules
+    // would miss after the swap.
+    parser.bodyRule = parser.rules["Body"];
     metaRules           = parser.rules;
     metaSetTable        = parser.setTable;
     parser.rules        = new;
@@ -919,7 +942,7 @@ singleQuote  = getSet("singleQuote","'");
     currentRule.alternatives += currentAlt;
     
     currentRule = getRule("Include");
-    //currentRule.immediate = IncludeplgNow;
+    currentRule.immediate = IncludeplgNow;
     //currentRule.next = getRule("Include2");
 
     // Bare form: `include Name` (no parens) — used at top of plg.g.
@@ -1028,6 +1051,7 @@ singleQuote  = getSet("singleQuote","'");
     
     
     addTest(3, "A-Za-z:.|", "", -1, 1, "");
+    setNoSkip();        // mirror the `&` modifier in `excludeSet!&`
     
     
     addTest(6, "Name", "variable", 1, 999999, "defaultSKIP");
@@ -1042,6 +1066,7 @@ singleQuote  = getSet("singleQuote","'");
     
     
     addTest(3, "A-Za-z:.|", "", -1, 1, "");
+    setNoSkip();        // mirror the `&` modifier in `excludeSet!&`
     
     
     addTest(6, "ForwardReference", "", 1, 999999, "defaultSKIP");
@@ -1056,6 +1081,7 @@ singleQuote  = getSet("singleQuote","'");
     
     
     addTest(3, "A-Za-z:.|", "", -1, 1, "");
+    setNoSkip();        // mirror the `&` modifier in `excludeSet!&`
     
     
     addTest(6, "Name", "name", 1, 1, "defaultSKIP");
@@ -1073,6 +1099,7 @@ singleQuote  = getSet("singleQuote","'");
     
     
     addTest(3, "A-Za-z:.|", "", -1, 1, "");
+    setNoSkip();        // mirror the `&` modifier in `excludeSet!&`
     
     
     addTest(6, "Name", "name", 1, 1, "defaultSKIP");
@@ -1090,6 +1117,7 @@ singleQuote  = getSet("singleQuote","'");
     
     
     addTest(3, "A-Za-z:.|", "", -1, 1, "");
+    setNoSkip();        // mirror the `&` modifier in `excludeSet!&`
     
     
     addTest(6, "Name", "condishun", 1, 999999, "defaultSKIP");
@@ -1104,6 +1132,7 @@ singleQuote  = getSet("singleQuote","'");
     
     
     addTest(3, "A-Za-z0-9_", "", -1, 1, "");
+    setNoSkip();        // mirror the `&` modifier in `excludeSet!&`
     
     
     addTest(6, "DebugRule", "rulename", 0, 999999, "defaultSKIP");
@@ -1169,16 +1198,11 @@ singleQuote  = getSet("singleQuote","'");
     addTest(6, "ForwardDecl", "", 1, 1, "defaultSKIP");
     currentRule.alternatives += currentAlt;
 
-    // Rule moved AHEAD of SetVariable so the `Set X` keyword in
-    // SetVariable's alts doesn't greedy-match the prefix of an
-    // identifier like `SetVariable`. The banged `!`/noSkip `&` modifiers
-    // that should give SetVariable's keywords a word-boundary check
-    // are not yet propagated through addTest — TODO restore them.
-    currentAlt = new Alternative();
-
-    addTest(6, "Rule", "atRule", 1, 1, "defaultSKIP");
-
-    currentRule.alternatives += currentAlt;
+    // SetVariable's keyword alts (`'Set'`, `'Variable'`, `'Rules'`, etc.)
+    // use `excludeSet!&` for word-boundary enforcement. With banged(!) and
+    // noSkip(&) propagation in place via ElementTypeplgAct + pendingNoSkip,
+    // those word boundaries hold and Rule no longer needs to be tried
+    // first to avoid keyword-into-identifier greedy matching.
     currentAlt = new Alternative();
 
     addTest(6, "SetVariable", "", 1, 1, "defaultSKIP");
@@ -1192,6 +1216,11 @@ singleQuote  = getSet("singleQuote","'");
     // Tail removed from Body alts: `%%` now bounds the rules section
     // at Start level, not via a Body alternative that swallows the rest.
     // (ForwardDecl alt is registered ahead of SetVariable above.)
+    currentAlt = new Alternative();
+
+    addTest(6, "Rule", "atRule", 1, 1, "defaultSKIP");
+
+    currentRule.alternatives += currentAlt;
     currentAlt = new Alternative();
 
     addTest(6, "ActionRule", "", 1, 1, "defaultSKIP");
@@ -1249,6 +1278,76 @@ singleQuote  = getSet("singleQuote","'");
 	created in parser.rules, then cascades the deferred action chain
 	(RuleOptionsplgAct etc.) for the rule's body.
 *******************************************************************************/
+/*******************************************************************************
+	IncludeplgNow — fires when an Include directive matches. Resolves the
+	filename (sourceDir + name), loads the content, and runs Body.match
+	in a loop on a diverted input until the include is exhausted. The
+	outer parse resumes seamlessly via revertInput. PLGincludes-style
+	non-grammar headers gracefully no-op when the diverted parse can't
+	make progress.
+*******************************************************************************/
+int IncludeplgNow(PLGparse state, PLGitem iTEM)
+{
+PLGitem fileItem;
+String  filename;
+String  content;
+String  fullPath;
+PLGitem bodyResult;
+String  before;
+int     dirLen;
+int     fileLen;
+int     iters;
+    if !iTEM || !iTEM.children
+        return false;
+    fileItem = iTEM.children["file"];
+    if !fileItem
+        {
+        cerr "IncludeplgNow: no file capture":;
+        return false;
+        }
+    filename = fileItem.toString();
+    if !filename || !*filename
+        {
+        cerr "IncludeplgNow: empty filename":;
+        return false;
+        }
+    if *filename == '/' || !state.sourceDir
+        fullPath = filename;
+    else
+        {
+        dirLen   = strlen(state.sourceDir);
+        fileLen  = strlen(filename);
+        fullPath = (char*)malloc(dirLen + fileLen + 1);
+        strcpy(fullPath, state.sourceDir);
+        strcat(fullPath, filename);
+        }
+    cout "IncludeplgNow: resolving '" filename "' -> '" fullPath "'":;
+    content = getStringFromFile(fullPath);
+    if !content
+        {
+        cerr "IncludeplgNow: could not load '" fullPath "' — skipping":;
+        return false;
+        }
+    if !state.bodyRule
+        {
+        cerr "IncludeplgNow: bodyRule not set — process() must run first":;
+        return false;
+        }
+    state.divertInput(content);
+    iters = 0;
+    while state.cursor < state.eof
+        {
+        before     = state.cursor;
+        bodyResult = state.bodyRule.match(state);
+        if !bodyResult || state.cursor == before
+            break;
+        iters++;
+        }
+    cout "IncludeplgNow: '" filename "' parsed " iters " Body items":;
+    state.revertInput();
+    return true;
+}
+
 int ForwardDeclplgNow(PLGparse state, PLGitem iTEM)
 {
 PLGitem n;
@@ -1343,7 +1442,9 @@ Alternative alt;
 void AlternativeplgAct(PLGparse state, PLGitem iTEM)
 {
 PLGitem     atLabel;
-    state.pendingLabel = null;
+PLGitem     atElement;
+    state.pendingLabel  = null;
+    state.pendingNoSkip = false;
     if iTEM && iTEM.children
         {
         // iTEM.children["atLabel"] is the Label meta-rule match (`Name '='`).
@@ -1356,8 +1457,18 @@ PLGitem     atLabel;
             if nameItem
                 state.pendingLabel = nameItem.toString();
             }
+        // The `&` (noSkip) modifier sits on the Balanced/Block wrapper that
+        // is captured as `atElement`. Pull it out so the next ElementplgAct
+        // can stamp elem.noSkip.
+        atElement = iTEM.children["atElement"];
+        if atElement && atElement.children
+            {
+            PLGitem ns = atElement.children["noSkip"];
+            if ns
+                state.pendingNoSkip = true;
+            }
         }
-    cout "AlternativeplgAct fired: pendingLabel=" state.pendingLabel:;
+    cout "AlternativeplgAct fired: pendingLabel=" state.pendingLabel " pendingNoSkip=" state.pendingNoSkip:;
 }
 
 /*******************************************************************************
@@ -1516,6 +1627,12 @@ int         handled = 0;
         {
         elem.label = state.pendingLabel;
         state.pendingLabel = null;
+        }
+    // Apply pending noSkip from Balanced/Block's `&` modifier.
+    if state.pendingNoSkip
+        {
+        elem.noSkip = true;
+        state.pendingNoSkip = false;
         }
     state.currentAlt.elements += elem;
     cout "ElementplgAct fired: kind=" elem.kind " text='" text "' label='" elem.label "' added to alt in rule '" state.currentRule.name "'":;

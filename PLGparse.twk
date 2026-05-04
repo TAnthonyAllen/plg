@@ -26,6 +26,9 @@ BaseHash    rules,
             conditionTable,
             variableTable;
 String      pendingLabel;
+boolean     pendingNoSkip;
+String      sourceDir;
+PLGrule     bodyRule;
 boolean
     debugRulePLG
     debugGuardPLG
@@ -92,6 +95,9 @@ Element elem = new;
     elem.kind       = kind;
     elem.minimum    = min;
     elem.maximum    = max;
+    // min=-1 is the convention for the `!` (banged) modifier — flip the
+    // banged flag here so the element actually inverts at match time.
+    if min == -1   elem.banged = true;
     if label        elem.label      = label;
     if skipSet      elem.skipSet    = getSet(skipSet);
     switch(kind) {
@@ -110,6 +116,24 @@ Element elem = new;
     currentAlt.elements.add((void*)elem);
 }
 
+/*****************************************************************************
+    Set noSkip on the most-recently-added element on currentAlt. Used in
+    setRules() to express the `&` (no-skip) modifier on a preceding element
+    where the source plg syntax `excludeSet!&` couldn't otherwise be
+    threaded through addTest. Pair with the banged auto-set in addTest
+    when both `!` and `&` should apply.
+*****************************************************************************/
+void setNoSkip()
+{
+DoubleLink last;
+Element    e;
+    if !currentAlt return;
+    last = currentAlt.elements.last;
+    if !last return;
+    e = last.value;
+    if e e.noSkip = true;
+}
+
 /*******************************************************************************
 	divertInput loads the string passed in to a new buffer, if there is an
     existing current buffer, it gets put on the inputStack, and the current
@@ -119,6 +143,8 @@ void divertInput(String s)
 {
 use buffer
     if !inputStack inputStack = new;
+    // Save outer parse cursor on the buffer so revertInput can restore it.
+    current = cursor;
     inputStack.push(buffer);
     buffer  = new;
     buffer += s;
@@ -236,7 +262,7 @@ PLGitem parse(PLGrule rule)
 void revertInput()
 {
 use buffer
-    if !inputStack || !inputStack.size
+    if !inputStack || !inputStack.length
         {
         cerr "revertInput: input stack is empty":;
         return;

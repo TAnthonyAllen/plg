@@ -4,6 +4,7 @@
 #include "Alternative.h"
 #include "DoubleLink.h"
 #include "PLGset.h"
+#include "Stak.h"
 #include "Element.h"
 #include "Buffer.h"
 #include "PLGparse.h"
@@ -136,6 +137,10 @@ PLGitem 		*result = 0;
 int 			altNum = 0;
 int 			altCount = alternatives->length;
 char 			*saved = 0;
+	// Auto-revert at end of any diverted buffer so include-resolved
+	// content flows seamlessly back to the outer parse stream.
+	while ( state->cursor >= state->eof && state->inputStack && state->inputStack->length )
+		state->revertInput();
 	if ( guardSet && state->cursor < state->eof && !guardSet->contains(*state->cursor) )
 		{
 		char 	ch = *state->cursor;

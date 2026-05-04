@@ -96,6 +96,10 @@ PLGitem     result;
 int         altNum = 0;
 int         altCount = alternatives.length();
 String      saved;
+    // Auto-revert at end of any diverted buffer so include-resolved
+    // content flows seamlessly back to the outer parse stream.
+    while state.cursor >= state.eof && state.inputStack && state.inputStack.length
+        state.revertInput();
     if guardSet && state.cursor < state.eof && !guardSet.contains(*state.cursor)
         {
         char ch = *state.cursor;

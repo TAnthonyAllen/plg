@@ -35,12 +35,10 @@
   - Goal: `.g` files become self-contained — no separate `.act` or `.rtn` files needed.
   - Conceptually parallel to incant field code blocks. Design approved, implementation pending.
 
-### PLG — Restore banged(!) and noSkip(&) propagation through addTest
-- [ ] addTest currently drops the `!` (banged) and `&` (noSkip) modifiers from element specs. plg.g uses `excludeSet!&` style word-boundary negative-lookaheads in SetVariable's keyword alts (`'Set'`, `'Variable'`, `'Rules'`, etc.); without these flags the literal greedy-matches the prefix of identifiers (e.g. `Set` matching the start of `SetVariable`). Workaround in place: Body alt order moves Rule ahead of SetVariable. Principled fix: thread `banged`/`noSkip` through the addTest signature (or via a separate addTest variant) so the original word-boundary semantics survive translation.
-
-### PLG — known cosmetic issues (post-bootstrap)
-- [ ] kLit litText extraction picks up a leading `\n` in generated Testing.twk (e.g. `elem->litText = "\n,";` for `','`). Likely a stray byte in ElementplgAct's quote-stripping or in PLGset.printText escaping. Doesn't affect runtime correctness.
-- [ ] Set spec name loses leading space when serialized — e.g. `[ \f\r\t\n]` round-trips through generateRules as `getSet("\f\r\t\n")`. The runtime PLGset includes the space (input parses correctly); only the serialized name drops it. Likely PLGset.name field stripping or printText quirk.
+### PLG — known issues / quirks
+- [ ] **`%%` first-separator is mandatory in Start.** Grammars without any `%%` (rules directly after preamble or no preamble at all) won't parse — Start's first `%%` element is min=1. Worth a sanity check before broader use.
+- [ ] **Buffer offset reporting overshoots by ~1000.** `parsed 4939 chars` for a 3939-byte file. Benign so far but odd; might bite when buffer accounting matters (e.g. precise error messages). Likely an offset baseline issue in start/cursor arithmetic.
+- [ ] **`doNotGuard` workarounds accumulate.** Header / CommentPartBoDY / ForwardDecl / Trailer all set `doNotGuard = true` because their setGuard() couldn't compute a usable FIRST set. Will compound when generated rules try guard-based fast-rejection. Audit and tighten when revisiting setGuard for the negated-set / kSet `^X` cases.
 
 ### TAWK
 - [ ] Create TAWK repo Xcode project (project.yml)

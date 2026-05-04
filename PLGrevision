@@ -163,6 +163,9 @@ BaseHash    rules,
             conditionTable,
             variableTable;
 String      pendingLabel;
+boolean     pendingNoSkip;
+String      sourceDir;
+PLGrule     bodyRule;
 PLGset      alternateSet;
 PLGset      characterSet;
 PLGset      commandSet;
@@ -186,6 +189,7 @@ boolean
     void   skip();
     void reportError(Alternative alt, String message);
     void addTest(int kind, String data, String label, int min, int max, String skipSet);
+    void setNoSkip();
     void divertInput(String s);
     void generateRules(Buffer output);
     PLGrule getRule(String name);

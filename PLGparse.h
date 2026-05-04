@@ -31,6 +31,12 @@ BaseHash *keyWordTable;
 BaseHash *conditionTable;
 BaseHash *variableTable;
 char *pendingLabel;
+struct 
+	{
+	unsigned int pendingNoSkip:1;
+	};
+char *sourceDir;
+PLGrule *bodyRule;
 PLGset *alternateSet;
 PLGset *characterSet;
 PLGset *commandSet;
@@ -65,6 +71,7 @@ void restore(char *s);
 void revertInput();
 void setInput(char *s);
 void setInput(PLGitem *item);
+void setNoSkip();
 void setSkip();
 void skip();
 char *snapshot();

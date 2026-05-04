@@ -169,6 +169,8 @@ void Element::generate(Buffer *output)
 
 PLGitem *Element::match(PLGparse *state)
 {
+char 		*savedCursor = 0;
+PLGitem 	*result = 0;
 	::printf("Element match\n");
 	//trace?.enterElement(this, state);
 	// Skip-set handling — done once, per element, before the kind-specific match
@@ -180,13 +182,25 @@ PLGitem *Element::match(PLGparse *state)
 		//trace?.exitElement(this, state, null, "guarded");
 		return 0;
 		}
-PLGitem *result = matchByKind(state);
+	savedCursor = state->cursor;
+	result = matchByKind(state);
 	// Apply repetition
 	if ( minimum > 1 || maximum > 1 )
 		result = applyRepetition(state,result);
-	// Apply banged inversion
+	// Apply banged inversion — negative lookahead. If the sub-match
+	// succeeded we must also REWIND the cursor back to where matchByKind
+	// started; otherwise a zero-width "fail" still leaves cursor advanced
+	// and breaks the next element's position assumption (this is the
+	// root cause of `'Set'` greedy-matching the prefix of `SetVariable`).
 	if ( banged )
-		result = (result == 0) ? PLGitem::itemEmpty : (PLGitem*)0;
+		{
+		if ( result )
+			{
+			state->cursor = savedCursor;
+			result = 0;
+			}
+		else	result = PLGitem::itemEmpty;
+		}
 	// Apply isIgnored — match succeeded but discard the result
 	if ( result && isIgnored )
 		result = PLGitem::itemEmpty;

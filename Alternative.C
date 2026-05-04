@@ -50,7 +50,11 @@ int 		result = 1;
 		PLGitem *item = elem->match(state);
 		if ( !item )
 			{
-			if ( elem->minimum > 0 )
+			// Banged elements (`!`, min=-1) ARE required even though their
+			// minimum looks optional — null from a banged element means
+			// the negative lookahead saw what it was excluding, so the
+			// alternative must fail.
+			if ( elem->minimum > 0 || elem->banged )
 				{
 				result = 0;
 				break;

@@ -67,6 +67,9 @@ PLGparse::PLGparse()
 	inputStack = 0;
 	depth = 0;
 	pendingLabel = 0;
+	pendingNoSkip = 0;
+	sourceDir = 0;
+	bodyRule = 0;
 	alternateSet = 0;
 	characterSet = 0;
 	commandSet = 0;
@@ -105,6 +108,9 @@ PLGparse::PLGparse(char *input)
 	inputStack = 0;
 	depth = 0;
 	pendingLabel = 0;
+	pendingNoSkip = 0;
+	sourceDir = 0;
+	bodyRule = 0;
 	alternateSet = 0;
 	characterSet = 0;
 	commandSet = 0;
@@ -147,6 +153,10 @@ Element 	*elem = new Element();
 	elem->kind = kind;
 	elem->minimum = min;
 	elem->maximum = max;
+	// min=-1 is the convention for the `!` (banged) modifier — flip the
+	// banged flag here so the element actually inverts at match time.
+	if ( min == -1 )
+		elem->banged = 1;
 	if ( label )
 		elem->label = label;
 	if ( skipSet )
@@ -193,6 +203,8 @@ void PLGparse::divertInput(char *s)
 {
 	if ( !inputStack )
 		inputStack = new Stak();
+	// Save outer parse cursor on the buffer so revertInput can restore it.
+	buffer->current = cursor;
 	inputStack->push(buffer);
 	buffer = ::bufferFactory1();
 	buffer->appendString(s);
@@ -319,7 +331,7 @@ void PLGparse::restore(char *s)
 *******************************************************************************/
 void PLGparse::revertInput()
 {
-	if ( !inputStack || !inputStack->size )
+	if ( !inputStack || !inputStack->length )
 		{
 		::fprintf(stderr,"revertInput: input stack is empty\n");
 		return;
@@ -350,6 +362,27 @@ void PLGparse::setInput(PLGitem *item)
 	buffer->appendString(item->toString());
 	cursor = buffer->start;
 	eof = buffer->end;
+}
+
+/*****************************************************************************
+    Set noSkip on the most-recently-added element on currentAlt. Used in
+    setRules() to express the `&` (no-skip) modifier on a preceding element
+    where the source plg syntax `excludeSet!&` couldn't otherwise be
+    threaded through addTest. Pair with the banged auto-set in addTest
+    when both `!` and `&` should apply.
+*****************************************************************************/
+void PLGparse::setNoSkip()
+{
+DoubleLink 	*last = 0;
+Element 	*e = 0;
+	if ( !currentAlt )
+		return;
+	last = currentAlt->elements->last;
+	if ( !last )
+		return;
+	e = (Element*)last->value;
+	if ( e )
+		e->noSkip = 1;
 }
 
 /*******************************************************************************
