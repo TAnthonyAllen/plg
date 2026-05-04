@@ -3,6 +3,11 @@ external PLGparse
 external PLGitem
 external PLGrule
 external PLGset
+{
+String          name;
+String          specs;
+Buffer          setBuffer;
+}
 external Buffer
 external regex.h
 {
@@ -190,6 +195,8 @@ boolean
     void reportError(Alternative alt, String message);
     void addTest(int kind, String data, String label, int min, int max, String skipSet);
     void setNoSkip();
+    void setBanged();
+    void setIgnored();
     void divertInput(String s);
     void generateRules(Buffer output);
     PLGrule getRule(String name);

@@ -38,57 +38,89 @@ PLGitem matchByKind(PLGparse state);    // the kind dispatch
 PLGitem applyRepetition(PLGparse state, PLGitem firstResult);
 
 /*******************************************************************************
-	Generate an element
+	Generate an element as an addTest() call. addTest packages
+	new-Element + kind + min/max/label/skipSet into one line; modifiers that
+	addTest doesn't carry (noSkip, banged, isIgnored) emit as setX() helpers
+	immediately after. Kinds without addTest support (kKeyTable, kCondition)
+	fall back to explicit Element construction against currentAlt.
 *******************************************************************************/
 void generate(Buffer output)
 {
-    print(output) "{\nElement *elem = new Element();":;
-    print "elem->minimum = " minimum ";":;
-    print "elem->maximum = " maximum ";":;
+String  data;
+String  skipName;
+int     kindNum;
     switch(kind) {
         case kLit:
-            print "elem->kind = kLit;":;
-            print "elem->litText = \"";
-            PLGset.printText(litText, output);
-            print "\";":;
+            kindNum = 1;
+            data    = litText;
             break;
         case kChr:
-            print "elem->kind = kChr;":;
-            print "elem->chrChar = '" chrChar "';\n":;
+            kindNum = 2;
+            // single-char data: rely on TAWK string-concat with the char
+            data    = "";   // sentinel — emit chrChar inline below
             break;
         case kSet:
-            setRef.generate(output);
-            print "elem->kind = kSet;":;
-            print "elem->setRef = currentSet;":;
+            kindNum = 3;
+            if setRef.name      data = setRef.name;
+            or setRef.specs     data = setRef.specs;
+            else                data = "";
             break;
         case kAny:
-            print "elem->kind = kAny;":;
+            kindNum = 4;
+            data    = "";
             break;
         case kEof:
-            print "elem->kind = kEof;":;
+            kindNum = 5;
+            data    = "";
             break;
         case kRuleRef:
-            print "elem->kind = kRuleRef;":;
-            print "elem->ruleRef = getRule(\"" ruleRef.name "\");\n":;
+            kindNum = 6;
+            data    = ruleRef.name;
             break;
         case kKeyTable:
-            print "elem->kind = kKeyTable;":;
-            print "elem->tableRef = getTable(\"" tableRef.name "\");\n":;
-            break;
         case kCondition:
-            print "elem->kind = kCondition;":;
-            //print "elem->condFunc = &" condFunc ";\n":;
-            break;
+            // Fall back to raw form against currentAlt
+            print(output) "{\nElement *elem = new Element();":;
+            print "elem->minimum = " minimum ";":;
+            print "elem->maximum = " maximum ";":;
+            if kind == kKeyTable
+                {
+                print "elem->kind = 7;":;     // kKeyTable
+                print "elem->tableRef = getTable(\"" tableRef.name "\");":;
+                }
+            else
+                {
+                print "elem->kind = 8;":;     // kCondition stub
+                }
+            if label        print "elem->label = \"" label "\";":;
+            if banged       print "elem->banged = true;":;
+            if isIgnored    print "elem->isIgnored = true;":;
+            if noSkip       print "elem->noSkip = true;":;
+            print "currentAlt->elements.add((void*)elem);\n}":;
+            return;
         default:
             cerr "Element.generate: unknown kind " kind:;
-            break;
+            return;
         }
-    if label        print "elem->label = \"" label "\";":;
-    if skipSet      { skipSet.generate(output); print "elem->skipSet = currentSet;":; }
-    if banged       print "elem->banged = true;":;
-    if isIgnored    print "elem->isIgnored = true;":;
-    if noSkip       print "elem->noSkip = true;":;
-    print "alt->addElement(elem);\n}":;
+
+    skipName = "";
+    if skipSet
+        {
+        if skipSet.name     skipName = skipSet.name;
+        or skipSet.specs    skipName = skipSet.specs;
+        }
+
+    print(output) "addTest(" kindNum ", \"";
+    if kind == kChr
+        print chrChar;
+    else if data
+        PLGset.printText(data, output);
+    print "\", \"" label "\", " minimum ", " maximum ", \"" skipName "\");":;
+
+    // Modifier follow-ups — addTest doesn't carry these directly
+    if noSkip       print "setNoSkip();":;
+    if banged       print "setBanged();":;
+    if isIgnored    print "setIgnored();":;
 }
 
 PLGitem match(PLGparse state)

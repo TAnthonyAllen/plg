@@ -21,16 +21,19 @@ Alternative()
 }
 
 /*******************************************************************************
-	Just a stub for now
+	Emit an alternative in addTest-compatible form: assign currentAlt, let
+	each element emit its own addTest()/setX() lines, then attach currentAlt
+	to currentRule. Matches the hand-written setRules() convention so
+	generated output can be pasted in directly.
 *******************************************************************************/
 void generate(Buffer output)
 {
 Element elem;
-    print(output) "{\nAlternative *alt = new Alternative();":;
+    print(output) "currentAlt = new Alternative();":;
     elements.resetIterator();
     while elem = elements.next()
         elem.generate(output);
-    print "currentRule->addAlternative(alt);\n}":;
+    print "currentRule.alternatives += currentAlt;":;
 }
 
 int match(PLGparse state, PLGitem &out)

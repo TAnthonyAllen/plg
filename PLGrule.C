@@ -57,7 +57,10 @@ void PLGrule::declareActions(Buffer *output)
 void PLGrule::generate(Buffer *output)
 {
 Alternative 	*test = 0;
-	output->appendString("//\ncurrentRule = getRule(\"");
+	// Blank-line separator only — `//` lines reset TAWK's field-resolution
+	// context, which strips `use parser` from the next assignment and breaks
+	// compilation when the generated body is pasted into a use-parser block.
+	output->appendString("\ncurrentRule = getRule(\"");
 	output->appendString(name);
 	output->appendString("\");");
 	output->appendString("\n");

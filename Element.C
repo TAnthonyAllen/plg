@@ -63,108 +63,150 @@ int count = 1;
 }
 
 /*******************************************************************************
-	Generate an element
+	Generate an element as an addTest() call. addTest packages
+	new-Element + kind + min/max/label/skipSet into one line; modifiers that
+	addTest doesn't carry (noSkip, banged, isIgnored) emit as setX() helpers
+	immediately after. Kinds without addTest support (kKeyTable, kCondition)
+	fall back to explicit Element construction against currentAlt.
 *******************************************************************************/
 void Element::generate(Buffer *output)
 {
-	output->appendString("{\nElement *elem = new Element();");
-	output->appendString("\n");
-	output->appendString("elem->minimum = ");
-	output->appendCount(minimum);
-	output->appendString(";");
-	output->appendString("\n");
-	output->appendString("elem->maximum = ");
-	output->appendCount(maximum);
-	output->appendString(";");
-	output->appendString("\n");
+char 	*data = 0;
+char 	*skipName = 0;
+int 	kindNum = 0;
 	switch (kind)
 		{
 		case 1:
-			output->appendString("elem->kind = kLit;");
-			output->appendString("\n");
-			output->appendString("elem->litText = \"");
-			PLGset::printText(litText,output);
-			output->appendString("\";");
-			output->appendString("\n");
+			kindNum = 1;
+			data = litText;
 			break;
 		case 2:
-			output->appendString("elem->kind = kChr;");
-			output->appendString("\n");
-			output->appendString("elem->chrChar = '");
-			output->appendChar(chrChar);
-			output->appendString("';\n");
-			output->appendString("\n");
+			kindNum = 2;
+			// single-char data: rely on TAWK string-concat with the char
+			data = "";
+			// sentinel — emit chrChar inline below
 			break;
 		case 3:
-			setRef->generate(output);
-			output->appendString("elem->kind = kSet;");
-			output->appendString("\n");
-			output->appendString("elem->setRef = currentSet;");
-			output->appendString("\n");
+			kindNum = 3;
+			if ( setRef->name )
+				data = setRef->name;
+			else
+			if ( setRef->specs )
+				data = setRef->specs;
+			else	data = "";
 			break;
 		case 4:
-			output->appendString("elem->kind = kAny;");
-			output->appendString("\n");
+			kindNum = 4;
+			data = "";
 			break;
 		case 5:
-			output->appendString("elem->kind = kEof;");
-			output->appendString("\n");
+			kindNum = 5;
+			data = "";
 			break;
 		case 6:
-			output->appendString("elem->kind = kRuleRef;");
-			output->appendString("\n");
-			output->appendString("elem->ruleRef = getRule(\"");
-			output->appendString(ruleRef->name);
-			output->appendString("\");\n");
-			output->appendString("\n");
+			kindNum = 6;
+			data = ruleRef->name;
 			break;
 		case 7:
-			output->appendString("elem->kind = kKeyTable;");
-			output->appendString("\n");
-			output->appendString("elem->tableRef = getTable(\"");
-			output->appendString(tableRef->name);
-			output->appendString("\");\n");
-			output->appendString("\n");
-			break;
 		case 8:
-			output->appendString("elem->kind = kCondition;");
+			// Fall back to raw form against currentAlt
+			output->appendString("{\nElement *elem = new Element();");
 			output->appendString("\n");
-			//print "elem->condFunc = &" condFunc ";\n":;
-			break;
+			output->appendString("elem->minimum = ");
+			output->appendCount(minimum);
+			output->appendString(";");
+			output->appendString("\n");
+			output->appendString("elem->maximum = ");
+			output->appendCount(maximum);
+			output->appendString(";");
+			output->appendString("\n");
+			if ( kind == kKeyTable(kind) )
+				{
+				output->appendString("elem->kind = 7;");
+				output->appendString("\n");
+				// kKeyTable
+				output->appendString("elem->tableRef = getTable(\"");
+				output->appendString(tableRef->name);
+				output->appendString("\");");
+				output->appendString("\n");
+				}
+			else {
+				output->appendString("elem->kind = 8;");
+				output->appendString("\n");
+				// kCondition stub
+				}
+			if ( label )
+				{
+				output->appendString("elem->label = \"");
+				output->appendString(label);
+				output->appendString("\";");
+				output->appendString("\n");
+				}
+			if ( banged )
+				{
+				output->appendString("elem->banged = true;");
+				output->appendString("\n");
+				}
+			if ( isIgnored )
+				{
+				output->appendString("elem->isIgnored = true;");
+				output->appendString("\n");
+				}
+			if ( noSkip )
+				{
+				output->appendString("elem->noSkip = true;");
+				output->appendString("\n");
+				}
+			output->appendString("currentAlt->elements.add((void*)elem);\n}");
+			output->appendString("\n");
+			return;
 		default:
 			::fprintf(stderr,"Element.generate: unknown kind %u\n",kind);
-			break;
+			return;
 		}
-	if ( label )
-		{
-		output->appendString("elem->label = \"");
-		output->appendString(label);
-		output->appendString("\";");
-		output->appendString("\n");
-		}
+	skipName = "";
 	if ( skipSet )
 		{
-		skipSet->generate(output);
-		output->appendString("elem->skipSet = currentSet;");
+		if ( skipSet->name )
+			skipName = skipSet->name;
+		else
+		if ( skipSet->specs )
+			skipName = skipSet->specs;
+		}
+	output->appendString("addTest(");
+	output->appendCount(kindNum);
+	output->appendString(", \"");
+	if ( kind == kChr(kind) )
+		output->appendChar(chrChar);
+	else
+	if ( data )
+		PLGset::printText(data,output);
+	output->appendString("\", \"");
+	output->appendString(label);
+	output->appendString("\", ");
+	output->appendCount(minimum);
+	output->appendString(", ");
+	output->appendCount(maximum);
+	output->appendString(", \"");
+	output->appendString(skipName);
+	output->appendString("\");");
+	output->appendString("\n");
+	// Modifier follow-ups — addTest doesn't carry these directly
+	if ( noSkip )
+		{
+		output->appendString("setNoSkip();");
 		output->appendString("\n");
 		}
 	if ( banged )
 		{
-		output->appendString("elem->banged = true;");
+		output->appendString("setBanged();");
 		output->appendString("\n");
 		}
 	if ( isIgnored )
 		{
-		output->appendString("elem->isIgnored = true;");
+		output->appendString("setIgnored();");
 		output->appendString("\n");
 		}
-	if ( noSkip )
-		{
-		output->appendString("elem->noSkip = true;");
-		output->appendString("\n");
-		}
-	output->appendString("alt->addElement(elem);\n}");
-	output->appendString("\n");
 }
 
 PLGitem *Element::match(PLGparse *state)

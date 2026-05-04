@@ -341,6 +341,43 @@ void PLGparse::revertInput()
 	eof = buffer->end;
 }
 
+/*****************************************************************************
+    Set banged on the most-recently-added element on currentAlt. Pairs with
+    addTest to express the `!` (banged / negative-lookahead) modifier.
+*****************************************************************************/
+void PLGparse::setBanged()
+{
+DoubleLink 	*last = 0;
+Element 	*e = 0;
+	if ( !currentAlt )
+		return;
+	last = currentAlt->elements->last;
+	if ( !last )
+		return;
+	e = (Element*)last->value;
+	if ( e )
+		e->banged = 1;
+}
+
+/*****************************************************************************
+    Set isIgnored on the most-recently-added element on currentAlt. The
+    element still must match but its result is discarded (no label binding,
+    no children entry).
+*****************************************************************************/
+void PLGparse::setIgnored()
+{
+DoubleLink 	*last = 0;
+Element 	*e = 0;
+	if ( !currentAlt )
+		return;
+	last = currentAlt->elements->last;
+	if ( !last )
+		return;
+	e = (Element*)last->value;
+	if ( e )
+		e->isIgnored = 1;
+}
+
 /*******************************************************************************
 	Load input into the parse buffer
 *******************************************************************************/

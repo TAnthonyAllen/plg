@@ -20,17 +20,20 @@ Alternative::Alternative()
 }
 
 /*******************************************************************************
-	Just a stub for now
+	Emit an alternative in addTest-compatible form: assign currentAlt, let
+	each element emit its own addTest()/setX() lines, then attach currentAlt
+	to currentRule. Matches the hand-written setRules() convention so
+	generated output can be pasted in directly.
 *******************************************************************************/
 void Alternative::generate(Buffer *output)
 {
 Element 	*elem = 0;
-	output->appendString("{\nAlternative *alt = new Alternative();");
+	output->appendString("currentAlt = new Alternative();");
 	output->appendString("\n");
 	elements->resetIterator();
 	while ( elem = (Element*)elements->next() )
 		elem->generate(output);
-	output->appendString("currentRule->addAlternative(alt);\n}");
+	output->appendString("currentRule.alternatives += currentAlt;");
 	output->appendString("\n");
 }
 

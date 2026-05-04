@@ -5,13 +5,11 @@
 
 ## 🔥 Immediate (current sprint)
 
-### PLG — Callback Chain
-- [ ] Design and implement `PLGitem.runDeferred()` — accumulates (callback, item) pairs during match, fires after
-- [ ] Wire `defer` field firing in `PLGrule::match()` (paired with `immediate`)
-- [ ] Rewrite `ElementplgAct` for new model (Element/Alternative, not PLGtester)
-- [ ] Rewrite `RuleOptionsplgAct`, `RuleOptionplgAct`, `AlternativeplgAct` chain
-- [ ] Verify: Testing.g parse builds complete Max + Integer rule structures (not just names)
-- [ ] Expand to plg.g — full bootstrap
+### PLG — Self-Hosting
+- [ ] Tests directory reorganization (Tokf/Tests, Parse/Tests — symlink to source)
+- [ ] Fix missing `ActionOption` / `ActionOption2` definition (diagnosis pending)
+- [ ] Self-host check — feed generated `plg.twk` back through tawk, compile, verify
+- [ ] Grammar split — `plg.g` (structure), `action.g` (Action blocks), `plgRules.g` (shared rules)
 
 ### Incant — Conceptual Bible
 - [ ] Clay drafts "What Is Incant?" wiki page from Pages document + session HWF discussion
@@ -96,3 +94,12 @@
 - [x] Testing.g parses end-to-end (90/91 bytes)
 - [x] Xcode project rebuilt via xcodegen/project.yml
 - [x] TAWK iteration trap documented in bible across all repos
+- [x] `PLGitem.runDeferred()` — defer/immediate cascade firing
+- [x] `defer` field firing wired in `PLGrule::match()`
+- [x] `ElementplgAct` rewritten for new model (Element/Alternative)
+- [x] `ElementTypeplgAct` — min/max repetition wired
+- [x] `RuleOptionsplgAct` / `RuleOptionplgAct` / `AlternativeplgAct` chain — rules parse as SEQUENCE not CHOICE; labels propagate
+- [x] Testing.g parse builds full Element structures in fresh rules table (`generateRules()` emits parsed rules, not meta-grammar)
+- [x] plg.g parses end-to-end — 23 rules defined, bootstrap loop closed
+- [x] Include resolution wired; banged/noSkip propagation restored; cursor restore on alt failure
+- [x] `plg_rules.g` → `plgRules.g` rename (no underscores)

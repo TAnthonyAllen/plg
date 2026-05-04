@@ -69,6 +69,8 @@ PLGitem *parse(PLGrule *rule);
 void reportError(Alternative *alt, char *message);
 void restore(char *s);
 void revertInput();
+void setBanged();
+void setIgnored();
 void setInput(char *s);
 void setInput(PLGitem *item);
 void setNoSkip();

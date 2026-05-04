@@ -60,7 +60,10 @@ void declareActions(Buffer output)
 void generate(Buffer output)
 {
 Alternative test;
-	print(output) "//\ncurrentRule = getRule(\"" name "\");":;
+	// Blank-line separator only — `//` lines reset TAWK's field-resolution
+	// context, which strips `use parser` from the next assignment and breaks
+	// compilation when the generated body is pasted into a use-parser block.
+	print(output) "\ncurrentRule = getRule(\"" name "\");":;
 
 	if balanceRule print "currentRule.immediate = balancE;":;
 	or balanceBody print "currentRule.immediate = balancEbody;":;

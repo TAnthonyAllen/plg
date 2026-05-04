@@ -134,6 +134,37 @@ Element    e;
     if e e.noSkip = true;
 }
 
+/*****************************************************************************
+    Set banged on the most-recently-added element on currentAlt. Pairs with
+    addTest to express the `!` (banged / negative-lookahead) modifier.
+*****************************************************************************/
+void setBanged()
+{
+DoubleLink last;
+Element    e;
+    if !currentAlt return;
+    last = currentAlt.elements.last;
+    if !last return;
+    e = last.value;
+    if e e.banged = true;
+}
+
+/*****************************************************************************
+    Set isIgnored on the most-recently-added element on currentAlt. The
+    element still must match but its result is discarded (no label binding,
+    no children entry).
+*****************************************************************************/
+void setIgnored()
+{
+DoubleLink last;
+Element    e;
+    if !currentAlt return;
+    last = currentAlt.elements.last;
+    if !last return;
+    e = last.value;
+    if e e.isIgnored = true;
+}
+
 /*******************************************************************************
 	divertInput loads the string passed in to a new buffer, if there is an
     existing current buffer, it gets put on the inputStack, and the current
