@@ -14,6 +14,9 @@ Set excludeSet      [A-Za-z:.|]
 Name            :   name    = [._a-zA-Z0-9]+
                 ;
 
+FileName        :   path    = [/._a-zA-Z0-9]+
+                ;
+
 Label           :   atLabel = Name '='
                 ;
 

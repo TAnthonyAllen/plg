@@ -110,7 +110,7 @@ Include			:   'include(' file = ')'}
                     '-%'
                     code    = '%-'}&
 				|
-					'include' file = Name
+					'include' file = FileName
 				;
 
 Max				:   ',' maximum = Integer

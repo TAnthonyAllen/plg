@@ -49,6 +49,31 @@ void generate(Buffer output)
 String  data;
 String  skipName;
 int     kindNum;
+    // Special case: processUpTo (the `{` and `}` modifiers in source grammar).
+    // The element captures characters up to a literal terminator, optionally
+    // consuming it (skipOverMatch from `}`). Expand to TWO emitted elements
+    // matching the OLD hand-written setRules pattern:
+    //   addTest(3, "^X", "label", 1, 999999, "");   — kSet capture
+    //   addTest(1, "X",  "",      1, 1,      "");   — terminator (only if `}`)
+    // X is the original litText; the captured set negates it. The runtime
+    // matchSet stops at the terminator char, leaving it for the kLit (or
+    // for the next element when `{` doesn't consume).
+    if processUpTo
+        {
+        print(output) "addTest(3, \"^";
+        PLGset.printText(litText, output);
+        print "\", \"";
+        if label    print label;
+        print "\", 1, 999999, \"\");":;
+        if skipOverMatch
+            {
+            print(output) "addTest(1, \"";
+            PLGset.printText(litText, output);
+            print "\", \"\", 1, 1, \"\");":;
+            }
+        return;
+        }
+
     switch(kind) {
         case kLit:
             kindNum = 1;

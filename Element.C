@@ -74,6 +74,33 @@ void Element::generate(Buffer *output)
 char 	*data = 0;
 char 	*skipName = 0;
 int 	kindNum = 0;
+	// Special case: processUpTo (the `{` and `}` modifiers in source grammar).
+	// The element captures characters up to a literal terminator, optionally
+	// consuming it (skipOverMatch from `}`). Expand to TWO emitted elements
+	// matching the OLD hand-written setRules pattern:
+	//   addTest(3, "^X", "label", 1, 999999, "");   — kSet capture
+	//   addTest(1, "X",  "",      1, 1,      "");   — terminator (only if `}`)
+	// X is the original litText; the captured set negates it. The runtime
+	// matchSet stops at the terminator char, leaving it for the kLit (or
+	// for the next element when `{` doesn't consume).
+	if ( processUpTo )
+		{
+		output->appendString("addTest(3, \"^");
+		PLGset::printText(litText,output);
+		output->appendString("\", \"");
+		if ( label )
+			output->appendString(label);
+		output->appendString("\", 1, 999999, \"\");");
+		output->appendString("\n");
+		if ( skipOverMatch )
+			{
+			output->appendString("addTest(1, \"");
+			PLGset::printText(litText,output);
+			output->appendString("\", \"\", 1, 1, \"\");");
+			output->appendString("\n");
+			}
+		return;
+		}
 	switch (kind)
 		{
 		case 1:
