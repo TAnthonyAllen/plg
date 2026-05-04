@@ -1,6 +1,7 @@
 #include <string.h>
 #include <stdio.h>
 #include "DoubleLinkList.h"
+#include "PLGrule.h"
 #include "DoubleLink.h"
 #include "PLGset.h"
 #include "BaseHash.h"
@@ -44,13 +45,30 @@ DoubleLink 	*link = 0;
 DoubleLink 	*dlink = 0;
 Element 	*elem = 0;
 int 		result = 1;
+int 		elemIdx = 0;
 	::printf("Alternative match elements: %d\n",elements->length);
 	collected->itemStart = state->cursor;
 	for ( link = elements->first; link; link = link->next )
 		{
 		elem = (Element*)link->value;
-		::printf("\telement kind: %u\n",elem->kind);
+		elemIdx++;
+		// Verbose per-element trace: index, kind, target, cursor before.
+		// For kRuleRef/kLit we print the ref-name or literal so the trace
+		// tells us which sub-match was attempted at which offset.
+		// NOTE: kRuleRef etc. are TEST macros not values (CLAUDE.md TAWK
+		// quirks) — use numeric kind values for assignment/comparison.
+{
+		char 	*what = "?";
+		if ( elem->kind == 6 && elem->ruleRef )
+			what = elem->ruleRef->name;
+		else
+		if ( elem->kind == 1 && elem->litText )
+			what = elem->litText;
+		::printf("    elem[%d] kind=%u target='%s' min=%d label='%s' cursor-offset=%lu\n",elemIdx,elem->kind,what,elem->minimum,elem->label,(state->cursor - state->buffer->start));
+		}
+		char *beforeCursor = state->cursor;
 		PLGitem *item = elem->match(state);
+		::printf("    elem[%d] result=%s cursor-now=%lu consumed=%lu\n",elemIdx,(item ? "MATCH" : "null"),(state->cursor - state->buffer->start),(state->cursor - beforeCursor));
 		if ( !item )
 			{
 			// Banged elements (`!`, min=-1) ARE required even though their
@@ -90,3 +108,4 @@ int 		result = 1;
 		}
 	return result;
 }
+// Ignoring declaration of unused variable altStart in method: match(PLGparse*,PLGitem*)
