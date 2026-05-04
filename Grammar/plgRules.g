@@ -45,9 +45,24 @@ Tail            :   '%%'
 Trailer         :   code    = ~.+
                 ;
 
+/*****************************************************************************
+    Comment uses a CommentBody helper rule to handle the multi-char
+    `*/` terminator. The naive `'/*' body = ~.+ '*/'` form does not work
+    because kAny is greedy and does not backtrack — body+ would eat past
+    the `*/` to EOF, then the closing `*/` element would fail. CommentBody's
+    two-alt structure (any-non-asterisk OR asterisk-then-non-slash) stops
+    cleanly when it sees `*/`, leaving the closer for the mandatory `'*/'`
+    element to consume. Same pattern as the hand-written meta-grammar in
+    PLG.twk's CommentPartBoDY.
+*****************************************************************************/
 Comment         :   '/*'
-                    body    = ~.+
+                    body    = CommentBody*
                     '*/'
+                ;
+
+CommentBody     :   notStar  = [^*]
+                |
+                    '*' nonSlash = [^/]
                 ;
 
 QuotedString    :   singleQuote
