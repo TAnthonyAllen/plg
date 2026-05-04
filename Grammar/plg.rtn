@@ -1,0 +1,230 @@
+BaseHash		plgSetTable,
+				plgRuleTable;
+KeyTable		conditionTable,
+                keyWordTable,
+                variableTable;
+PLGitem			tail,
+				ruleActionName;
+int				alternateFlag,
+				blockCount,
+				optionCount,
+				regexCount,
+				testFlag;
+Buffer			buffer,
+				headerBuffer,
+				includeBuffer,
+				output,
+				parseBuffer;
+Stak			ruleStack,
+				testStack;
+String          parentParser;
+boolean         hasActions,
+                hasConditions,
+                hasKeys,
+                hasSets,
+                hasVariables;
+/*****************************************************************************
+	default constructor
+*****************************************************************************/
+plg()
+{
+    output			= new("plgOutput",10000);
+    buffer			= new("plgBuffer");
+    headerBuffer    = new("plgHeader");
+    includeBuffer   = new("plgInclude");
+    parseBuffer	    = new("plgParse");
+	parserName		= "plg";
+	ruleStack		= new;
+	testStack		= new;
+    mainParser      = this;
+}
+
+/*****************************************************************************
+	Loop thru all the rules and write their action declarations
+*****************************************************************************/
+void declareActions()
+{
+PLGitem failMethod;
+PLGrule	rule;
+    rules.entry = null;
+    print(output) "external\n{":;
+    while rule = rules.next()
+        rule.declareActions(output);
+    if failMethods
+        while failMethod = failMethods.next()
+            print "void " failMethod "(PLGtester t);":;
+    print "}":;
+}
+
+/*****************************************************************************
+	Loop thru the sets in the setTable and write their declarations
+*****************************************************************************/
+void declareSets()
+{
+PLGset  set;
+String  conditionName;
+    if hasSets
+        {
+        setTable.reset();
+        while set = setTable.next()
+            if set.name
+                print(headerBuffer) "PLGset	" set.name ";":;
+        }
+    if hasConditions
+        {
+        conditionTable.reset();
+        while conditionName = conditionTable.next()
+            print "int"`conditionName ";":;
+        }
+    if hasVariables
+        {
+        variableTable.reset();
+        while conditionName = variableTable.next()
+            print "String"`conditionName ";":;
+        }
+}
+
+/*****************************************************************************
+	Generate key word initializations - also generates set table initializing
+    when class is being extended
+*****************************************************************************/
+void initializeKeyWords(Buffer *output)
+{
+//	The following declares the key words
+KeyTable keywords;
+KeyTableItem item;
+KeyTableItem table;
+    if keyWordTable
+        {
+        if table = keyWordTable.getNext()
+            do {
+                print(output) "KeyTable " table.key ";":;
+                table = keyWordTable.getNext();
+                }
+            while table;
+        //	The following outputs the initialization method that populates key words
+        print(output) :"void initializeKeyWords()\n{":;
+        table = keyWordTable.getNext();
+        if table
+            {
+            do {
+                print `table.key " = new(\"" table.key "\");":;
+                keywords = (KeyTable*)table.value;
+                if !keywords
+                    cerr "No table for: " table.key "":;
+                else
+                do {
+                    item = keywords.getNext();
+                    if item
+                        print `table.key ".add(\"" item.key "\");":;
+                    } while item;
+                table = keyWordTable.getNext();
+                if table print "":;
+                } while table;
+            }
+        if parentParser
+            print `parentParser ".initializeKeyWords();":;
+        print "}":;
+        }
+    print "void initializeSetTable()\n{":;
+    if setTable.length
+        {
+        setTable.resetIterator();
+        while currentSet = setTable.next()
+            if currentSet.name
+                print `"setTable[\"" currentSet.name "\"] = (void*)" currentSet.name ";":;
+        }
+    if parentParser
+        print `parentParser ".initializeSetTable();":;
+    print "}":;
+}
+
+/*****************************************************************************
+	Process a grammar file
+*****************************************************************************/
+void process(String name)
+{
+String	input = getStringFromFile(name);
+PLGrule filename,
+        start;
+    if input
+		{
+        setRules();
+        initialize();
+        filename    = rules["FileName"];
+        start       = rules["Start"];
+        /*********************************************************************
+            Separate plg rules and sets from those that get generated
+        *********************************************************************/
+        plgRuleTable    = rules;
+        plgSetTable     = setTable;
+        rules           = new;
+        setTable        = new;
+        /*********************************************************************
+            Create the tok file into which this parser gets generated
+        *********************************************************************/
+        setInput(name);
+        parse(filename);
+        /*********************************************************************
+            Run the parse from contents of the file (name passed in)
+        *********************************************************************/
+		setInput(input);
+		if parse(start)
+            cout "Parse successful":;
+        else cout "Parse failed":;
+        /*********************************************************************
+            Puts rules and setTable back so we can run summary
+        *********************************************************************/
+        rules           = plgRuleTable;
+        setTable        = plgSetTable;
+        summary(10);
+		}
+}
+
+/*****************************************************************************
+	Test a rule
+*****************************************************************************/
+void test(String name,String text)
+{
+String	input = getStringFromFile(text);
+PLGitem result;
+PLGrule testRule;
+    if input
+		{
+        setRules();
+        initialize();
+        testRule        = rules[name];
+        /*********************************************************************
+            Separate plg rules and sets from those that get generated
+        *********************************************************************/
+        plgRuleTable    = rules;
+        plgSetTable     = setTable;
+        rules           = new;
+        setTable        = new;
+        /*********************************************************************
+            Run the parse from contents of the file (name passed in text)
+        *********************************************************************/
+		setInput(input);
+        //debug = true;
+		if result = parse(testRule)
+            cout "Parse test of rule:",name,"successful",result:;
+        else cout "Parse test of rule:",name,"failed":;
+        /*********************************************************************
+            Puts rules and setTable back so we can run summary
+        *********************************************************************/
+        rules           = plgRuleTable;
+        setTable        = plgSetTable;
+        summary(1);
+		}
+}
+
+/*****************************************************************************
+	Loop thru all the rules and write out their action methods
+*****************************************************************************/
+void writeActions()
+{
+PLGrule	rule;
+    rules.entry = null;
+    while rule = rules.next()
+		rule.writeActions(parserName,output);
+}

@@ -1,0 +1,469 @@
+Alternative!
+PLGitem	name = exception.get("name");
+PLGitem text = exception.get("text");
+    if name
+        {
+		currentRule.failMethod = name;
+        if !failMethods failMethods = new;
+        failMethods.put(name.toString(),(void*)name);
+        }
+    or text
+		currentTest.errorMessage = text.toString();
+|
+	atElement.runDeferred();
+    if guard
+		guard.runDeferred();
+	if !alternateFlag
+		currentRule.addTest(currentTest);
+    if atLabel
+		currentTest.setLabel(atLabel.toString());
+;
+
+Balanced!
+    left.runDeferred();
+    if type type.runDeferred();
+	if !currentTest.processUpTo
+		if noSkip
+			currentTest.skipSet = null;
+		or skipping currentTest.skipSet = ((plg)iTEM.testParser).skipSet;
+    if right right.runDeferred();
+;
+
+BalanceRight!
+String		text;
+PLGtester	leftTest, rightTest;
+PLGrule		balanceRule, bodyRule, anyRule;
+use currentTest
+	text        = currentRule.name "BalancE";
+	balanceRule = getRule(text);
+	balanceRule.balanceRule = true;
+	leftTest    = currentTest;
+	leftBalance = true;
+	balanceRule.addTest(currentTest);
+	setLabel("start");
+    if noSkip
+		skipSet = null;
+	or skipping skipSet = ((plg)iTEM.testParser).skipSet;
+
+	text        = currentRule.name "BoDY";
+	bodyRule    = getRule(text);
+	currentTest = new((void*)bodyRule,5);
+	balanceRule.addTest(currentTest);
+	setLabel("body");
+	setMultiple(0,0x0FFFFFFF);
+    if noSkip   skipSet = null;
+	or skipping skipSet = ((plg)iTEM.testParser).skipSet;
+	
+	element.runDeferred();
+    if type type.runDeferred();
+	if processUpTo
+		cerr "ERROR: specifying { or } in a balance rule is undefined":;
+    if noSkip   skipSet = null;
+	or skipping skipSet = ((plg)iTEM.testParser).skipSet;
+	rightTest       = currentTest;
+	rightBalance    = true;
+	balanceRule.addTest(currentTest);
+	setLabel("finish");
+	skipSet = null;
+
+    text        = currentRule.name "Any";
+    anyRule     = getRule(text);
+    anyRule.balanceAny  = true;
+	currentTest         = new;
+	currentTest.type    = 1;
+	anyRule.addTest(currentTest);
+
+	bodyRule.balanceBody = true;
+	currentTest = new(leftTest);
+	bodyRule.addTest(currentTest);
+	setLabel("begin");
+	setMultiple(0,1);
+	skipSet     = null;
+	currentTest = new(rightTest);
+	bodyRule.addTest(currentTest);
+	setLabel("end");
+	setMultiple(0,1);
+    bodyRule.next = anyRule;
+ 
+	currentTest = new;
+	data        = balanceRule;
+	currentTest.type    = 5;
+    if noSkip   skipSet = null;
+	or skipping skipSet = ((plg)iTEM.testParser).skipSet;
+;
+
+Block!
+String	ruleName = currentRule.name;
+int		blockFlag, saveFlag;
+	buffer.reset();
+	print(buffer) ruleName "Block" blockCount++;
+
+	ruleStack.push((void*)currentRule);
+	currentRule = getRule(buffer.toString());
+	saveFlag = alternateFlag;
+	alternateFlag = false;
+
+	if clause && atAlternative.next
+		{
+		blockFlag = true;
+		buffer.reset();
+		print(buffer) ruleName "Block" blockCount++;
+
+		ruleStack.push((void*)currentRule);
+		currentRule = getRule(buffer.toString());
+		}
+	else blockFlag = false;
+    testStack.push((void*)null);
+    for atAlternative
+		atAlternative.runDeferred();
+	if blockFlag
+		{
+		currentTest = new((void*)currentRule,5);
+		if skipping currentTest.skipSet = ((plg)iTEM.testParser).skipSet;
+		currentRule = ruleStack.pop();
+		currentRule.addTest(currentTest);
+		}
+    for clause
+		{
+		testFlag = true;
+		testStack.push((void*)currentTest);
+		clause.runDeferred();
+		saveTest = testStack.pop();
+		saveTest.setAlternate(currentTest);
+		testFlag = false;
+		}
+	currentTest = new((void*)currentRule,5);
+    if type type.runDeferred();
+    if noSkip
+		currentTest.skipSet = null;
+	or skipping currentTest.skipSet = ((plg)iTEM.testParser).skipSet;
+	currentRule = ruleStack.pop();
+    testStack.pop();
+	alternateFlag = saveFlag;
+;
+
+Body!
+||||||.
+    cerr "Skipping input: " error "\n";
+;
+
+Clause!
+int	nextFlag = false;
+int saveFlag = alternateFlag;
+    if next
+		{
+		nextFlag = true;
+		alternateFlag = false;
+		buffer.reset();
+		print(buffer) currentRule.name blockCount++;
+		ruleStack.push((void*)currentRule);
+		currentRule = getRule(buffer.toString());
+		}
+	else alternateFlag = true;
+	for atAlternative
+		atAlternative.runDeferred();
+	if nextFlag
+		{
+		currentTest = new((void*)currentRule,5);
+		if skipping currentTest.skipSet = ((plg)iTEM.testParser).skipSet;
+		currentRule = ruleStack.pop();
+		}
+	alternateFlag = saveFlag;
+;
+
+Element!
+    /***************************************************************************
+        flag4, isEndTag, isRegex and noPrint are overloaded flags defined in the
+        Element immediate action
+            flag4           Condition
+            isEndTag        KeyTable
+            isRegex         Variable
+            noPrint         Set
+    ***************************************************************************/
+	if atElement.isEndTag
+		currentTest = new((void*)atElement.value,4);
+	or atElement.isRegex
+        {
+		currentTest = new((void*)atElement.value,7);
+        currentTest.aVariable = true;
+        }
+	or atElement.noPrint
+		{
+		currentSet = atElement.value;
+		currentTest = new((void*)currentSet,6);
+		}
+    or atElement.flag4
+        {
+		currentTest = new((void*)atElement.value,8);
+        currentTest.isConditionTestPLG = true;
+        }
+    else currentTest = new((void*)atElement.value,5);
+.
+void	*key;
+String  text = atElement.string();
+    if keyWordTable
+        {
+        if key = keyWordTable[text]
+            atElement.isEndTag = true;
+        }
+    if !key && conditionTable
+        {
+        if key = conditionTable[text]
+            atElement.flag4 = true;
+        }
+    if !key && variableTable
+        {
+        if key = variableTable[text]
+            atElement.isRegex = true;
+        }
+    if !key && (key = setTable[text])
+        atElement.noPrint = true;
+    if !key key = getRule(text);
+    atElement.unString();
+	if !key return false;
+	atElement.value = key;
+|
+	atElement = atElement.get("text");
+    currentTest = new((void*)atElement.toString(),7);
+|
+    atElement.runDeferred();
+    currentTest = new((void*)currentSet,6);
+|
+	currentTest = new;
+	if *atElement.itemStart == '.'
+		currentTest.type = 1;
+	or *atElement.itemStart == '$'
+        {
+        if currentTest.label
+            {
+            cerr "ERROR: EOF test should not have a label, deleting label",label.name:;
+            currentTest.label = null;
+            }
+		currentTest.type = 3;
+        }
+;
+
+ElementType!
+int min = atoi(minimum.string());
+int max = min;
+use currentTest
+    if maximum max = atoi(maximum.string());
+	setMultiple(min,max);
+|
+use currentTest
+    switch(*option.itemStart)
+		{
+		case '*':
+			setMultiple(0,0x0FFFFFFF);
+			break;
+		case '+':
+			setMultiple(1,0x0FFFFFFF);
+			break;
+		case '?':
+			setMultiple(0,1);
+			break;
+		case '!':
+            banged  = true;
+			minimum = -1;
+            if currentTest.label
+                {
+                cerr "ERROR: when ! specified, test should not have a label, deleting label",label.name:;
+                currentTest.label = null;
+                }
+			break;
+		case '{':
+			setMultiple(0,1);
+			processUpTo = true;
+			skipSet     = null;
+			if !currentRule.tests currentRule.doNotGuard = true;
+			break;
+		case '}':
+			setMultiple(0,1);
+			processUpTo     = true;
+			skipOverMatch   = true;
+			skipSet         = null;
+			if !currentRule.tests currentRule.doNotGuard = true;
+			break;
+		case '%':
+			isIgnored = true;
+		}
+;
+
+ForwardReference!
+.
+    getRule(name.toString());
+;
+
+Guard!
+	set.runDeferred();
+	currentTest.guardSet = currentSet;
+|
+	currentRule.doNotGuard = true;
+;
+
+Include!
+.
+String	text = getStringFromFile(file.string());
+PLGrule	rule = plgRuleTable["ParseInclude"];
+    cout "Including file: " file.string():;
+    if text divertInput(text,rule);
+	file.unString();
+|.
+String text = getStringFromFile(file.string());
+    cout "Inserting file: " file:;
+    includeBuffer.append(text);
+	file.unString();
+|.
+    includeBuffer.append(code.string());
+	code.unString();
+;
+
+Rule!
+.
+    String name = ruleName.toString();
+    cout "Rule: " name:;
+    currentRule = getRule(name);
+    options.runDeferred();
+;
+
+RuleOption!
+    testStack.push((void*)null);
+    for atAlternative
+		atAlternative.runDeferred();
+    testStack.pop();
+    if debug && currentRule currentRule.debug = true;
+;
+
+RuleOptions!
+PLGrule saveRule;
+PLGitem	item;
+String	ruleName = currentRule.name;
+int		ruleNumber = 2;
+    first.runDeferred();
+    for others
+        {
+        String name;
+        buffer.reset();
+        print(buffer) ruleName ruleNumber++;
+        name = buffer.toString();
+
+        saveRule = currentRule;
+        currentRule = getRule( name );
+
+        item = others.get("dummy");
+        if item
+            item.runDeferred();
+        else print "ERROR: no rule option\n";
+        saveRule.append(currentRule);
+        }
+;
+
+SetVariable!
+.
+    //                                          Variable
+    hasVariables    = true;
+    if !variableTable   variableTable = new("Variables");
+    for variable
+		variableTable.add(variable.string());
+||.
+KeyTable keyWordList = new(name.string());
+    //                                          Keyword
+    hasKeys     = true;
+    if !keyWordTable
+        keyWordTable = new("Keywords");
+    while list
+    	{
+		keyWordList.add( list.string());
+		list = list.next;
+		}
+    keyWordTable.add(name.string(),(void*)keyWordList);
+|.
+String setName  = name.toString();
+    //                                          Set
+    hasSets     = true;
+    currentSet  = null;
+    if set      set.runDeferred();
+    if !currentSet      currentSet = new;
+    currentSet.name     = setName;
+    setTable[setName]   = (void*)currentSet;
+|.
+    //                                          Condition
+    hasConditions   = true;
+    if !conditionTable conditionTable = new("Conditions");
+    do  {
+        PLGitem name = condishun["name"];
+		conditionTable.add(name.string());
+		condishun = condishun.next;
+		}
+    while condishun;
+|.
+PLGrule     rule;
+    //                                          Debug
+    if rulename
+        for rulename
+            {
+            PLGitem name    = rulename["name"];
+            if rule = rules[name.string()] {
+                rule.debug = !rule.debug;
+                while rule = rule.next
+                    rule.debug = !rule.debug; }
+            else {
+                cout `"Could not find rule to debug:",name:;
+                name.unString(); }}
+    else debugRulePLG = !debugRulePLG;
+;
+
+Start!
+.
+    if hasActions
+        {
+        print(output)
+        "/*******************************************************************************
+            Rule action declarations
+        *******************************************************************************/":;
+        declareActions();
+        }
+    if hasSets || hasConditions || hasVariables
+        declareSets();
+    if headerBuffer.length()
+		print headerBuffer.start;
+    if hasKeys  initializeKeyWords(output);
+    if includeBuffer.length()
+		print includeBuffer.string();
+	generateRules(output);
+    print "
+PLGitem run(String name)
+{":;
+    if keyWordTable
+        print `"initializeKeyWords();":;
+    print `"if !rules.length":``"{":;
+    if parentParser print ``parentParser ".setRules();":;
+    print ``"setRules();":
+        ``"initialize();":
+        ``"}":;
+    print `"return parse(name);
+}
+}":;
+    if hasActions
+        {
+        print
+            "/*******************************************************************************
+                Rule actions
+            *******************************************************************************/":;
+        writeActions();
+        }
+    if ((plg)iTEM.testParser).tail print ((plg)iTEM.testParser).tail:;
+    output.closeFile();
+;
+
+StringSet!
+    currentSet = new(text.toString());
+|
+	currentSet = setTable[name.string()];
+	name.unString();
+.
+	currentSet = setTable[name.string()];
+	name.unString();
+	if !currentSet
+		return false;
+;
