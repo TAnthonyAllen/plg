@@ -196,6 +196,7 @@ PLGrule startRule = parser.rules["Start"];
     parser.rules        = new;
     parser.setTable     = new;
 
+    content = parser.stripComments(content);
     setInput(content);
     result = parse(startRule);
     if result
@@ -235,13 +236,15 @@ PLGrule testRule = parser.rules["Test"];
         cout "=== end Test demo ===":;
         }
 
-    // Build output path: foo.g -> foo.twk
-    outFile = malloc(strlen(filename) + 8);
+    // Build output path: foo.g -> foo.regen.twk (suffix avoids overwriting
+    // any existing foo.twk source — important for grammars whose .g and
+    // .twk live in the same directory, e.g. Tokf/Tawk.g vs Tokf/Tawk.twk).
+    outFile = malloc(strlen(filename) + 16);
     strcpy(outFile, filename);
     dot = strrchr(outFile, '.');
     if dot
         { *dot = '\0'; }
-    strcat(outFile, ".twk");
+    strcat(outFile, ".regen.twk");
 
     // Generate from the FRESH parser.rules (the rules parsed out of
     // Testing.g) BEFORE restoring the meta-grammar. This is the real
@@ -533,10 +536,10 @@ singleQuote  = getSet("singleQuote","'");
     currentAlt = new Alternative();
     
     addTest(1, "//", "", 1, 1, "defaultSKIP");
-    
-    
+
+
     addTest(1, "\n", "", 0, 1, "");
-    
+
     currentRule.alternatives += currentAlt;
     
     currentRule = getRule("CommentPartBalancE");
@@ -605,18 +608,18 @@ singleQuote  = getSet("singleQuote","'");
     currentSet = getSet("/");
     currentRule.guardSet = currentSet;
     //currentRule.next = getRule("Comment2");
-    
+
     currentAlt = new Alternative();
-    
+
     addTest(6, "CommentPart", "", 1, 1, "defaultSKIP");
-    
+
     currentRule.alternatives += currentAlt;
     currentAlt = new Alternative();
-    
+
     addTest(6, "Command", "", 1, 1, "defaultSKIP");
-    
+
     currentRule.alternatives += currentAlt;
-    
+
     currentRule = getRule("Balanced");
     //currentRule.defer = BalancedplgAct;
     
@@ -736,11 +739,11 @@ singleQuote  = getSet("singleQuote","'");
     currentRule.alternatives += currentAlt;
     
     currentRule = getRule("Word");
-    currentSet = getSet("n;");
-    
+    currentSet = getSet("^ \f\r\t\n;");
+
     currentAlt = new Alternative();
-    
-    addTest(3, "n;", "what", 1, 999999, "defaultSKIP");
+
+    addTest(3, "^ \f\r\t\n;", "what", 1, 999999, "defaultSKIP");
     
     currentRule.alternatives += currentAlt;
     
@@ -895,21 +898,15 @@ singleQuote  = getSet("singleQuote","'");
     //currentRule.next = getRule("ElementType2");
     
     currentAlt = new Alternative();
-    
-    addTest(1, "", "", 1, 1, "defaultSKIP");
-    
-    
+
+    addTest(1, "{", "", 1, 1, "defaultSKIP");
     addTest(6, "Integer", "minimum", 1, 1, "defaultSKIP");
-    
-    
     addTest(6, "Max", "maximum", 0, 1, "defaultSKIP");
-    
-    
-    addTest(1, "", "", 1, 1, "defaultSKIP");
-    
+    addTest(1, "}", "", 1, 1, "defaultSKIP");
+
     currentRule.alternatives += currentAlt;
     currentAlt = new Alternative();
-    
+
     addTest(3, "*+?!%{}", "option", 1, 1, "defaultSKIP");
     
     currentRule.alternatives += currentAlt;
@@ -1333,6 +1330,7 @@ int     iters;
         cerr "IncludeplgNow: bodyRule not set — process() must run first":;
         return false;
         }
+    content = state.stripComments(content);
     state.divertInput(content);
     iters = 0;
     while state.cursor < state.eof
@@ -1360,8 +1358,14 @@ int SetVariableplgNow(PLGparse state, PLGitem iTEM)
 char    *text;
 char    keyword;
 PLGitem nameItem;
+PLGitem listItem;
 String  itemName;
 PLGset  newSet;
+KeyTable keyTable;
+char    *p;
+char    *firstWord;
+int     wordLen;
+char    ch;
     if !iTEM
         return false;
     text = iTEM.toString();
@@ -1379,7 +1383,43 @@ PLGset  newSet;
         cout "SetVariableplgNow: Set '" itemName "' registered":;
         return true;
         }
-    cout "SetVariableplgNow: keyword '" keyword "' (Variable/KeyWord/Rules/Condition/Debug — port from BeforeRefactor when needed)":;
+    if keyword == 'K'
+        {
+        // KeyWord <name> <words>* ;  — register a KeyTable group
+        nameItem = iTEM.children["name"];
+        if !nameItem return false;
+        itemName = nameItem.toString();
+        keyTable = new KeyTable(itemName);
+        listItem = iTEM.children["list"];
+        if listItem && listItem.length > 0
+            {
+            // Head item's length spans the full Word* repetition; scan to
+            // first word boundary (whitespace or ;) instead of toString().
+            // Subsequent items via .next have correct individual lengths.
+            p = listItem.start;
+            wordLen = 0;
+            ch = *(p + wordLen);
+            while ch && ch != ' ' && ch != '\t' && ch != '\n' && ch != '\r' && ch != '\f' && ch != ';'
+                {
+                wordLen++;
+                ch = *(p + wordLen);
+                }
+            firstWord = (char*)malloc(wordLen + 1);
+            strncpy(firstWord, p, wordLen);
+            *(firstWord + wordLen) = 0;
+            keyTable.add(firstWord);
+            listItem = listItem.next;
+            while listItem
+                {
+                keyTable.add(listItem.toString());
+                listItem = listItem.next;
+                }
+            }
+        state.keyWordTable[itemName] = (void*)keyTable;
+        cout "SetVariableplgNow: KeyWord '" itemName "' registered":;
+        return true;
+        }
+    cout "SetVariableplgNow: keyword '" keyword "' (Variable/Rules/Condition/Debug — port from BeforeRefactor when needed)":;
     return true;
 }
 

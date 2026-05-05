@@ -166,6 +166,113 @@ Element    e;
     if e e.isIgnored = true;
 }
 
+/*****************************************************************************
+    stripComments - pre-parse pass that replaces block comments (slash-star
+    ... star-slash) and line comments (slash-slash to newline) with spaces,
+    preserving newlines and char positions so error messages still report
+    correct line numbers. Quoted strings are passed through unmodified -
+    comment markers inside 'literals' or "literals" don't trigger stripping.
+    Returns a freshly-allocated String; caller owns the returned buffer.
+*****************************************************************************/
+String stripComments(String input)
+{
+char    *src;
+char    *dst;
+char    *out;
+int     len;
+char    quote;
+    if !input return input;
+    len = strlen(input);
+    out = (char*)malloc(len + 1);
+    src = input;
+    dst = out;
+    while *src
+        {
+        if *src == '['
+            {
+            // Character-set literal — pass through to closing ] verbatim,
+            // honoring `\X` escape so a literal `]` inside doesn't terminate.
+            *dst = *src; dst++; src++;
+            while *src && *src != ']'
+                {
+                if *src == '\\' && *(src+1)
+                    {
+                    *dst = *src; dst++; src++;
+                    *dst = *src; dst++; src++;
+                    }
+                else
+                    {
+                    *dst = *src; dst++; src++;
+                    }
+                }
+            if *src
+                {
+                *dst = *src; dst++; src++;
+                }
+            continue;
+            }
+        if *src == '\'' || *src == '"'
+            {
+            quote = *src;
+            *dst = *src; dst++; src++;
+            while *src && *src != quote
+                {
+                if *src == '\\' && *(src+1)
+                    {
+                    *dst = *src; dst++; src++;
+                    *dst = *src; dst++; src++;
+                    }
+                else
+                    {
+                    *dst = *src; dst++; src++;
+                    }
+                }
+            if *src
+                {
+                *dst = *src; dst++; src++;
+                }
+            continue;
+            }
+        if *src == '/' && *(src+1) == '/'
+            {
+            while *src && *src != '\n'
+                {
+                *dst = ' '; dst++; src++;
+                }
+            continue;
+            }
+        if *src == '/' && *(src+1) == '*'
+            {
+            *dst = ' '; dst++; src++;
+            *dst = ' '; dst++; src++;
+            while *src && !(*src == '*' && *(src+1) == '/')
+                {
+                if *src == '\n'
+                    {
+                    *dst = '\n'; dst++;
+                    }
+                else
+                    {
+                    *dst = ' '; dst++;
+                    }
+                src++;
+                }
+            if *src
+                {
+                *dst = ' '; dst++; src++;
+                if *src
+                    {
+                    *dst = ' '; dst++; src++;
+                    }
+                }
+            continue;
+            }
+        *dst = *src; dst++; src++;
+        }
+    *dst = 0;
+    return out;
+}
+
 /*******************************************************************************
 	divertInput loads the string passed in to a new buffer, if there is an
     existing current buffer, it gets put on the inputStack, and the current

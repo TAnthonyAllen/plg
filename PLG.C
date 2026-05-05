@@ -517,6 +517,7 @@ if ( !state->bodyRule )
 	::fprintf(stderr,"IncludeplgNow: bodyRule not set — process() must run first\n");
 	return 0;
 }
+content = state->stripComments(content);
 state->divertInput(content);
 iters = 0;
 while ( state->cursor < state->eof )
@@ -594,8 +595,14 @@ int SetVariableplgNow(PLGparse *state, PLGitem *iTEM)
 char 		*text = 0;
 char 		keyword = 0;
 PLGitem 	*nameItem = 0;
+PLGitem 	*listItem = 0;
 char 		*itemName = 0;
 PLGset 		*newSet = 0;
+KeyTable 	*keyTable = 0;
+char 		*p = 0;
+char 		*firstWord = 0;
+int 		wordLen = 0;
+char 		ch = 0;
 if ( !iTEM )
 return 0;
 text = iTEM->toString();
@@ -614,7 +621,44 @@ if ( keyword == 'S' )
 	::printf("SetVariableplgNow: Set '%s' registered\n",itemName);
 	return 1;
 }
-::printf("SetVariableplgNow: keyword '%c' (Variable/KeyWord/Rules/Condition/Debug — port from BeforeRefactor when needed)\n",keyword);
+if ( keyword == 'K' )
+{
+	// KeyWord <name> <words>* ;  — register a KeyTable group
+	nameItem = (PLGitem*)iTEM->children->get("name");
+	if ( !nameItem )
+		return 0;
+	itemName = nameItem->toString();
+	keyTable = new KeyTable(itemName);
+	listItem = (PLGitem*)iTEM->children->get("list");
+	if ( listItem && listItem->itemLength > 0 )
+		{
+		// Head item's length spans the full Word* repetition; scan to
+		// first word boundary (whitespace or ;) instead of toString().
+		// Subsequent items via .next have correct individual lengths.
+		p = listItem->itemStart;
+		wordLen = 0;
+		ch = *(p + wordLen);
+		while ( ch && ch != ' ' && ch != '\t' && ch != '\n' && ch != '\r' && ch != '\f' && ch != ';' )
+			{
+			wordLen++;
+			ch = *(p + wordLen);
+			}
+		firstWord = (char*)::malloc(wordLen + 1);
+		::strncpy(firstWord,p,wordLen);
+		*(firstWord + wordLen) = 0;
+		keyTable->add(firstWord);
+		listItem = listItem->itemNext;
+		while ( listItem )
+			{
+			keyTable->add(listItem->toString());
+			listItem = listItem->itemNext;
+			}
+		}
+	state->keyWordTable->add(itemName,(void*)keyTable);
+	::printf("SetVariableplgNow: KeyWord '%s' registered\n",itemName);
+	return 1;
+}
+::printf("SetVariableplgNow: keyword '%c' (Variable/Rules/Condition/Debug — port from BeforeRefactor when needed)\n",keyword);
 return 1;
 }
 
@@ -842,6 +886,7 @@ metaRules = parser->rules;
 metaSetTable = parser->setTable;
 parser->rules = new BaseHash();
 parser->setTable = new BaseHash();
+content = parser->stripComments(content);
 parser->setInput(content);
 result = parser->parse(startRule);
 if ( result )
@@ -879,15 +924,17 @@ PLGitem *testResult = testRule->match(parser);
 	parser->revertInput();
 	::printf("=== end Test demo ===\n");
 }
-// Build output path: foo.g -> foo.twk
-outFile = (char*)::malloc(::strlen(filename) + 8);
+// Build output path: foo.g -> foo.regen.twk (suffix avoids overwriting
+// any existing foo.twk source — important for grammars whose .g and
+// .twk live in the same directory, e.g. Tokf/Tawk.g vs Tokf/Tawk.twk).
+outFile = (char*)::malloc(::strlen(filename) + 16);
 ::strcpy(outFile,filename);
 dot = strrchr(outFile,'.');
 if ( dot )
 {
 	*dot = '\0';
 }
-::strcat(outFile,".twk");
+::strcat(outFile,".regen.twk");
 // Generate from the FRESH parser.rules (the rules parsed out of
 // Testing.g) BEFORE restoring the meta-grammar. This is the real
 // bootstrap output: setRules code derived from the user's grammar
@@ -1159,9 +1206,9 @@ parser->addTest(1,"\\","",1,1,"defaultSKIP");
 parser->addTest(4,"","",1,1,"defaultSKIP");
 parser->currentRule->alternatives->add(parser->currentAlt);
 parser->currentRule = parser->getRule("Word");
-parser->currentSet = parser->getSet("n;");
+parser->currentSet = parser->getSet("^ \f\r\t\n;");
 parser->currentAlt = new Alternative();
-parser->addTest(3,"n;","what",1,999999,"defaultSKIP");
+parser->addTest(3,"^ \f\r\t\n;","what",1,999999,"defaultSKIP");
 parser->currentRule->alternatives->add(parser->currentAlt);
 parser->currentRule = parser->getRule("ActionOption");
 //currentRule.defer = ActionOptionplgAct;
@@ -1252,10 +1299,10 @@ parser->currentRule = parser->getRule("ElementType");
 parser->currentRule->defer = ::ElementTypeplgAct;
 //currentRule.next = getRule("ElementType2");
 parser->currentAlt = new Alternative();
-parser->addTest(1,"","",1,1,"defaultSKIP");
+parser->addTest(1,"{","",1,1,"defaultSKIP");
 parser->addTest(6,"Integer","minimum",1,1,"defaultSKIP");
 parser->addTest(6,"Max","maximum",0,1,"defaultSKIP");
-parser->addTest(1,"","",1,1,"defaultSKIP");
+parser->addTest(1,"}","",1,1,"defaultSKIP");
 parser->currentRule->alternatives->add(parser->currentAlt);
 parser->currentAlt = new Alternative();
 parser->addTest(3,"*+?!%{}","option",1,1,"defaultSKIP");

@@ -1,5 +1,6 @@
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include "DoubleLinkList.h"
 #include "PLGrule.h"
 #include "Alternative.h"
@@ -66,6 +67,7 @@ PLGparse::PLGparse()
 	skipStack = 0;
 	inputStack = 0;
 	depth = 0;
+	helperCount = 0;
 	pendingLabel = 0;
 	pendingNoSkip = 0;
 	sourceDir = 0;
@@ -84,7 +86,6 @@ PLGparse::PLGparse()
 	doNotGuard = 0;
 	setsInitialized = 0;
 	skipping = 0;
-	helperCount = 0;
 	rules = new BaseHash();
 	setTable = new BaseHash();
 	keyWordTable = new BaseHash();
@@ -108,6 +109,7 @@ PLGparse::PLGparse(char *input)
 	skipStack = 0;
 	inputStack = 0;
 	depth = 0;
+	helperCount = 0;
 	pendingLabel = 0;
 	pendingNoSkip = 0;
 	sourceDir = 0;
@@ -126,7 +128,6 @@ PLGparse::PLGparse(char *input)
 	doNotGuard = 0;
 	setsInitialized = 0;
 	skipping = 0;
-	helperCount = 0;
 	buffer = ::bufferFactory1();
 	buffer->appendString(input);
 	cursor = buffer->start;
@@ -449,6 +450,145 @@ void PLGparse::skip()
 char *PLGparse::snapshot()
 {
 	return cursor;
+}
+
+/*****************************************************************************
+    stripComments - pre-parse pass that replaces block comments (slash-star
+    ... star-slash) and line comments (slash-slash to newline) with spaces,
+    preserving newlines and char positions so error messages still report
+    correct line numbers. Quoted strings are passed through unmodified -
+    comment markers inside 'literals' or "literals" don't trigger stripping.
+    Returns a freshly-allocated String; caller owns the returned buffer.
+*****************************************************************************/
+char *PLGparse::stripComments(char *input)
+{
+char 	*src = 0;
+char 	*dst = 0;
+char 	*out = 0;
+int 	len = 0;
+char 	quote = 0;
+	if ( !input )
+		return input;
+	len = ::strlen(input);
+	out = (char*)::malloc(len + 1);
+	src = input;
+	dst = out;
+	while ( *src )
+		{
+		if ( *src == '[' )
+			{
+			// Character-set literal — pass through to closing ] verbatim,
+			// honoring `\X` escape so a literal `]` inside doesn't terminate.
+			*dst = *src;
+			dst++;
+			src++;
+			while ( *src && *src != ']' )
+				{
+				if ( *src == '\\' && *(src + 1) )
+					{
+					*dst = *src;
+					dst++;
+					src++;
+					*dst = *src;
+					dst++;
+					src++;
+					}
+				else {
+					*dst = *src;
+					dst++;
+					src++;
+					}
+				}
+			if ( *src )
+				{
+				*dst = *src;
+				dst++;
+				src++;
+				}
+			continue;
+			}
+		if ( *src == '\'' || *src == '"' )
+			{
+			quote = *src;
+			*dst = *src;
+			dst++;
+			src++;
+			while ( *src && *src != quote )
+				{
+				if ( *src == '\\' && *(src + 1) )
+					{
+					*dst = *src;
+					dst++;
+					src++;
+					*dst = *src;
+					dst++;
+					src++;
+					}
+				else {
+					*dst = *src;
+					dst++;
+					src++;
+					}
+				}
+			if ( *src )
+				{
+				*dst = *src;
+				dst++;
+				src++;
+				}
+			continue;
+			}
+		if ( *src == '/' && *(src + 1) == '/' )
+			{
+			while ( *src && *src != '\n' )
+				{
+				*dst = ' ';
+				dst++;
+				src++;
+				}
+			continue;
+			}
+		if ( *src == '/' && *(src + 1) == '*' )
+			{
+			*dst = ' ';
+			dst++;
+			src++;
+			*dst = ' ';
+			dst++;
+			src++;
+			while ( *src && !(*src == '*' && *(src + 1) == '/') )
+				{
+				if ( *src == '\n' )
+					{
+					*dst = '\n';
+					dst++;
+					}
+				else {
+					*dst = ' ';
+					dst++;
+					}
+				src++;
+				}
+			if ( *src )
+				{
+				*dst = ' ';
+				dst++;
+				src++;
+				if ( *src )
+					{
+					*dst = ' ';
+					dst++;
+					src++;
+					}
+				}
+			continue;
+			}
+		*dst = *src;
+		dst++;
+		src++;
+		}
+	*dst = 0;
+	return out;
 }
 /*	Warning: the following methods were referenced but not declared
 	process(char*)

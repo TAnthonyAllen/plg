@@ -193,6 +193,7 @@ boolean
     String snapshot();
     void   restore(String s);
     void   skip();
+    String stripComments(String input);
     void reportError(Alternative alt, String message);
     void addTest(int kind, String data, String label, int min, int max, String skipSet);
     void setNoSkip();
