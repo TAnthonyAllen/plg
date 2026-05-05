@@ -218,3 +218,204 @@ If you pick PLG bootstrap back up:
 3. Action-blocks design is approved per TODO; implementation will
    close the action-wiring round-trip. Both gates need to clear before
    self-host loop completes cleanly.
+
+
+# Continuation — 2026-05-04 (afternoon → evening)
+
+Picks up after the morning's "self-host can't close" finding. Goal:
+work the deferred path X (update plg.g rules to self-describe), then
+drive the self-host chain forward and clear whatever surfaces. Late-
+evening pivot to Incant Phase 2 step 5 (gating hook in
+aCTionStatemenT). Mixed PLG/Incant session, summarized together.
+
+## Distilled — what landed
+
+### PLG bootstrap — three structural fixes + investigation tools
+
+**1. plg.g now self-describes.** Start rewritten from `Header? Body+`
+to `Header* '%%' Body+ '%%'? Trailer?` matching the OLD hand-written
+meta-grammar. Header flipped from `'%%'` (literal) to `Include`
+(rule). New `Trailer` rule. New `FileName` rule for path-style include
+filenames (`/Users/.../OCframe`). Bare-include alternative added to
+`Include` (`'include' file = FileName`). Grammar source files moved
+from untracked Parse/ into tracked `Parse/Revision/Grammar/` —
+caught a case-collision near-miss (APFS treats `plg.twk` and
+`PLG.twk` as the same file; binary's regenerated plg.twk was about
+to overwrite the PLG class source. Grammar/ subdir avoids it).
+Commit `02ee960` + `3f0a9d4`.
+
+**2. Generator: `}` modifier emits two elements correctly.** Source
+`'include(' file = ')'}` parses to one element with processUpTo +
+skipOverMatch flags but stays kind=kLit. matchLit doesn't honor
+processUpTo; the regenerated form was silently wrong (an OPTIONAL
+literal `)`, not "capture chars up to `)` as file"). OLD setRules
+sidesteps via a 3-element pattern (kLit prefix + kSet `^X` capture +
+kLit X terminator). Element.generate now emits the same pattern when
+processUpTo is set — adopted by the generator, not the runtime.
+Commit `3f0a9d4`.
+
+**3. Generator: noSkip flag propagates through `}` expansion.** Bug
+caught via the per-element trace below: source `'\n'}&` should produce
+two elements both with noSkip=true (from `&`); generator was dropping
+the flag. Body's error fallback then ran `skip()` before `kLit \n`,
+ate the `\n`, and the kLit had no \n to find. Two-line fix in
+Element.generate's processUpTo branch — emit `setNoSkip();` after
+each addTest if the source element had noSkip. Commit `4f410d2`.
+
+**4. Comment rule decomposition in plgRules.g.** `body = ~.+ '*/'`
+is kAny + kLit `*/` — kAny is greedy, doesn't backtrack when `*/`
+fails to follow. body+ would eat past `*/` to EOF. Rewrote Comment
+to use a CommentBody helper rule with two alts: any-non-asterisk
+(`[^*]`) OR asterisk-then-non-slash (`'*' [^/]`). body+ stops
+cleanly at `*/`, leaving the closer for the mandatory `'*/'`
+element. Same pattern as the OLD CommentPartBoDY in PLG.twk.
+Commit `faf1e5a`.
+
+**5. setGuard() — null vs empty PLGset.** Audited
+PLGrule.setGuard()'s switch over element kind. Original handled only
+kLit/kSet/kRuleRef; missing cases (kAny, kEof, kChr, kKeyTable,
+kCondition, kVariable, kUpTo, kBalanced) silently left an empty
+guardSet. Empty guardSet rejects every char; null means "accept
+anything, decide at match time." Fixed by adding all missing cases
+(→ noGuard for the un-summarizable kinds), special-casing negated
+kSet (also → noGuard), and skipping banged elements' FIRST chars
+(matching banged means failure; their chars must NOT seed the
+guard). Effect on chain: where the binary had been blocked at offset
+493 by spurious guard rejection (Trailer GUARD-REJECTED on `/` etc.),
+the rebuilt binary now traverses the entire 5095-char plg.g.
+Commit `a2c6bd1`.
+
+**6. Per-element diagnostic trace in Alternative.match.** Added
+verbose logging — `elem[N] kind=K target='X' min=M label='L'
+cursor-offset=N` (before) and `result=MATCH/null cursor-now=N
+consumed=DELTA` (after). Crucial gotcha: `kRuleRef` etc. are TEST
+macros (per CLAUDE.md TAWK quirks), not values — must compare
+against numeric kind values (1, 6, etc.), not the macro names.
+Commit `bffa005`.
+
+### Incant Phase 2 step 5 — gating hook landed
+
+In `aCTionStatemenT`, between the GROUP unwrap and the existing
+`gMethod` dispatch:
+
+```c
+GroupItem *bc = statement->getAttribute("bytecodE");
+if ( bc ) {
+    GroupItem *interpretField =
+        GroupControl::groupController->locate("interpret");
+    if ( interpretField )
+        return ::runAction(bc, interpretField);
+}
+if ( statement->groupBody->gMethod )
+    return statement->groupBody->gMethod(statement);
+```
+
+11 lines. Source-position stamping unchanged. `processingCode` skip
+unchanged. Bytecode attribute present → runs `interpret()` over the
+body via `runAction`. Falls through to `gMethod` when no bytecode
+attached or interpret isn't loaded — keeps it safe as a runtime no-op
+until the emitter starts attaching bytecodE attributes.
+Commit `b4cdb5e` (incant repo).
+
+### Other things that landed
+
+- TAWK CLAUDE.md gained a section on **directives** — debug injection
+  files (`tokDirectives` / `plgDirectives` / `groupDirectives`) that
+  weave debug code into generated C++ at TAWK-time without touching
+  `.twk` source. Toggle with `active` vs `ctive`. Documented as the
+  preferred pattern for instrumentation; commit (Tokf) `d0e95d4`.
+- TODO.md restructured to reflect current state (this morning's items
+  marked done; new layered blockers logged).
+
+## What didn't close — and why
+
+### Self-host loop still 0 rules
+
+After all the structural fixes (Comment, setGuard, noSkip, the
+hand-patched Comment+CommentBody bridge, the 8-line action-wiring
+TEMPORARY BRIDGE), the chain binary parses the entire 5095-byte
+plg.g but **emits 0 rules** in the regenerated output. Diagnosis:
+
+- Body+ matches 828 times across the file, but **NO Body alt 4 (Rule)
+  matches**. Every rule definition (`Alternative : ... ;`,
+  `Body : ... ;`, …) is being absorbed by Body alt 5 (the error
+  fallback line consumer), not recognized as a Rule item.
+- Rule was attempted only 5 times across the parse — at offsets that
+  aren't where the actual rule definitions start. At those positions
+  Rule's element chain (Name → `:` → RuleOptions → `;`) bails inside
+  RuleOptions / RuleOption / Alternative+, eventually consumes 0
+  meaningful chars, falls through.
+- Why rule definitions aren't reaching Rule alt 4: probably because
+  Body+ keeps consuming preamble lines via the error fallback before
+  ever hitting a rule definition. Or one of the Body alts higher up
+  (Comment / SetVariable / Include) is over-greedy. Next debug round
+  with directives instead of source edits.
+
+### Build path for the gating-hook test
+
+Discovered late: the right Xcode target is the **Groups scheme in
+TOK.xcodeproj** (accessed via `InProcess.xcworkspace`). It points at
+OLD `Parse/PLG{set,rule,parse,…}.C` files that reference an OLD API
+(`PLGset::addTest`, etc.). The current PLGset header lives in
+`support/Frame/PLGset.h` and the API has moved (`addTest` is now on
+PLGparse). OLD .C / NEW .h mismatch blocks compile.
+
+Recovery plan = symlink stale paths in Parse/ → current sources in
+support/Frame/ and Parse/Revision/. Affects 3 targets (Groups, TOK,
+PLG) — focused task for fresh head, not a late-night improvisation.
+Deferred to next session.
+
+The gating-hook code itself is correct and pushed (`b4cdb5e`). It
+will activate the moment (a) the build can run and (b) the emitter
+starts attaching `bytecodE` attributes.
+
+## Things to remember
+
+- **APFS is case-insensitive by default.** `plg.twk` and `PLG.twk`
+  collide. Generated artifacts in the same directory as a hand-
+  written .twk WILL overwrite it. Use subdirectories for generated
+  output. Discovered when binary's regenerated plg.twk almost
+  overwrote PLG.twk source.
+- **Empty PLGset ≠ null.** Empty rejects everything (a contradiction
+  in guard semantics); null means "no useful pre-screen, defer to
+  match time." When a guard can't be computed, return null.
+- **Use directives, not source edits** for ephemeral debug. PLG
+  has plgDirectives, Groups has groupDirectives, TAWK has
+  tokDirectives. Toggle with one-character `active`/`ctive`. Wish
+  this had been remembered earlier in the session.
+- **The Groups Xcode target is in TOK.xcodeproj**, not in any project
+  named "Groups." Look at the schemes in `InProcess.xcworkspace`.
+  GUI-related projects are off the table for now.
+- **`kRuleRef` etc. are TEST macros, not values** (CLAUDE.md TAWK
+  quirks). For comparison or assignment in TAWK code, use the numeric
+  kind value directly (1, 3, 6, …). Bit me when adding diagnostic
+  trace.
+- **Self-host bootstrap is layered.** Each fix unblocks a layer and
+  reveals the next. Today: 3 generator/grammar fixes + 1 setGuard fix
+  + 1 plgRules fix unblocked file traversal but not rule capture.
+  Next layer: why Rule rule isn't matched in main parse.
+
+## Commits this session (PLG)
+
+- `02ee960` Move grammar source into Grammar/ subdir; track in repo
+- `3f0a9d4` Generator: emit kSet ^X capture for } modifier; add FileName rule for paths
+- `dc48011` TODO.md: Self-Hosting section updated
+- `46d7563` Sessions: add plg-bootstrap-session.md (this file's earlier half)
+- `faf1e5a` Grammar: decompose Comment into Comment + CommentBody
+- `a2c6bd1` setGuard(): null vs empty PLGset
+- `bffa005` Alternative.match per-element diagnostic trace
+- `4f410d2` Generator: propagate noSkip flag through `}` modifier expansion
+
+## Commits this session (Incant)
+
+- `b4cdb5e` aCTionStatemenT: gating hook for bytecode interpretation (Phase 2 step 5)
+
+## Commits this session (TAWK)
+
+- `d0e95d4` CLAUDE.md: document directives — debug injection without source pollution
+
+## Where to pick up next session
+
+1. **Symlink dance** for Groups build path: `Parse/PLGset.C → support/Frame/PLGset.C` and equivalents for the other Parse/ stale .C files (PLGitem, PLGparse, PLGrule, PLGtester, PLGsetParse, PLGlabel, PLGrgx). Scope across 3 targets (Groups, TOK, PLG) — needs care. Then add `Bytecode.mm` to the Groups target and verify the build runs.
+2. **Why Rule rule never matches in plg.g main parse** — set up a directive in `plgDirectives` rather than editing source. Trace what Body+ matches at the offsets where rule definitions live. Almost certainly a too-greedy Body alt above Rule consuming the territory.
+3. After both: actual self-host round-trip + `testByteCode` round-trip via the gating hook.
