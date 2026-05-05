@@ -8,8 +8,8 @@
     preserved — the runtime semantics are pragmatic approximations.
 *****************************************************************************/
 
-Set singleQuote     [']
-Set excludeSet      [A-Za-z:.|]
+Set singleQuote     ['] ;
+Set excludeSet      [A-Za-z:.|] ;
 
 Name            :   name    = [._a-zA-Z0-9]+
                 ;

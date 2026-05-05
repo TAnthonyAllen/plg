@@ -56,6 +56,110 @@ if ( iTEM && iTEM->children )
 }
 
 /*******************************************************************************
+    BlockplgAct — fires (deferred) when a paren-block ( A | B | ... ) matches
+    in the source grammar. Decomposes the block by:
+      1. Creating a helper rule named <parentRuleName>Block<state.helperCount++>
+      2. Swapping state.currentRule/currentAlt to helper, then running the
+         captured atAlternative chain's deferred actions — each ElementplgAct
+         fires against the helper rule, populating its first alt.
+      3. Each Clause becomes another helper alt (same swap pattern).
+      4. Restoring parent currentRule/currentAlt and adding ONE kRuleRef
+         element pointing to helper. Any pendingLabel is stamped onto that
+         kRuleRef so caller-side labels survive decomposition.
+    Recursive nesting works naturally — nested () inside the alts triggers
+    nested BlockplgAct, captures parent name = outer helper name, producing
+    parent-prefixed names like ParentBlock0Block1.
+    Counter is reset per user-rule in RuleplgNow.
+*******************************************************************************/
+void BlockplgAct(PLGparse *state, PLGitem *iTEM)
+{
+char 			*parentName = 0;
+char 			*helperName = 0;
+Buffer 			*buf = 0;
+PLGrule 		*savedRule = 0;
+Alternative 	*savedAlt = 0;
+PLGrule 		*helper = 0;
+Alternative 	*helperAlt = 0;
+PLGitem 		*atAlt = 0;
+PLGitem 		*clauseItem = 0;
+DoubleLink 		*dlink = 0;
+PLGitem 		*deferEntry = 0;
+Element 		*elem = 0;
+char 			*label = 0;
+int 			noSkip = 0;
+if ( !iTEM )
+return;
+if ( !state->currentRule || !state->currentAlt )
+{
+	::fprintf(stderr,"BlockplgAct: no currentRule/currentAlt\n");
+	return;
+}
+label = state->pendingLabel;
+noSkip = state->pendingNoSkip;
+state->pendingLabel = 0;
+state->pendingNoSkip = 0;
+parentName = state->currentRule->name;
+buf = ::bufferFactory3("blockHelper",256);
+buf->appendString(parentName);
+buf->appendString("Block");
+buf->appendCount(state->helperCount++);
+helperName = buf->toString();
+::printf("BlockplgAct: creating helper '%s' under parent '%s'\n",helperName,parentName);
+savedRule = state->currentRule;
+savedAlt = state->currentAlt;
+helper = state->getRule(helperName);
+state->currentRule = helper;
+helperAlt = new Alternative();
+helper->alternatives->add(helperAlt);
+state->currentAlt = helperAlt;
+atAlt = (PLGitem*)iTEM->children->get("atAlternative");
+while ( atAlt )
+{
+	atAlt->runDeferred(state);
+	// Clear deferRules on every defer entry we just fired so the outer
+	// runDeferred (which has these same entries bubbled up) skips them
+	// instead of re-firing them against the parent rule.
+	if ( atAlt->deferred )
+		for ( dlink = atAlt->deferred->first; dlink; dlink = dlink->next )
+			{
+			deferEntry = (PLGitem*)dlink->value;
+			if ( deferEntry )
+				deferEntry->deferRule = 0;
+			}
+	atAlt = atAlt->itemNext;
+}
+clauseItem = (PLGitem*)iTEM->children->get("clause");
+while ( clauseItem && clauseItem->itemLength > 0 )
+{
+	helperAlt = new Alternative();
+	helper->alternatives->add(helperAlt);
+	state->currentAlt = helperAlt;
+	clauseItem->runDeferred(state);
+	if ( clauseItem->deferred )
+		for ( dlink = clauseItem->deferred->first; dlink; dlink = dlink->next )
+			{
+			deferEntry = (PLGitem*)dlink->value;
+			if ( deferEntry )
+				deferEntry->deferRule = 0;
+			}
+	clauseItem = clauseItem->itemNext;
+}
+state->currentRule = savedRule;
+state->currentAlt = savedAlt;
+elem = new Element();
+elem->kind = 6;
+elem->ruleRef = helper;
+elem->minimum = 1;
+elem->maximum = 1;
+if ( label )
+elem->label = label;
+if ( noSkip )
+elem->noSkip = 1;
+state->currentAlt->elements->add(elem);
+::printf("BlockplgAct: added kRuleRef -> '%s' on parent '%s' label='%s' noSkip=%u\n",helperName,parentName,elem->label,elem->noSkip);
+}
+
+/*******************************************************************************
 	ElementTypeplgAct — fires after an ElementType meta-rule match
 	(deferred). Modifies the most-recently-added element on
 	state.currentAlt — sets min/max from explicit `{N M}` form, or maps
@@ -472,7 +576,45 @@ return 0;
 name = ruleName->toString();
 ::printf("RuleplgNow: matched rule '%s'\n",name);
 state->currentRule = state->getRule(name);
+state->helperCount = 0;
+// per-rule reset for BlockplgAct helper naming
 iTEM->runDeferred(state);
+return 1;
+}
+
+/*******************************************************************************
+    SetVariableplgNow — fires when SetVariable matches. Dispatches by first-
+    keyword character to register captured names in the parser's tables.
+    The Set branch is the round-trip fix: registering excludeSet/singleQuote
+    etc. in setTable makes later element refs resolve via getSet instead of
+    falling through to getRule as zombie empty rules.
+*******************************************************************************/
+int SetVariableplgNow(PLGparse *state, PLGitem *iTEM)
+{
+char 		*text = 0;
+char 		keyword = 0;
+PLGitem 	*nameItem = 0;
+char 		*itemName = 0;
+PLGset 		*newSet = 0;
+if ( !iTEM )
+return 0;
+text = iTEM->toString();
+if ( !text || !*text )
+return 0;
+keyword = *text;
+if ( keyword == 'S' )
+{
+	nameItem = (PLGitem*)iTEM->children->get("name");
+	if ( !nameItem )
+		return 0;
+	itemName = nameItem->toString();
+	newSet = new PLGset(itemName);
+	newSet->name = itemName;
+	state->setTable->add(itemName,(void*)newSet);
+	::printf("SetVariableplgNow: Set '%s' registered\n",itemName);
+	return 1;
+}
+::printf("SetVariableplgNow: keyword '%c' (Variable/KeyWord/Rules/Condition/Debug — port from BeforeRefactor when needed)\n",keyword);
 return 1;
 }
 
@@ -1073,7 +1215,7 @@ parser->currentAlt = new Alternative();
 parser->addTest(6,"Comment","",1,1,"defaultSKIP");
 parser->currentRule->alternatives->add(parser->currentAlt);
 parser->currentRule = parser->getRule("Block");
-//currentRule.defer = BlockplgAct;
+parser->currentRule->defer = ::BlockplgAct;
 parser->currentAlt = new Alternative();
 parser->addTest(1,"(","",1,1,"defaultSKIP");
 parser->addTest(6,"Alternative","atAlternative",1,999999,"defaultSKIP");
@@ -1193,7 +1335,7 @@ parser->addTest(6,"RuleOption","first",1,1,"defaultSKIP");
 parser->addTest(6,"OptionClause","others",0,999999,"defaultSKIP");
 parser->currentRule->alternatives->add(parser->currentAlt);
 parser->currentRule = parser->getRule("SetVariable");
-//currentRule.immediate = SetVariableplgNow;
+parser->currentRule->immediate = ::SetVariableplgNow;
 parser->currentSet = excludeSet;
 //currentRule.next = getRule("SetVariable2");
 parser->currentAlt = new Alternative();
@@ -1228,7 +1370,7 @@ parser->setNoSkip();
 // mirror the `&` modifier in `excludeSet!&`
 parser->addTest(6,"Name","name",1,1,"defaultSKIP");
 parser->addTest(6,"StringSet","set",0,1,"defaultSKIP");
-parser->addTest(1,";","",0,1,"defaultSKIP");
+parser->addTest(1,";","",1,1,"defaultSKIP");
 parser->currentRule->alternatives->add(parser->currentAlt);
 parser->currentAlt = new Alternative();
 parser->addTest(1,"Condition","",1,1,"defaultSKIP");

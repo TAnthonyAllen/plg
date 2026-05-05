@@ -23,7 +23,7 @@ void ActionOption2plgAct(PLGitem iTEM);
 int ActionRuleplgNow(PLGitem iTEM);
 void Alternative2plgAct(PLGitem iTEM);
 void AlternativeplgAct(PLGparse state, PLGitem iTEM);
-void BlockplgAct(PLGitem iTEM);
+void BlockplgAct(PLGparse state, PLGitem iTEM);
 void ClauseplgAct(PLGitem iTEM);
 int ElementplgNow(PLGitem iTEM);
 void ElementplgAct(PLGparse state, PLGitem iTEM);
@@ -43,7 +43,7 @@ int ForwardDeclplgNow(PLGparse state, PLGitem iTEM);
 int IncludeplgNow(PLGparse state, PLGitem iTEM);
 void RuleOptionplgAct(PLGparse state, PLGitem iTEM);
 void RuleOptionsplgAct(PLGparse state, PLGitem iTEM);
-int SetVariableplgNow(PLGitem iTEM);
+int SetVariableplgNow(PLGparse state, PLGitem iTEM);
 int SetVariable3plgNow(PLGitem iTEM);
 int SetVariable5plgNow(PLGitem iTEM);
 int StartplgNow(PLGitem iTEM);
@@ -823,7 +823,7 @@ singleQuote  = getSet("singleQuote","'");
     currentRule.alternatives += currentAlt;
     
     currentRule = getRule("Block");
-    //currentRule.defer = BlockplgAct;
+    currentRule.defer = BlockplgAct;
     
     currentAlt = new Alternative();
     
@@ -1041,7 +1041,7 @@ singleQuote  = getSet("singleQuote","'");
     currentRule.alternatives += currentAlt;
     
     currentRule = getRule("SetVariable");
-    //currentRule.immediate = SetVariableplgNow;
+    currentRule.immediate = SetVariableplgNow;
     currentSet = excludeSet;
     //currentRule.next = getRule("SetVariable2");
     
@@ -1096,19 +1096,19 @@ singleQuote  = getSet("singleQuote","'");
     currentAlt = new Alternative();
     
     addTest(1, "Set", "", 1, 1, "defaultSKIP");
-    
-    
+
+
     addTest(3, "A-Za-z:.|", "", -1, 1, "");
     setNoSkip();        // mirror the `&` modifier in `excludeSet!&`
-    
-    
+
+
     addTest(6, "Name", "name", 1, 1, "defaultSKIP");
-    
-    
+
+
     addTest(6, "StringSet", "set", 0, 1, "defaultSKIP");
-    
-    
-    addTest(1, ";", "", 0, 1, "defaultSKIP");
+
+
+    addTest(1, ";", "", 1, 1, "defaultSKIP");
     
     currentRule.alternatives += currentAlt;
     currentAlt = new Alternative();
@@ -1348,6 +1348,147 @@ int     iters;
     return true;
 }
 
+/*******************************************************************************
+    SetVariableplgNow — fires when SetVariable matches. Dispatches by first-
+    keyword character to register captured names in the parser's tables.
+    The Set branch is the round-trip fix: registering excludeSet/singleQuote
+    etc. in setTable makes later element refs resolve via getSet instead of
+    falling through to getRule as zombie empty rules.
+*******************************************************************************/
+int SetVariableplgNow(PLGparse state, PLGitem iTEM)
+{
+char    *text;
+char    keyword;
+PLGitem nameItem;
+String  itemName;
+PLGset  newSet;
+    if !iTEM
+        return false;
+    text = iTEM.toString();
+    if !text || !*text
+        return false;
+    keyword = *text;
+    if keyword == 'S'
+        {
+        nameItem = iTEM.children["name"];
+        if !nameItem return false;
+        itemName = nameItem.toString();
+        newSet = new PLGset(itemName);
+        newSet.name = itemName;
+        state.setTable[itemName] = (void*)newSet;
+        cout "SetVariableplgNow: Set '" itemName "' registered":;
+        return true;
+        }
+    cout "SetVariableplgNow: keyword '" keyword "' (Variable/KeyWord/Rules/Condition/Debug — port from BeforeRefactor when needed)":;
+    return true;
+}
+
+/*******************************************************************************
+    BlockplgAct — fires (deferred) when a paren-block ( A | B | ... ) matches
+    in the source grammar. Decomposes the block by:
+      1. Creating a helper rule named <parentRuleName>Block<state.helperCount++>
+      2. Swapping state.currentRule/currentAlt to helper, then running the
+         captured atAlternative chain's deferred actions — each ElementplgAct
+         fires against the helper rule, populating its first alt.
+      3. Each Clause becomes another helper alt (same swap pattern).
+      4. Restoring parent currentRule/currentAlt and adding ONE kRuleRef
+         element pointing to helper. Any pendingLabel is stamped onto that
+         kRuleRef so caller-side labels survive decomposition.
+    Recursive nesting works naturally — nested () inside the alts triggers
+    nested BlockplgAct, captures parent name = outer helper name, producing
+    parent-prefixed names like ParentBlock0Block1.
+    Counter is reset per user-rule in RuleplgNow.
+*******************************************************************************/
+void BlockplgAct(PLGparse state, PLGitem iTEM)
+{
+String      parentName;
+String      helperName;
+Buffer      buf;
+PLGrule     savedRule;
+Alternative savedAlt;
+PLGrule     helper;
+Alternative helperAlt;
+PLGitem     atAlt;
+PLGitem     clauseItem;
+DoubleLink  dlink;
+PLGitem     deferEntry;
+Element     elem;
+String      label;
+int         noSkip;
+    if !iTEM
+        return;
+    if !state.currentRule || !state.currentAlt
+        {
+        cerr "BlockplgAct: no currentRule/currentAlt":;
+        return;
+        }
+    label  = state.pendingLabel;
+    noSkip = state.pendingNoSkip;
+    state.pendingLabel  = null;
+    state.pendingNoSkip = false;
+
+    parentName = state.currentRule.name;
+    buf = new Buffer("blockHelper", 256);
+    print(buf) parentName "Block" state.helperCount++;
+    helperName = buf.toString();
+    cout "BlockplgAct: creating helper '" helperName "' under parent '" parentName "'":;
+
+    savedRule = state.currentRule;
+    savedAlt  = state.currentAlt;
+    helper = state.getRule(helperName);
+    state.currentRule = helper;
+
+    helperAlt = new Alternative();
+    helper.alternatives += helperAlt;
+    state.currentAlt = helperAlt;
+    atAlt = iTEM.children["atAlternative"];
+    while atAlt
+        {
+        atAlt.runDeferred(state);
+        // Clear deferRules on every defer entry we just fired so the outer
+        // runDeferred (which has these same entries bubbled up) skips them
+        // instead of re-firing them against the parent rule.
+        if atAlt.deferred
+            for dlink = atAlt.deferred.first
+                {
+                deferEntry = dlink.value;
+                if deferEntry deferEntry.deferRule = null;
+                }
+        atAlt = atAlt.next;
+        }
+
+    clauseItem = iTEM.children["clause"];
+    while clauseItem && clauseItem.length > 0
+        {
+        helperAlt = new Alternative();
+        helper.alternatives += helperAlt;
+        state.currentAlt = helperAlt;
+        clauseItem.runDeferred(state);
+        if clauseItem.deferred
+            for dlink = clauseItem.deferred.first
+                {
+                deferEntry = dlink.value;
+                if deferEntry deferEntry.deferRule = null;
+                }
+        clauseItem = clauseItem.next;
+        }
+
+    state.currentRule = savedRule;
+    state.currentAlt  = savedAlt;
+
+    elem = new Element();
+    elem.kind = 6;
+    elem.ruleRef = helper;
+    elem.minimum = 1;
+    elem.maximum = 1;
+    if label
+        elem.label = label;
+    if noSkip
+        elem.noSkip = true;
+    state.currentAlt.elements += elem;
+    cout "BlockplgAct: added kRuleRef -> '" helperName "' on parent '" parentName "' label='" elem.label "' noSkip=" elem.noSkip:;
+}
+
 int ForwardDeclplgNow(PLGparse state, PLGitem iTEM)
 {
 PLGitem n;
@@ -1396,6 +1537,7 @@ String  name;
     name = ruleName.toString();
     cout "RuleplgNow: matched rule '" name "'":;
     state.currentRule = state.getRule(name);
+    state.helperCount = 0;        // per-rule reset for BlockplgAct helper naming
     iTEM.runDeferred(state);
     return true;
 }

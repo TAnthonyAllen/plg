@@ -3,15 +3,15 @@ include PLGincludes
 %%
 insert(plg.rtn)
 
-Set	alternateSet	[#([~'a-zA-Z]
-Set characterSet	[[a-zA-Z]
-Set	commandSet		[derst]
-Set	commentSet		[derst/]
-Set elementSet		[[(a-zA-Z~']
-Set	excludeSet		[A-Za-z:.|]
-Set	nameSet			[a-zA-Z]
-Set numberSet       [0-9]
-Set	singleQuote		[']
+Set	alternateSet	[#([~'a-zA-Z] ;
+Set characterSet	[[a-zA-Z] ;
+Set	commandSet		[derst] ;
+Set	commentSet		[derst/] ;
+Set elementSet		[[(a-zA-Z~'] ;
+Set	excludeSet		[A-Za-z:.|] ;
+Set	nameSet			[a-zA-Z] ;
+Set numberSet       [0-9] ;
+Set	singleQuote		['] ;
 
 Rules		Max
 			Name
@@ -171,7 +171,7 @@ SetVariable		:   'Variable'	excludeSet!&
                 	'Set'		excludeSet!&
 					name	= Name
 					set     = StringSet?
-                    ';'?
+                    ';'
                 |
                     'Condition'	excludeSet!&
 					condishun	= Name+

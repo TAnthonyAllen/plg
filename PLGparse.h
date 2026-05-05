@@ -54,6 +54,7 @@ struct
 	unsigned int setsInitialized:1;
 	unsigned int skipping:1;
 	};
+int helperCount;
 PLGparse();
 PLGparse(char *input);
 void addTest(int kind, char *data, char *label, int min, int max, char *skipSet);

@@ -161,7 +161,8 @@ PLGset		currentSet,
             skipSet;
 Stak        skipStack,
             inputStack;
-int         depth;
+int         depth,
+            helperCount;
 BaseHash    rules,
             setTable,
             keyWordTable,

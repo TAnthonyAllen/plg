@@ -84,6 +84,7 @@ PLGparse::PLGparse()
 	doNotGuard = 0;
 	setsInitialized = 0;
 	skipping = 0;
+	helperCount = 0;
 	rules = new BaseHash();
 	setTable = new BaseHash();
 	keyWordTable = new BaseHash();
@@ -125,6 +126,7 @@ PLGparse::PLGparse(char *input)
 	doNotGuard = 0;
 	setsInitialized = 0;
 	skipping = 0;
+	helperCount = 0;
 	buffer = ::bufferFactory1();
 	buffer->appendString(input);
 	cursor = buffer->start;
