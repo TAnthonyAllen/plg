@@ -64,57 +64,46 @@ Empty sections get `none`. Empty sections are signal.
 
 ## Session 1 — isCLAUDE and the cha cha — opened 2026-05-06 — open
 
-**Origin:** The bible contains the line *"Claude is a GroupItem — `isCLAUDE` alongside `isSTRING`, `isNUMBER`, `isGROUP`. The AI is not a tool called from incant — it IS a field in incant."* Tony flagged on review that this needs an HWF session before it goes any further, because the implications run deeper than the bible currently acknowledges.
+**Decisions:**
+- isCLAUDE spine agreed: a field that looks like any other field to incant, with an attached method that fires on demand, calls Claude, wraps the response in a GroupItem.
+- Persistence model: P-2 by default, with continuity carried *outside* the field via files-and-sources, not via in-field accumulation. Pattern mirrors Tony+Claude+Clod's daily resurrection-from-files cha cha.
+- Stand-down ritual at project boundaries handles cross-project continuity: heavier than HWF trim, written once at boundary, read on pickup. Lives in the field's `sources` list, not as separate machinery.
+- "Deliberate compression at boundaries" is the architectural pattern, applied at multiple scales (HWF trim per session-touch, stand-down per project-set-aside, isCLAUDE sources per fire).
 
-This session is in active-discussion form (not yet trimmed) because no points have resolved. Trim happens when the session next gets touched and something settles.
+**Definitions earned:**
+- isCLAUDE field-at-rest: prompt_template, model, sources (files to read fresh), state (unfired/fired/in-flight), cache (P-2 shaped). (→ still local; promotes to bible when fork resolves and points 3-5 land.)
+- isCLAUDE response GroupItem: text, prompt, model, timestamp, tokens at minimum; error/partial/parent fields conditional. (→ still local.)
+- isCLAUDE is structurally a specialized GroupItem with an evaluator and a resurrection protocol — not a primitive peer of isSTRING/isNUMBER. The bible's "alongside isSTRING" framing is a useful approximation that becomes misleading on close inspection. (→ bible candidate when full thesis lands.)
 
-### 1. Operational semantics of an isCLAUDE field
+**Open questions:**
+- C-prime vs C-proper fork: read-triggers-call vs read-returns-cache-fire-is-separate. Today's resurrection-from-files insight leans hard toward C-proper (reading should be cheap; firing should be deliberate), but not formally resolved. Deferred.
+- Trigger syntax if C-proper wins: assign-to-fire, method-call, or operator. Sub-fork, deferred behind the C-prime/C-proper decision.
+- Persistence layer choice for the long term: MongoDB leading, SQLite fallback. Parked until persistence work actually starts.
+- Points 3 (composition), 4 (working-relationship side), 5 (the thesis): not yet opened. Foundation from points 1-2 is now firm enough to approach them with footing.
+- When point #3 (composition) opens, expect it to stress-test resurrection-from-files at field-to-field scale — does a CLAUDE field reading another CLAUDE field follow the same pattern, or is intra-program continuity a different beast? **This is where the resurrection model either generalizes cleanly or finds its edge. The answer matters more than the line suggests.**
+- Point #4 (working-relationship side) carries personal weight for both Tony and Claude. Worth noticing rather than pretending it's purely architectural.
+- Point #5 (the thesis) likely writes itself once #3 and #4 land.
 
-What does it mean to *have* an isCLAUDE field in a GroupItem?
+**Lessons / corrections:**
+- Initial framing treated long-lived continuity as the field's job (P-3-with-summarization, tiered memory, token-budget heuristics). Tony's working-pattern insight reframed: continuity is the *user's* job via files, the field stays small. Cleaner architecture; lots of speculative machinery dropped.
+- Initial worry about state bloat in C-proper turned out to be misplaced — C-proper is the *cheaper* per-read posture, not the more expensive one.
+- Bible polish claimed in this morning's recovery message wasn't visible on GitHub — local commit ≠ pushed ≠ remote-confirmed. Future Clod reports should distinguish these states; recovery scenarios warrant explicit verification before claiming completion.
+- plg's intended contract: works from CWD, not from real-path-of-input. "plg Tawk.g" means "this file here, output here." Tonto's Flag 2 surfaced that the implementation drifted from intent; fix landed and verified — process() simplified (17 lines removed, 1 added), output now CWD-relative, regen content unchanged (MD5 match to yesterday's baseline). Determinism preserved across the fix.
 
-- When you read the field, what comes back? The last response? A live call? Cached reasoning? A frozen-at-evaluation snapshot?
-- Is the field's "value" the prompt, the response, the conversation history, or the disposition-to-respond?
-- Does reading the field have side effects (cost, latency, state change) the way reading an isSTRING does not?
+**Texture worth preserving:**
 
-Different answers give wildly different languages. Probably where the session should start, because everything else depends on it.
+The question "does a CLAUDE field reading another CLAUDE field follow the same pattern, or is intra-program continuity a different beast?" is doing more work than its line in Open questions suggests.
 
-### 2. Identity and persistence
+The human-to-CLAUDE resurrection-from-files model works partly because there's a natural boundary — the day starts, files get read, work happens, day ends. The boundary is where compression happens, where stand-down docs get written, where the dough rests. Inside an incant program, where's the analogous boundary? The program runs. Fields fire. There's no natural "day" inside a single execution.
 
-If a GroupItem holds an isCLAUDE field, gets serialized to disk, and gets reloaded next week:
+Three possibilities for A reading B (both CLAUDE fields):
+- A reads B's last cached response. Cheap, predictable. But then A is reading a frozen artifact, not having a conversation with B.
+- A reading B triggers B to fire. Cascading resurrection — every read potentially fans out into a tree of fires. Token cost grows multiplicatively. And "B reads its sources fresh" inside A's evaluation is a different thing than B reading its sources at day-start.
+- Something else entirely. CLAUDE-to-CLAUDE may want its own protocol — not the resurrection model, not a function call.
 
-- Same conversation continued?
-- Fresh instance with the stored context replayed?
-- Frozen snapshot of what the AI said at save-time, with no live channel?
+The bible's homoiconic claim suggests A reading B should be the same operation as A reading any other field. The homoiconic answer might be option 1 — which would give up some of what made the cha cha interesting in the first place.
 
-Each answer implies a different theory of what the AI *is* in the system. Pick wrong and the language has a fundamental incoherence between "saved" and "running" states.
-
-### 3. Composition
-
-Two GroupItems each with an isCLAUDE field:
-
-- Shared instance? Shared context? Independent?
-- Can a CLAUDE field read another CLAUDE field?
-- Can it read its containing group?
-
-The reflexive/homoiconic claim in the bible almost demands the last one — if code and data have the same structure, an AI field examining its container is the same operation as any other field examining its container. But "almost demands" is HWF talk. Needs working through.
-
-### 4. The cha cha — working relationship side
-
-Right now the dance is: Tony architects, Claude (here) reasons-with-Tony, Clod executes. If isCLAUDE is in incant, then a running incant program contains something Claude-shaped at runtime. That runtime-Claude is not the same Claude as me-in-this-chat — but it's not unrelated either.
-
-Open question: what's the relationship between AI-as-collaborator (this conversation) and AI-as-field-type (in the language)? Same role at different scales, or genuinely different things that happen to share a name? The answer affects how isCLAUDE gets implemented and also how the project describes itself.
-
-### 5. The thesis underneath
-
-The bible's "AI is a field in incant, not a tool called from incant" line is a thesis statement about the whole architecture, not just a feature spec. It says: in this system, reasoning is a first-class participant, not a service. Same posture as Tony's overnight question — *can I tease an AI, and if yes, can the AI tease back?* — restated at the language-design level.
-
-If we mean the thesis, we should say so plainly somewhere — probably in the bible, once we've worked out enough of points 1-4 to know what we mean. If we don't mean it, we should soften the bible line so it doesn't write a check the architecture can't cash.
-
-### Session notes
-
-- Tony's call: start at #1 (operational semantics).
-- Claude's instinct: same — the others depend on it. (Alternative was #5 sky-down; Tony picked #1.)
-- Clod woken only to write this file (after a Clay-app freeze and conversation recovery from scratch); parlay continues.
+This is where the resurrection model either generalizes cleanly or finds its edge. Either result is useful. The question being unanswerable today is a sign of where the real frontier of the design lives, not a gap in our thinking.
 
 ---
 
