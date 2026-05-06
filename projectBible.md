@@ -66,7 +66,7 @@ Each repo has `CLAUDE.md`, `TODO.md`, and this bible mirrored.
 |---------|------|----------------|
 | PLG | DSL / pattern matcher | Declarative, stateless, fast, embeddable |
 | TAWK | Transpiler | Source-to-source, metaprogramming, syntactic sugar for C++ |
-| Incant | General purpose | Reflexive, homoiconic, stack-aware, generates to C++ |
+| Incant | General purpose | Reflexive, homoiconic, stack-aware, will be JIT enabled |
 
 **DSL** — Domain-Specific Language. Designed for one purpose.  
 **Reflexive** — the language can examine and describe itself.  
@@ -87,9 +87,9 @@ Each repo has `CLAUDE.md`, `TODO.md`, and this bible mirrored.
 
 ### Key Design Decisions
 1. **Buffer-based input** — all input lives in Buffer objects. divertInput pushes/pops buffer stack.
-2. **Safe iteration** — `for (link = list->first; link; link = link->next)` — never add manual advance inside body (TAWK's for loop already advances — double-advance = SIGSEGV).
+2. **Safe iteration** — `for (link = list->first; link; link = link->next)` — never add manual advance inside body (TAWK's for loop: for link = list.first; already advances — double-advance = SIGSEGV).
 3. **Composition over inheritance** — PLG contains PLGparse field (workaround for TAWK header issues).
-4. **toString() only** — PLGitem no longer null-terminates in place.
+4. **toString() only** — PLGitem string() and unString() that generate temporary strings in the input stream are not used (they were in old plg).
 5. **addTest() shorthand** — `addTest(kind, data, label, min, max, skipSet)` creates and wires an Element in one call.
 6. **Guards** — setGuard() computes FIRST sets. CRITICAL: null guard = accept anything; empty PLGset = reject everything. These are NOT the same. When setGuard() can't determine FIRST set (kAny, negated sets, kEof etc.) return null, not empty set.
 7. **Method ordering** — alphabetical by convention (Anthony's preference). Not a TAWK requirement.
