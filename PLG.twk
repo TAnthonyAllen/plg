@@ -155,23 +155,10 @@ BaseHash    metaSetTable;
         cerr "process: could not load " filename:;
         return;
         }
-    // Save the source-file directory on the parser so IncludeplgNow can
-    // resolve include filenames relative to the grammar file's location.
-    {
-    int slash = strlen(filename);
-    while slash > 0 && *(filename + slash - 1) != '/'
-        slash--;
-    if slash > 0
-        {
-        char *dir = (char*)malloc(slash + 1);
-        strncpy(dir, filename, slash);
-        *(dir + slash) = 0;
-        parser.sourceDir = dir;
-        }
-    else
-        parser.sourceDir = "";
-    cout "process: sourceDir = '" parser.sourceDir "'":;
-    }
+    // plg's path contract is CWD-relative: includes and regen output both
+    // resolve through the current working directory, not the input file's
+    // path. Caller is responsible for being in the right place.
+    parser.sourceDir = "";
 
     // Two-table pattern: save meta-grammar (the rules that *parse* .g files),
     // install fresh empty tables for action callbacks to populate during the
@@ -236,11 +223,17 @@ PLGrule testRule = parser.rules["Test"];
         cout "=== end Test demo ===":;
         }
 
-    // Build output path: foo.g -> foo.regen.twk (suffix avoids overwriting
-    // any existing foo.twk source — important for grammars whose .g and
-    // .twk live in the same directory, e.g. Tokf/Tawk.g vs Tokf/Tawk.twk).
-    outFile = malloc(strlen(filename) + 16);
-    strcpy(outFile, filename);
+    // Build output path: foo.g -> foo.regen.twk in CWD. Strip any leading
+    // directory from filename so output lands where plg was fired, not
+    // next to the source file. The .regen suffix avoids overwriting an
+    // existing foo.twk source.
+String base = strrchr(filename, '/');
+    if base
+        base++;
+    else
+        base = filename;
+    outFile = malloc(strlen(base) + 16);
+    strcpy(outFile, base);
     dot = strrchr(outFile, '.');
     if dot
         { *dot = '\0'; }
