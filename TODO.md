@@ -80,6 +80,7 @@ Clod wrote his first real incant (interpret()) — the demon is emerging! 😄
 - [ ] plg.g `%%` assumption — document/fix
 - [ ] doNotGuard accumulation — Header/CommentPartBoDY/ForwardDecl/Trailer
 - [ ] +1000 offset reporting quirk — benign but odd
+- [ ] Bible mirror drift — projectBible.md in tawk and incant repos is behind plg/support as of 2026-05-07 (resurrection-reader standard, May 7 polishes, path-bug entry). Mirror and verify per push-then-fetch protocol. Support is current.
 
 ---
 
