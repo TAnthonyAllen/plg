@@ -39,7 +39,7 @@ This is a primary standard, not a stylistic preference. The .md files exist to m
 
 Sessions live as **trimmed logs only**. No stack of historical versions, no full transcript above the trim. The trim is the record.
 
-**Format per session — four sections:**
+**Format per session — five sections:**
 
 ```
 Session N — Topic — Date — Status
@@ -55,6 +55,10 @@ Open questions:
 
 Lessons / corrections:
 - wrong turns survive only as their corrections
+
+Texture worth preserving:
+- prose for substance that doesn't fit bullets — only when a session
+  produces it. Optional.
 ```
 
 Empty sections get `none`. Empty sections are signal.
@@ -72,11 +76,56 @@ Empty sections get `none`. Empty sections are signal.
 
 ---
 
+## The graduation ritual
+
+Active sessions live in HWF.md. When a session has done its work — its decisions promoted to the bible, definitions promoted to the glossary, open questions either resolved or explicitly transferred elsewhere — the session **graduates** out of HWF.md.
+
+Graduated sessions move to the **attic**: a sibling directory `HWFattic/` holding the final form of each graduated session as a static file. Findable if needed, not in the main reading path.
+
+**Why the attic exists, not just deletion:** a recently-graduated session is a candidate for needing-one-more-look. The attic provides a recovery window. Git history would technically serve the same purpose, but realistically nobody spelunks git history; an attic directory next to HWF.md with files in it is *findable*. That matters.
+
+**The flow when a session graduates:**
+
+1. **Verify graduation conditions are met.** All Decisions and Definitions earned that should live durably are already in the bible (or other appropriate destination). Open questions are resolved or explicitly transferred. The session has nothing left that needs HWF's working-memory shape.
+
+2. **Check the attic.** Open `HWFattic/`. Are there older trims that should retire? Retirement criterion: the trim's content is fully captured elsewhere (bible, glossary, etc.) and enough time has passed that we're confident nothing in it needs a second look. When in doubt, leave it.
+
+3. **If retirement is needed, do it.** Delete the retiring trim file from `HWFattic/`. Git history retains the content forever; this is the durable form of forgetting.
+
+4. **Add the graduating file.** The session's final trim becomes a file in `HWFattic/` named like `session1isCLAUDE.md` (number + topic, runtogether — matches incant's runtogether convention).
+
+5. **Remove the graduated session from HWF.md.** The active-sessions section no longer contains it. The Sessions index updates: graduated entry replaces the active entry, with a pointer to the attic file.
+
+6. **Same protocol as other file changes.** Claude drafts, Tony blesses, Clod commits and verifies on GitHub.
+
+**The pattern in one line:** graduation is the boundary; at the boundary, deliberate compression — both adding the new and removing the old. One ritual, two effects.
+
+This applies the cha-cha pattern at the cross-session scale: same shape as session trim (within a session) and stand-down doc (across project set-asides). At every scale: compress at the boundary, write the result somewhere durable, free the working memory.
+
+---
+
 ## Conventions
 
 - Session headings: `## Session N — Topic — Date — Status` (status is `open`, `closed`, or `deferred`).
-- Sub-points within a session: `###` headings. Discussion as prose, bullets, or dialog — whatever fits. (For active sessions only; trimmed sessions use the four-section format above.)
+- Sub-points within a session: `###` headings. Discussion as prose, bullets, or dialog — whatever fits. (For active sessions only; trimmed sessions use the four-section-plus-texture format above.)
 - Speaker tags (Tony: / Claude: / Clod:) when useful, skip when not.
+- Attic directory location: `HWFattic/` as a sibling of `HWF.md` in the same repo (currently `plg/`).
+- Attic file naming: `sessionNtopic.md` runtogether (e.g., `session1isCLAUDE.md`). No dashes, no underscores. Number first for ordering, topic for findability.
+
+---
+
+## Sessions index
+
+**Active:**
+1. **Session 1 — isCLAUDE and the cha cha** — open — opened 2026-05-06. Working through what `isCLAUDE` means as a GroupItem field type. Spine settled (field with method, fires on demand, response wrapped in GroupItem). Persistence model settled (P-2 with continuity carried outside the field via files-and-sources). C-prime/C-proper fork still open. Points 3-5 (composition, working-relationship, thesis) not yet opened.
+4. **Session 4 — Indentation as structure** — open — opened 2026-05-07. Major incant syntax design. A1 (colon required to open block), B1 (`;` always required as terminator), C (`;` survives as same-line separator), D (action bodies as `{code}` member shape with attribute-name binding) all settled. Implementation surface and migration arc unmapped — this is the real next work for this session.
+
+**Queued (origin captured, not yet opened):**
+2. **Session 2 — Sign-off ritual** — origin 2026-05-07. Three days of sign-off failures (claimed pushed but wasn't, treated as uncommitted but was, etc.). Pattern is "verification step that runs across session boundary, only verification within session." Needs design work on what cross-session verification looks like.
+3. **Session 3 — GUI / XML / incant role** — origin 2026-05-07. The xml files in incant's XML/ directory are an incant dialect for window/UI definition. Conversion rules (xml-to-incant) are partially worked out. Several substantive design threads: attribute model and merge semantics, named-close vs count-close (resolved by Session 4's indent-as-structure decision — see Session 4 lessons), inheritance through nesting, cross-platform GUI goals.
+
+**Graduated (in attic):**
+*(none yet)*
 
 ---
 
@@ -86,7 +135,7 @@ Empty sections get `none`. Empty sections are signal.
 - isCLAUDE spine agreed: a field that looks like any other field to incant, with an attached method that fires on demand, calls Claude, wraps the response in a GroupItem.
 - Persistence model: P-2 by default, with continuity carried *outside* the field via files-and-sources, not via in-field accumulation. Pattern mirrors Tony+Claude+Clod's daily resurrection-from-files cha cha.
 - Stand-down ritual at project boundaries handles cross-project continuity: heavier than HWF trim, written once at boundary, read on pickup. Lives in the field's `sources` list, not as separate machinery.
-- "Deliberate compression at boundaries" is the architectural pattern, applied at multiple scales (HWF trim per session-touch, stand-down per project-set-aside, isCLAUDE sources per fire).
+- "Deliberate compression at boundaries" is the architectural pattern, applied at multiple scales (HWF trim per session-touch, stand-down per project-set-aside, isCLAUDE sources per fire, graduation per session-completion).
 
 **Definitions earned:**
 - isCLAUDE field-at-rest: prompt_template, model, sources (files to read fresh), state (unfired/fired/in-flight), cache (P-2 shaped). (→ still local; promotes to bible when fork resolves and points 3-5 land.)
@@ -127,16 +176,56 @@ This is where the resurrection model either generalizes cleanly or finds its edg
 
 ---
 
+## Session 4 — Indentation as structure — opened 2026-05-07 — open
+
+**Decisions:**
+- A1 — Colon required to open a block. `name attrs:` opens; `name attrs;` is self-closing. The colon is the explicit "I expect children" signal. Reader can see from the line alone whether children follow.
+- B1 — `;` always required as terminator at end of statement. Single `;` per statement, regardless of nesting depth. Stacked `;;` and `;;;` for popping multiple levels become unnecessary — dedent does the structural work. Consistent with existing incant compound-statement usage (e.g., `if expression; body`).
+- C — `;` survives as same-line statement separator. Mostly mechanical, no real fork.
+- D — Action bodies become a new member shape: `{code}` lives in the field's body alongside other members, not as an end-of-line trailer attached to the field declaration. Attribute-name labels the binding at point of declaration: `onLayout: {code};`. The brace-form is unambiguous because no name-form member starts with `{`. Code stored in CodE attribute as today, just via a different syntactic path.
+
+**Definitions earned:**
+- Indent-as-structure model: indentation conveys block boundary (where a block ends), colon conveys block opening (that there is one). Together they replace count-close and named-close mechanisms — neither is needed for normal structural nesting.
+- Action-bodies-as-members: a field's body can contain two member shapes — name-form (`name attrs;` or `name attrs:` opening a child block) and brace-form (`{code};`). Brace-form members get stored in the CodE attribute. Attribute-label syntax (`onLayout: {code};`) binds the code to a specific event-bearing attribute.
+- noPrint disposition (clarified during session): CodE attribute is noPrint — accessible if you go looking, invisible to default attribute listing. noPrint commands are fire-and-forget at define time: they execute side effects (registration, code attachment) and don't retain user-facing state.
+- Resurrection-reader test for syntax design: a single line of incant should be readable on its own — whether it opens a block, closes a statement, or both — without requiring the reader to look at the next line for disambiguation. A1 passes this test; pure-indentation (A2) failed it.
+
+**Open questions:**
+- Empty blocks — `intro:` followed immediately by dedent, or by sibling at same level. Valid? Error? Needs `pass`-equivalent? Deferred.
+- Multiple action-body bindings on the same attribute name within one field — e.g., two `onLayout: {...};` declarations on one field. Probably no (latest wins, or duplicate-error), but unsettled.
+- Same-line shorthand — multiple statements per line work mechanically because `;` is statement separator. Style convention for when same-line is acceptable vs encouraged-to-break-out is unsettled. Probably falls out of writing practice rather than language rule.
+- Implementation surface mapping — parser changes, C++ rule action methods, TAWK grammar files (Tawk.g, declare.g, etc.), existing .twk files. Not a small surface. Needs explicit mapping before any code changes. "Look before we leap."
+- Migration of existing incant code — every `.twk` file with structural `;;` or `;;;` needs updating to single-`;` terminators with proper indentation. Mechanical-but-tedious. Has to happen coherently — half-migrated repos would be parser-broken. Probably wants its own arc, similar to Phase 2's TAWK runtime replacement.
+
+**Lessons / corrections:**
+- Initial framing of D treated braces as a "special case for blocks" that conflicted with indent-as-structure. Wrong frame. Once Tony surfaced that action bodies are strings stored in a CodE attribute (with noPrint disposition), the right frame became "braces are multi-line string quoting, not structural" — and the design simplified considerably. Lesson: when a feature looks like an awkward exception, check whether the underlying mechanism reframes it as something simpler.
+- Initial proposal D1' (keep braces attached to field declaration line) was too conservative. Tony's counter-proposal — make `{code}` a member shape inside the body — is structurally cleaner: order-independent, allows multiple action-bearing members per field, decouples code from positional attachment. The cleaner answer was reachable only after seeing the CodE mechanism.
+- The named-close-vs-count-close question that was queued as a separate HWF item resolves implicitly: under indent-as-structure, neither count-close nor named-close is needed for normal nesting. The question becomes moot rather than answered. (Tracking note: this means the "named-close feature" item flagged earlier in the morning's discussion does not need its own session.)
+
+**Texture worth preserving:**
+
+The trigger for this session was a small observation while working on draw.xml conversion. Claude wrote: *"If incant follows the same model (read like Python, indentation is the structure), then the closing semicolons are doing redundant work too. You don't need ;;;;; to pop five levels — the dedent already conveys that. The semicolons are just terminators, not structural information."*
+
+Tony's response, verbatim: *"This is a spectacular observation I had not noticed and we need to get on it and make it so. Lets shit can ; in incant and use indenting for structure (altho we may need a ; at the end)."*
+
+That moment is worth marking because of the shape it has. We were working a tactical problem (xml-to-incant conversion rules). A casual observation about Python-style indentation pulled a thread that revealed a *language-design simplification* that had been quietly sitting available since indentation was already authoritative in practice. The friction we'd been queueing as future HWF (named-close vs count-close) didn't need solving — it needed *eliminating*, by removing the need for either mechanism.
+
+The lesson generalizes beyond this specific decision: **when a language feature creates persistent friction (the `;;;;;` count-close awkwardness), check whether the friction is a sign the feature is doing redundant work alongside another mechanism that already covers the same ground.** Indent was already conveying nesting; the count-close was a parallel mechanism doing the same job. One had to go, and the dedent-driven approach is the one that's already self-evident to readers.
+
+A second piece of texture worth preserving: this session demonstrated that the cha cha works at language-design scale, not just architecture-design scale. Tony brought the deep incant fluency (the CodE/noPrint mechanism that reframed D, the "if expression;" usage that confirmed B1, the existing convention checks that grounded each decision). Claude brought the structural framing (mapping decisions to A/B/C/D, surfacing implications, holding the resurrection-reader standard). Neither alone would have produced this session's result. The collaboration is the mechanism, not just a feature of it.
+
+A third piece, smaller but worth marking: this session also produced *negative* design-space mapping. A2 (indentation-only, no colon) was rejected for failing the resurrection-reader test. D1 and D2 (the brace-keeping-attached and brace-dropping options) were rejected for different reasons. Knowing what was *not* chosen and why is part of the design's durability — future-Claude reading the trim should understand both the chosen path and the alternatives that didn't survive.
+
+---
+
 ## Glossary additions pending
 
 Terms used in HWF that may want bible/glossary promotion once stable:
 
 - *cha cha* — the working dance between Tony, Claude, and Clod. Currently informal.
 - *isCLAUDE* — provisional name for an AI-as-field-type GroupItem kind. May survive into the implementation; may get renamed.
-- *trim* — the four-section session record. Replaces, doesn't append.
-
----
-
-## Sessions index
-
-1. isCLAUDE and the cha cha — open — 2026-05-06
+- *trim* — the four-section-plus-texture session record. Replaces, doesn't append.
+- *graduation* — the ritual of moving a settled session out of HWF.md into the attic, with prerequisite checks and attic-cleanup combined.
+- *attic* — the sibling directory `HWFattic/` holding graduated session trims as static files. Recovery window before final retirement.
+- *resurrection-reader* — fresh-Claude reading the .md files cold tomorrow with no memory of today. The audience all project documentation must serve.
+- *indent-as-structure* — incant syntax model where indentation conveys block boundary and colon conveys block opening; replaces count-close and named-close mechanisms.
