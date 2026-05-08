@@ -118,7 +118,8 @@ This applies the cha-cha pattern at the cross-session scale: same shape as sessi
 
 **Active:**
 1. **Session 1 — isCLAUDE and the cha cha** — open — opened 2026-05-06. Working through what `isCLAUDE` means as a GroupItem field type. Spine settled (field with method, fires on demand, response wrapped in GroupItem). Persistence model settled (P-2 with continuity carried outside the field via files-and-sources). C-prime/C-proper fork still open. Points 3-5 (composition, working-relationship, thesis) not yet opened.
-4. **Session 4 — Indentation as structure** — open — opened 2026-05-07. Major incant syntax design. A1 (colon required to open block), B1 (`;` always required as terminator), C (`;` survives as same-line separator), D (action bodies as `{code}` member shape with attribute-name binding) all settled. Implementation surface and migration arc unmapped — this is the real next work for this session.
+4. **Session 4 — Indentation as structure** — open — opened 2026-05-07. Major incant syntax design. A1 (colon required to open block), B1 (`;` always required as terminator), C (`;` survives as same-line separator), D (action bodies as `{code}` member shape with attribute-name binding) all settled. Implementation design settled (Fork A); Phase 1 and Phase 2 briefs drafted, execution pending build environment stable.
+5. **Session 5 — PLGset / CharSet architectural split** — open — opened 2026-05-08. Two classes, two names settled: PLGset (parser-rule, InProcess/Parse) and CharSet (character-set utility, support/Frame). Phase A executed (PLGset strengthened to true superset of CharSet — specs field, setSimple, char *skip(char *), escape handling). Phase B executed (incant Groups walked back to PLGset). Build currently blocked on legacy 3-arg appendChar calls in PLGset printText — pre-existing bitrot exposed when file refs were fixed today. Tony researching the historical 3-arg signature overnight. PLGset.twk now exists at InProcess/Parse/PLGset.twk, needs adding to xcode project once Buffer mystery resolves.
 
 **Queued (origin captured, not yet opened):**
 2. **Session 2 — Sign-off ritual** — origin 2026-05-07. Three days of sign-off failures (claimed pushed but wasn't, treated as uncommitted but was, etc.). Pattern is "verification step that runs across session boundary, only verification within session." Needs design work on what cross-session verification looks like.
@@ -194,7 +195,7 @@ This is where the resurrection model either generalizes cleanly or finds its edg
 - Empty blocks — `intro:` followed immediately by dedent, or by sibling at same level. Valid? Error? Needs `pass`-equivalent? Deferred.
 - Multiple action-body bindings on the same attribute name within one field — e.g., two `onLayout: {...};` declarations on one field. Probably no (latest wins, or duplicate-error), but unsettled.
 - Same-line shorthand — multiple statements per line work mechanically because `;` is statement separator. Style convention for when same-line is acceptable vs encouraged-to-break-out is unsettled. Probably falls out of writing practice rather than language rule.
-- Implementation surface mapping — parser changes, C++ rule action methods, TAWK grammar files (Tawk.g, declare.g, etc.), existing .twk files. Not a small surface. Needs explicit mapping before any code changes. "Look before we leap."
+- Implementation surface mapping — design settled (Fork A: optional `:` and `;` in grammar with checkSkip() injecting from indent, with de-duplication for mixed-style files; trailing `;` at end of definition stays explicit). Phase 1 (GroupMain.twk grammar polish + DEFINing flag promotion) and Phase 2 (GroupRules.twk checkSkip() additions for defining state) drafted in briefs but not yet executed. Pending build environment stable.
 - Migration of existing incant code — every `.twk` file with structural `;;` or `;;;` needs updating to single-`;` terminators with proper indentation. Mechanical-but-tedious. Has to happen coherently — half-migrated repos would be parser-broken. Probably wants its own arc, similar to Phase 2's TAWK runtime replacement.
 
 **Lessons / corrections:**
@@ -229,3 +230,11 @@ Terms used in HWF that may want bible/glossary promotion once stable:
 - *attic* — the sibling directory `HWFattic/` holding graduated session trims as static files. Recovery window before final retirement.
 - *resurrection-reader* — fresh-Claude reading the .md files cold tomorrow with no memory of today. The audience all project documentation must serve.
 - *indent-as-structure* — incant syntax model where indentation conveys block boundary and colon conveys block opening; replaces count-close and named-close mechanisms.
+
+---
+
+## Tomorrow's first move (2026-05-09)
+
+Buffer/print 3-arg appendChar signature — Tony researching overnight. Once the historical signature is known, decide: restore Buffer's multi-arg API (with aliases for default formatting), or fix the 4 call sites in PLGset.mm to use 1-arg form. Either path unblocks the Groups build.
+
+After that: add PLGset.twk to TOK.xcodeproj (file already exists at InProcess/Parse/), regen via tok, build clean, commit both repos (support rename + incant walk-back).
