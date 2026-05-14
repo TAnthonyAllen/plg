@@ -1,0 +1,54 @@
+include /Users/anthony/Dropbox/data/InProcess/Include/PLGrevision
+
+/*****************************************************************************
+	A class wrapper for regex functionality
+*****************************************************************************/
+class PLGrgx
+{
+regex_t		*model;
+String		expression;
+boolean
+			caseSensitive
+			compiled
+			status
+			;
+
+PLGrgx(String xpr)
+{
+	expression		= xpr;
+	caseSensitive	= true;
+	model			= calloc(1,sizeof(regex_t));
+}
+
+void compile()
+{
+int		flags;
+String	errorText;
+	if compiled return;
+	if caseSensitive
+		flags = REG_EXTENDED | REG_NOSUB;
+	else flags = REG_EXTENDED | REG_NOSUB | REG_ICASE;
+	status = regcomp(model,expression,flags);
+	if status
+		{
+		errorText = malloc(200);
+		regerror(status,model,errorText,200);
+		cerr errorText "\n";
+		}
+	else compiled = true;
+}
+
+/*****************************************************************************
+	Checks if the string passed in matches the pattern
+*****************************************************************************/
+int
+matches(String text)
+{
+	if text
+		{
+		compile();
+		if !status return !regexec(model,text,0,null,0);
+		}
+	return false;
+}
+}
