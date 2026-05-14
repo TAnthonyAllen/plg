@@ -6,7 +6,6 @@
 #include "PLGrule.h"
 #include "Alternative.h"
 #include "DoubleLink.h"
-#include "PLGset.h"
 #include "Stak.h"
 #include "BaseHash.h"
 #include "Element.h"
@@ -14,6 +13,7 @@
 #include "KeyTable.h"
 #include "PLGparse.h"
 #include "PLGitem.h"
+#include "PLGset.h"
 #include "PLG.h"
 
 /*******************************************************************************
@@ -100,9 +100,9 @@ int 			noSkip = 0;
 	state->pendingNoSkip = 0;
 	parentName = state->currentRule->name;
 	buf = ::bufferFactory3("blockHelper",256);
-	buf->appendString(parentName);
-	buf->appendString("Block");
-	buf->appendCount(state->helperCount++);
+	buf->appendString(parentName,0,0);
+	buf->appendString("Block",0,0);
+	buf->appendInt(state->helperCount++,0,0);
 	helperName = buf->toString();
 	::printf("BlockplgAct: creating helper '%s' under parent '%s'\n",helperName,parentName);
 	savedRule = state->currentRule;

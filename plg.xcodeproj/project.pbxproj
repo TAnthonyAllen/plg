@@ -126,7 +126,7 @@
 		A1B173E039834775FF90F24F /* projectBible.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; name = projectBible.md; path = ../projectBible.md; sourceTree = "<group>"; };
 		A32A2B9AF8BEE9BAE559E8DB /* SearchNode.C */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SearchNode.C; sourceTree = "<group>"; };
 		A8710DDF6B5A23D21FE422DD /* CLAUDE.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; name = CLAUDE.md; path = ../CLAUDE.md; sourceTree = "<group>"; };
-		A931536F0FEFE38660C7665E /* PLGitem.twk */ = {isa = PBXFileReference; lastKnownFileType = text; path = PLGitem.twk; sourceTree = "<group>"; };
+		A931536F0FEFE38660C7665E /* PLGitem.twk */ = {isa = PBXFileReference; lastKnownFileType = text; path = PLGitem.twk; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.simpleColoring; };
 		A994484488FA9F43F9C19099 /* TapeSegment.twk */ = {isa = PBXFileReference; lastKnownFileType = text; path = TapeSegment.twk; sourceTree = "<group>"; };
 		AA3B692F6E9EAEA8952B63F6 /* GroupList.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = GroupList.mm; sourceTree = "<group>"; };
 		AAD6C6446D9E412CB29F5DE9 /* SymbolType.C */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SymbolType.C; sourceTree = "<group>"; };
@@ -165,7 +165,7 @@
 		ECB269DC07D8CB031AEAC60B /* GroupBody.twk */ = {isa = PBXFileReference; lastKnownFileType = text; path = GroupBody.twk; sourceTree = "<group>"; };
 		ED0C2E01435518992A8FF766 /* Support */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = Support; path = ../../../support/support.xcodeproj; sourceTree = "<group>"; };
 		EE9188B88ACF471B9AF6604B /* groups.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = groups.mm; sourceTree = "<group>"; };
-		F0639EC80423B76977484BD2 /* plgDirectives */ = {isa = PBXFileReference; lastKnownFileType = text; name = plgDirectives; path = ../../../plgDirectives; sourceTree = "<group>"; };
+		F0639EC80423B76977484BD2 /* plgDirectives */ = {isa = PBXFileReference; lastKnownFileType = text; name = plgDirectives; path = ../plgDirectives; sourceTree = "<group>"; };
 		F1E692281700DBAF6C46429F /* Tape.C */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = Tape.C; sourceTree = "<group>"; };
 		F2A50A34E6587EF62E7CFC64 /* OCroutines.twk */ = {isa = PBXFileReference; lastKnownFileType = text; path = OCroutines.twk; sourceTree = "<group>"; };
 		F7D0C57493CE4E48DA7F5859 /* RuleStuff.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = RuleStuff.mm; sourceTree = "<group>"; };

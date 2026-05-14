@@ -27,6 +27,7 @@ static PLGitem *itemEmpty;
 PLGitem();
 PLGitem(char *s);
 PLGitem(char *start, long length);
+int compare(PLGitem *item);
 void runDeferred(PLGparse *state);
 char *string();
 char *toString();

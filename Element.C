@@ -3,12 +3,12 @@
 #include "DoubleLinkList.h"
 #include "PLGrule.h"
 #include "DoubleLink.h"
-#include "PLGset.h"
 #include "Buffer.h"
 #include "KeyTableItem.h"
 #include "KeyTable.h"
 #include "PLGparse.h"
 #include "PLGitem.h"
+#include "PLGset.h"
 #include "Element.h"
 
 PLGitem *Element::applyRepetition(PLGparse *state, PLGitem *firstResult)
@@ -85,13 +85,13 @@ int 	kindNum = 0;
 	// for the next element when `{` doesn't consume).
 	if ( processUpTo )
 		{
-		output->appendString("addTest(3, \"^");
+		output->appendString("addTest(3, \"^",0,0);
 		PLGset::printText(litText,output);
-		output->appendString("\", \"");
+		output->appendString("\", \"",0,0);
 		if ( label )
-			output->appendString(label);
-		output->appendString("\", 1, 999999, \"\");");
-		output->appendString("\n");
+			output->appendString(label,0,0);
+		output->appendString("\", 1, 999999, \"\");",0,0);
+		output->appendString("\n",0,0);
 		// Propagate the noSkip flag from the source element. Source like
 		// `'\n'}&` has noSkip=true (from `&`); without setNoSkip on each
 		// emitted element, Element.match's default skip() runs before
@@ -100,19 +100,19 @@ int 	kindNum = 0;
 		// content + newline, parse halts.
 		if ( noSkip )
 			{
-			output->appendString("setNoSkip();");
-			output->appendString("\n");
+			output->appendString("setNoSkip();",0,0);
+			output->appendString("\n",0,0);
 			}
 		if ( skipOverMatch )
 			{
-			output->appendString("addTest(1, \"");
+			output->appendString("addTest(1, \"",0,0);
 			PLGset::printText(litText,output);
-			output->appendString("\", \"\", 1, 1, \"\");");
-			output->appendString("\n");
+			output->appendString("\", \"\", 1, 1, \"\");",0,0);
+			output->appendString("\n",0,0);
 			if ( noSkip )
 				{
-				output->appendString("setNoSkip();");
-				output->appendString("\n");
+				output->appendString("setNoSkip();",0,0);
+				output->appendString("\n",0,0);
 				}
 			}
 		return;
@@ -153,55 +153,55 @@ int 	kindNum = 0;
 		case 7:
 		case 8:
 			// Fall back to raw form against currentAlt
-			output->appendString("{\nElement *elem = new Element();");
-			output->appendString("\n");
-			output->appendString("elem->minimum = ");
-			output->appendCount(minimum);
-			output->appendString(";");
-			output->appendString("\n");
-			output->appendString("elem->maximum = ");
-			output->appendCount(maximum);
-			output->appendString(";");
-			output->appendString("\n");
+			output->appendString("{\nElement *elem = new Element();",0,0);
+			output->appendString("\n",0,0);
+			output->appendString("elem->minimum = ",0,0);
+			output->appendInt(minimum,0,0);
+			output->appendString(";",0,0);
+			output->appendString("\n",0,0);
+			output->appendString("elem->maximum = ",0,0);
+			output->appendInt(maximum,0,0);
+			output->appendString(";",0,0);
+			output->appendString("\n",0,0);
 			if ( kind == kKeyTable(kind) )
 				{
-				output->appendString("elem->kind = 7;");
-				output->appendString("\n");
+				output->appendString("elem->kind = 7;",0,0);
+				output->appendString("\n",0,0);
 				// kKeyTable
-				output->appendString("elem->tableRef = getTable(\"");
-				output->appendString(tableRef->name);
-				output->appendString("\");");
-				output->appendString("\n");
+				output->appendString("elem->tableRef = getTable(\"",0,0);
+				output->appendString(tableRef->name,0,0);
+				output->appendString("\");",0,0);
+				output->appendString("\n",0,0);
 				}
 			else {
-				output->appendString("elem->kind = 8;");
-				output->appendString("\n");
+				output->appendString("elem->kind = 8;",0,0);
+				output->appendString("\n",0,0);
 				// kCondition stub
 				}
 			if ( label )
 				{
-				output->appendString("elem->label = \"");
-				output->appendString(label);
-				output->appendString("\";");
-				output->appendString("\n");
+				output->appendString("elem->label = \"",0,0);
+				output->appendString(label,0,0);
+				output->appendString("\";",0,0);
+				output->appendString("\n",0,0);
 				}
 			if ( banged )
 				{
-				output->appendString("elem->banged = true;");
-				output->appendString("\n");
+				output->appendString("elem->banged = true;",0,0);
+				output->appendString("\n",0,0);
 				}
 			if ( isIgnored )
 				{
-				output->appendString("elem->isIgnored = true;");
-				output->appendString("\n");
+				output->appendString("elem->isIgnored = true;",0,0);
+				output->appendString("\n",0,0);
 				}
 			if ( noSkip )
 				{
-				output->appendString("elem->noSkip = true;");
-				output->appendString("\n");
+				output->appendString("elem->noSkip = true;",0,0);
+				output->appendString("\n",0,0);
 				}
-			output->appendString("currentAlt->elements.add((void*)elem);\n}");
-			output->appendString("\n");
+			output->appendString("currentAlt->elements.add((void*)elem);\n}",0,0);
+			output->appendString("\n",0,0);
 			return;
 		default:
 			::fprintf(stderr,"Element.generate: unknown kind %u\n",kind);
@@ -216,39 +216,39 @@ int 	kindNum = 0;
 		if ( skipSet->specs )
 			skipName = skipSet->specs;
 		}
-	output->appendString("addTest(");
-	output->appendCount(kindNum);
-	output->appendString(", \"");
+	output->appendString("addTest(",0,0);
+	output->appendInt(kindNum,0,0);
+	output->appendString(", \"",0,0);
 	if ( kind == kChr(kind) )
-		output->appendChar(chrChar);
+		output->appendChar(chrChar,0,0);
 	else
 	if ( data )
 		PLGset::printText(data,output);
-	output->appendString("\", \"");
-	output->appendString(label);
-	output->appendString("\", ");
-	output->appendCount(minimum);
-	output->appendString(", ");
-	output->appendCount(maximum);
-	output->appendString(", \"");
-	output->appendString(skipName);
-	output->appendString("\");");
-	output->appendString("\n");
+	output->appendString("\", \"",0,0);
+	output->appendString(label,0,0);
+	output->appendString("\", ",0,0);
+	output->appendInt(minimum,0,0);
+	output->appendString(", ",0,0);
+	output->appendInt(maximum,0,0);
+	output->appendString(", \"",0,0);
+	output->appendString(skipName,0,0);
+	output->appendString("\");",0,0);
+	output->appendString("\n",0,0);
 	// Modifier follow-ups — addTest doesn't carry these directly
 	if ( noSkip )
 		{
-		output->appendString("setNoSkip();");
-		output->appendString("\n");
+		output->appendString("setNoSkip();",0,0);
+		output->appendString("\n",0,0);
 		}
 	if ( banged )
 		{
-		output->appendString("setBanged();");
-		output->appendString("\n");
+		output->appendString("setBanged();",0,0);
+		output->appendString("\n",0,0);
 		}
 	if ( isIgnored )
 		{
-		output->appendString("setIgnored();");
-		output->appendString("\n");
+		output->appendString("setIgnored();",0,0);
+		output->appendString("\n",0,0);
 		}
 }
 

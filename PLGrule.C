@@ -3,12 +3,12 @@
 #include "DoubleLinkList.h"
 #include "Alternative.h"
 #include "DoubleLink.h"
-#include "PLGset.h"
 #include "Stak.h"
 #include "Element.h"
 #include "Buffer.h"
 #include "PLGparse.h"
 #include "PLGitem.h"
+#include "PLGset.h"
 #include "PLGrule.h"
 
 /*******************************************************************************
@@ -60,48 +60,48 @@ Alternative 	*test = 0;
 	// Blank-line separator only — `//` lines reset TAWK's field-resolution
 	// context, which strips `use parser` from the next assignment and breaks
 	// compilation when the generated body is pasted into a use-parser block.
-	output->appendString("\ncurrentRule = getRule(\"");
-	output->appendString(name);
-	output->appendString("\");");
-	output->appendString("\n");
+	output->appendString("\ncurrentRule = getRule(\"",0,0);
+	output->appendString(name,0,0);
+	output->appendString("\");",0,0);
+	output->appendString("\n",0,0);
 	if ( balanceRule )
 		{
-		output->appendString("currentRule.immediate = balancE;");
-		output->appendString("\n");
+		output->appendString("currentRule.immediate = balancE;",0,0);
+		output->appendString("\n",0,0);
 		}
 	else
 	if ( balanceBody )
 		{
-		output->appendString("currentRule.immediate = balancEbody;");
-		output->appendString("\n");
+		output->appendString("currentRule.immediate = balancEbody;",0,0);
+		output->appendString("\n",0,0);
 		}
 	else
 	if ( balanceAny )
 		{
-		output->appendString("currentRule.immediate = balancEbail;");
-		output->appendString("\n");
+		output->appendString("currentRule.immediate = balancEbail;",0,0);
+		output->appendString("\n",0,0);
 		}
 	else
 	if ( immediateAction )
 		{
-		output->appendString("currentRule.immediate = ");
-		output->appendString(name);
-		output->appendString(parentParser->parserName);
-		output->appendString("Now;");
-		output->appendString("\n");
+		output->appendString("currentRule.immediate = ",0,0);
+		output->appendString(name,0,0);
+		output->appendString(parentParser->parserName,0,0);
+		output->appendString("Now;",0,0);
+		output->appendString("\n",0,0);
 		}
 	if ( deferAction )
 		{
-		output->appendString("currentRule.defer = ");
-		output->appendString(name);
-		output->appendString(parentParser->parserName);
-		output->appendString("Act;");
-		output->appendString("\n");
+		output->appendString("currentRule.defer = ",0,0);
+		output->appendString(name,0,0);
+		output->appendString(parentParser->parserName,0,0);
+		output->appendString("Act;",0,0);
+		output->appendString("\n",0,0);
 		}
 	if ( doNotGuard )
 		{
-		output->appendString("currentRule.doNotGuard = true;");
-		output->appendString("\n");
+		output->appendString("currentRule.doNotGuard = true;",0,0);
+		output->appendString("\n",0,0);
 		}
 	else
 	if ( guardSet )
@@ -115,20 +115,20 @@ Alternative 	*test = 0;
 		if ( test->guardSet )
 			{
 			test->guardSet->generate(output);
-			output->appendString("currentRule.guardSet = currentSet;");
-			output->appendString("\n");
+			output->appendString("currentRule.guardSet = currentSet;",0,0);
+			output->appendString("\n",0,0);
 			}
 		}
 	if ( debug )
 		{
-		output->appendString("currentRule.debug = true;");
-		output->appendString("\n");
+		output->appendString("currentRule.debug = true;",0,0);
+		output->appendString("\n",0,0);
 		}
 	if ( failMethod )
 		{
-		output->appendString("currentRule.fail = ");
-		output->appendString(failMethod->toString());
-		output->appendString(";\n");
+		output->appendString("currentRule.fail = ",0,0);
+		output->appendString(failMethod->toString(),0,0);
+		output->appendString(";\n",0,0);
 		}
 }
 

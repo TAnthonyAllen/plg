@@ -5,12 +5,12 @@
 #include "PLGrule.h"
 #include "Alternative.h"
 #include "DoubleLink.h"
-#include "PLGset.h"
 #include "Stak.h"
 #include "BaseHash.h"
 #include "Element.h"
 #include "Buffer.h"
 #include "PLGitem.h"
+#include "PLGset.h"
 #include "PLG.h"
 #include "PLGparse.h"
 
@@ -129,7 +129,7 @@ PLGparse::PLGparse(char *input)
 	setsInitialized = 0;
 	skipping = 0;
 	buffer = ::bufferFactory1();
-	buffer->appendString(input);
+	buffer->appendString(input,0,0);
 	cursor = buffer->start;
 	eof = buffer->end;
 	rules = new BaseHash();
@@ -210,7 +210,7 @@ void PLGparse::divertInput(char *s)
 	buffer->current = cursor;
 	inputStack->push(buffer);
 	buffer = ::bufferFactory1();
-	buffer->appendString(s);
+	buffer->appendString(s,0,0);
 	cursor = buffer->start;
 	eof = buffer->end;
 }
@@ -222,16 +222,16 @@ void PLGparse::generateRules(Buffer *output)
 {
 PLGrule 	*rule = 0;
 PLGset 		*set = 0;
-	output->appendString("\nvoid setRules()\n{\n	setSkip();");
-	output->appendString("\n");
+	output->appendString("\nvoid setRules()\n{\n	setSkip();",0,0);
+	output->appendString("\n",0,0);
 	setTable->hashList->resetIterator();
 	while ( set = (PLGset*)setTable->hashList->next() )
 		set->generate(output);
 	rules->hashList->entry = 0;
 	while ( rule = (PLGrule*)rules->hashList->next() )
 		rule->generate(output);
-	output->appendString("}");
-	output->appendString("\n");
+	output->appendString("}",0,0);
+	output->appendString("\n",0,0);
 	// end of setup
 }
 
@@ -389,7 +389,7 @@ void PLGparse::setInput(char *s)
 	if ( !buffer )
 		buffer = ::bufferFactory1();
 	buffer->reset();
-	buffer->appendString(s);
+	buffer->appendString(s,0,0);
 	cursor = buffer->start;
 	eof = buffer->end;
 }
@@ -399,7 +399,7 @@ void PLGparse::setInput(PLGitem *item)
 	if ( !buffer )
 		buffer = ::bufferFactory1();
 	buffer->reset();
-	buffer->appendString(item->toString());
+	buffer->appendString(item->toString(),0,0);
 	cursor = buffer->start;
 	eof = buffer->end;
 }

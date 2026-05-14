@@ -3,12 +3,12 @@
 #include "DoubleLinkList.h"
 #include "PLGrule.h"
 #include "DoubleLink.h"
-#include "PLGset.h"
 #include "BaseHash.h"
 #include "Element.h"
 #include "Buffer.h"
 #include "PLGparse.h"
 #include "PLGitem.h"
+#include "PLGset.h"
 #include "Alternative.h"
 
 /*******************************************************************************
@@ -29,13 +29,13 @@ Alternative::Alternative()
 void Alternative::generate(Buffer *output)
 {
 Element 	*elem = 0;
-	output->appendString("currentAlt = new Alternative();");
-	output->appendString("\n");
+	output->appendString("currentAlt = new Alternative();",0,0);
+	output->appendString("\n",0,0);
 	elements->resetIterator();
 	while ( elem = (Element*)elements->next() )
 		elem->generate(output);
-	output->appendString("currentRule.alternatives += currentAlt;");
-	output->appendString("\n");
+	output->appendString("currentRule.alternatives += currentAlt;",0,0);
+	output->appendString("\n",0,0);
 }
 
 int Alternative::match(PLGparse *state, PLGitem *&out)

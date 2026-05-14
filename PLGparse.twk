@@ -1,6 +1,6 @@
 include /Users/anthony/Dropbox/data/InProcess/Include/globals
 include /Users/anthony/Dropbox/data/InProcess/Include/frame
-include PLGrevision
+include /Users/anthony/Dropbox/data/InProcess/Include/PLGrevision
 
 /*******************************************************************************
 	PLGparse defines the environment for a test version of plg and provides

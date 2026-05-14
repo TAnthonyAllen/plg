@@ -1,6 +1,6 @@
 include /Users/anthony/Dropbox/data/InProcess/Include/globals
 include /Users/anthony/Dropbox/data/InProcess/Include/frame
-include PLGrevision
+include /Users/anthony/Dropbox/data/InProcess/Include/PLGrevision
 
 /*******************************************************************************
 	Class that embodies the Element rule in plg

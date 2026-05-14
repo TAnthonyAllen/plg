@@ -1,6 +1,6 @@
 include /Users/anthony/Dropbox/data/InProcess/Include/globals
 include /Users/anthony/Dropbox/data/InProcess/Include/frame
-include PLGrevision
+include /Users/anthony/Dropbox/data/InProcess/Include/PLGrevision
 
 /*******************************************************************************
     PLG external declarations for stuff that is not there yet

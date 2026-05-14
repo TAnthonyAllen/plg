@@ -84,7 +84,7 @@ tawk PLG.twk             # largest file — contains setRules()
 
 **Important TAWK quirks:**
 - Empty `//` comment lines reset field resolution context — remove them from method bodies
-- `field = new;` sometimes fails type inference — use `field = new ClassName();` explicitly
+- `field = new;` sometimes fails type inference (actually, only when there is a preceding empty comment)— use `field = new ClassName();` explicitly in that case (best avoided by not having empty comments but lets fix the bug anyway)
 - No `#include` generated in `.h` files — for inherited classes add `#include "Parent.h"` manually after every re-tawk
 - After adding include guards to `.h` files, they must be re-added after re-tawk (tawk doesn't generate them)
 

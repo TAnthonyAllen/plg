@@ -88,3 +88,11 @@ venv/
 Grammar/plg.twk
 Grammar/parts.twk
 *.regen.twk
+
+# Archive / out-of-scope dirs — preserved on disk, not tracked
+/Backup/
+/BeforeRefactor/
+/Tests/
+
+# Claude Code per-repo configuration
+.claude/

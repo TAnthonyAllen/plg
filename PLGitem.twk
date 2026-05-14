@@ -1,6 +1,6 @@
 include /Users/anthony/Dropbox/data/InProcess/Include/globals
 include /Users/anthony/Dropbox/data/InProcess/Include/frame
-include PLGrevision
+include /Users/anthony/Dropbox/data/InProcess/Include/PLGrevision
 
 /*******************************************************************************
 	Class that embodies an item (like a PLGitem)
@@ -39,6 +39,21 @@ PLGitem(String s)
 {
     itemStart   = s;
     itemLength  = strlen(s);
+}
+
+/*****************************************************************************
+	Compare this item to the item passed in.
+*****************************************************************************/
+int compare(PLGitem item)
+{
+	if item
+		{
+        int	result = (int)(itemLength - item.itemLength);
+        if !result
+            result = strncmp(itemStart,item.itemStart,itemLength);
+        return result;
+        }
+    return 1;
 }
 
 /*****************************************************************************

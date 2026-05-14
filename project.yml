@@ -52,7 +52,7 @@ targets:
         includes: ["*.twk", "plgDirectives"]
 
       # ── PLG own — plgDirectives lives one level up ─────────────────
-      - path: ../plgDirectives
+      - path: plgDirectives
         group: PLG/Tawk
         buildPhase: none
         optional: true

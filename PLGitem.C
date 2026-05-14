@@ -58,6 +58,21 @@ PLGitem::PLGitem(char *start, long length)
 }
 
 /*****************************************************************************
+	Compare this item to the item passed in.
+*****************************************************************************/
+int PLGitem::compare(PLGitem *item)
+{
+	if ( item )
+		{
+		int 	result = (int)(itemLength - item->itemLength);
+		if ( !result )
+			result = ::strncmp(itemStart,item->itemStart,itemLength);
+		return result;
+		}
+	return 1;
+}
+
+/*****************************************************************************
     runDeferred — walk this item's deferred list (each entry is a PLGitem
     whose deferRule field names the rule whose defer callback to fire).
     Cascade is built bottom-up: PLGrule.match adds (rule, result) to
