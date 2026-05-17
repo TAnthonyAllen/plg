@@ -44,8 +44,7 @@ DoubleLink  dlink = null;
 Element     elem;
 int         result = true;
 int         elemIdx = 0;
-String      altStart = state.cursor;
-cout "Alternative match elements: " elements.length():;
+if debugRulePLG  cout "Alternative match elements: " elements.length():;
     collected.start = state.cursor;
     for link = elements.first {
         elem = link.value;
@@ -59,11 +58,11 @@ cout "Alternative match elements: " elements.length():;
         String      what = "?";
         if elem.kind == 6 && elem.ruleRef   what = elem.ruleRef.name;
         else if elem.kind == 1 && elem.litText  what = elem.litText;
-        cout "    elem[" elemIdx "] kind=" elem.kind " target='" what "' min=" elem.minimum " label='" elem.label "' cursor-offset=" (state.cursor - state.buffer.start):;
+        if debugRulePLG  cout "    elem[" elemIdx "] kind=" elem.kind " target='" what "' min=" elem.minimum " label='" elem.label "' cursor-offset=" (state.cursor - state.buffer.start):;
         }
         String beforeCursor = state.cursor;
         PLGitem item = elem.match(state);
-        cout "    elem[" elemIdx "] result=" (item ? "MATCH" : "null") " cursor-now=" (state.cursor - state.buffer.start) " consumed=" (state.cursor - beforeCursor):;
+        if debugRulePLG  cout "    elem[" elemIdx "] result=" (item ? "MATCH" : "null") " cursor-now=" (state.cursor - state.buffer.start) " consumed=" (state.cursor - beforeCursor):;
         if !item
             {
             // Banged elements (`!`, min=-1) ARE required even though their

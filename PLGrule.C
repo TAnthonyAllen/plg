@@ -147,21 +147,25 @@ char 			*saved = 0;
 	if ( guardSet && state->cursor < state->eof && !guardSet->contains(*state->cursor) )
 		{
 		char 	ch = *state->cursor;
-		::printf("PLGrule: %s GUARD-REJECTED at offset %lu char='%c' guard=[%s]\n",name,(state->cursor - state->buffer->start),ch,guardSet->toString());
+		if ( state->debugRulePLG || debug )
+			::printf("PLGrule: %s GUARD-REJECTED at offset %lu char='%c' guard=[%s]\n",name,(state->cursor - state->buffer->start),ch,guardSet->toString());
 		return 0;
 		}
-	::printf("PLGrule: %s (%d alts) at offset %lu\n",name,altCount,(state->cursor - state->buffer->start));
+	if ( state->debugRulePLG || debug )
+		::printf("PLGrule: %s (%d alts) at offset %lu\n",name,altCount,(state->cursor - state->buffer->start));
 	for ( link = alternatives->first; link; link = link->next )
 		{
 		alt = (Alternative*)link->value;
 		altNum++;
 		saved = state->cursor;
-		::printf("  %s try alt %d/%d at offset %lu\n",name,altNum,altCount,(saved - state->buffer->start));
+		if ( state->debugRulePLG || debug )
+			::printf("  %s try alt %d/%d at offset %lu\n",name,altNum,altCount,(saved - state->buffer->start));
 		if ( alt->match(state,result) )
 			{
 			if ( state->cursor > saved )
 				{
-				::printf("  %s alt %d SUCCEEDED -> offset %lu\n",name,altNum,(state->cursor - state->buffer->start));
+				if ( state->debugRulePLG || debug )
+					::printf("  %s alt %d SUCCEEDED -> offset %lu\n",name,altNum,(state->cursor - state->buffer->start));
 				if ( immediate )
 					immediate(state,result);
 				if ( defer )
@@ -183,18 +187,21 @@ char 			*saved = 0;
 					}
 				return result;
 				}
-			::printf("  %s alt %d ZERO-ADVANCE — treating as fail\n",name,altNum);
+			if ( state->debugRulePLG || debug )
+				::printf("  %s alt %d ZERO-ADVANCE — treating as fail\n",name,altNum);
 			// Restore cursor — Alternative.match may have advanced
 			// through partial matches before its required element failed.
 			// Without this, the next alt starts at the wrong position.
 			state->cursor = saved;
 			}
 		else {
-			::printf("  %s alt %d FAILED at offset %lu (was %lu)\n",name,altNum,(state->cursor - state->buffer->start),(saved - state->buffer->start));
+			if ( state->debugRulePLG || debug )
+				::printf("  %s alt %d FAILED at offset %lu (was %lu)\n",name,altNum,(state->cursor - state->buffer->start),(saved - state->buffer->start));
 			state->cursor = saved;
 			}
 		}
-	::printf("  %s ALL %d alts failed\n",name,altCount);
+	if ( state->debugRulePLG || debug )
+		::printf("  %s ALL %d alts failed\n",name,altCount);
 	return 0;
 }
 

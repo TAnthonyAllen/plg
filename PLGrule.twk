@@ -106,20 +106,20 @@ String      saved;
     if guardSet && state.cursor < state.eof && !guardSet.contains(*state.cursor)
         {
         char ch = *state.cursor;
-        cout "PLGrule: " name " GUARD-REJECTED at offset " (state.cursor - state.buffer.start) " char='" ch "' guard=[" guardSet.toString() "]":;
+        if debugRulePLG || debug  cout "PLGrule: " name " GUARD-REJECTED at offset " (state.cursor - state.buffer.start) " char='" ch "' guard=[" guardSet.toString() "]":;
         return null;
         }
-    cout "PLGrule: " name " (" altCount " alts) at offset " (state.cursor - state.buffer.start):;
+    if debugRulePLG || debug  cout "PLGrule: " name " (" altCount " alts) at offset " (state.cursor - state.buffer.start):;
     for link = alternatives.first {
         alt = link.value;
         altNum++;
         saved = state.cursor;
-        cout "  " name " try alt " altNum "/" altCount " at offset " (saved - state.buffer.start):;
+        if debugRulePLG || debug  cout "  " name " try alt " altNum "/" altCount " at offset " (saved - state.buffer.start):;
         if alt.match(state, result)
             {
             if state.cursor > saved
                 {
-                cout "  " name " alt " altNum " SUCCEEDED -> offset " (state.cursor - state.buffer.start):;
+                if debugRulePLG || debug  cout "  " name " alt " altNum " SUCCEEDED -> offset " (state.cursor - state.buffer.start):;
                 if immediate  immediate(state, result);
                 if defer
                     {
@@ -140,7 +140,7 @@ String      saved;
                     }
                 return result;
                 }
-            cout "  " name " alt " altNum " ZERO-ADVANCE — treating as fail":;
+            if debugRulePLG || debug  cout "  " name " alt " altNum " ZERO-ADVANCE — treating as fail":;
             // Restore cursor — Alternative.match may have advanced
             // through partial matches before its required element failed.
             // Without this, the next alt starts at the wrong position.
@@ -148,11 +148,11 @@ String      saved;
             }
         else
             {
-            cout "  " name " alt " altNum " FAILED at offset " (state.cursor - state.buffer.start) " (was " (saved - state.buffer.start) ")":;
+            if debugRulePLG || debug  cout "  " name " alt " altNum " FAILED at offset " (state.cursor - state.buffer.start) " (was " (saved - state.buffer.start) ")":;
             state.cursor = saved;
             }
         }
-    cout "  " name " ALL " altCount " alts failed":;
+    if debugRulePLG || debug  cout "  " name " ALL " altCount " alts failed":;
     return null;
 }
 

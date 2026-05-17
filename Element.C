@@ -23,7 +23,8 @@ PLGitem *head = firstResult;
 PLGitem *tail = head;
 DoubleLink *dlink = 0;
 int count = 1;
-	::printf("Element applyRepetition\n");
+	if ( state->debugRulePLG )
+		::printf("Element applyRepetition\n");
 	while ( count < maximum )
 		{
 		char 	*saved = state->snapshot();
@@ -36,7 +37,8 @@ int count = 1;
 			state->skip();
 		// 6 = kRuleRef (kRuleRef macro is a test, not a value)
 		// Re-run the element's kind-specific matcher
-		::printf("\tapplyRepetition matchByKind kind=%u cursor=%s\n",kind,state->cursor);
+		if ( state->debugRulePLG )
+			::printf("\tapplyRepetition matchByKind kind=%u cursor=%s\n",kind,state->cursor);
 		PLGitem *nextItem = matchByKind(state);
 		if ( !nextItem )
 			{
@@ -256,7 +258,8 @@ PLGitem *Element::match(PLGparse *state)
 {
 char 		*savedCursor = 0;
 PLGitem 	*result = 0;
-	::printf("Element match\n");
+	if ( state->debugRulePLG )
+		::printf("Element match\n");
 	//trace?.enterElement(this, state);
 	// Skip-set handling — done once, per element, before the kind-specific match
 	if ( !noSkip )
@@ -434,7 +437,8 @@ PLGitem *result = new PLGitem(state->cursor,at - state->cursor);
 
 PLGitem *Element::matchRuleRef(PLGparse *state)
 {
-	::printf("matchRuleRef: cursor: %s\n",state->cursor);
+	if ( state->debugRulePLG || ruleRef->debug )
+		::printf("matchRuleRef: cursor: %s\n",state->cursor);
 	return ruleRef->match(state);
 }
 

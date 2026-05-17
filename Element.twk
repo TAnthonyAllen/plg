@@ -160,7 +160,7 @@ PLGitem match(PLGparse state)
 {
 String      savedCursor;
 PLGitem     result;
-cout "Element match":;
+if debugRulePLG  cout "Element match":;
     //trace?.enterElement(this, state);
 
     // Skip-set handling — done once, per element, before the kind-specific match
@@ -216,7 +216,7 @@ PLGitem head = firstResult;
 PLGitem tail = head;
 DoubleLink dlink;
 int count = 1;
-cout "Element applyRepetition":;
+if debugRulePLG  cout "Element applyRepetition":;
     while count < maximum {
         String saved = snapshot();
         // Skip between repeats only for sub-rule (kRuleRef) repetitions,
@@ -226,7 +226,7 @@ cout "Element applyRepetition":;
         // let `[a-zA-Z]+` swallow whitespace inside what should be one name.
         if !noSkip && kind == 6  skip();   // 6 = kRuleRef (kRuleRef macro is a test, not a value)
         // Re-run the element's kind-specific matcher
-cout `"applyRepetition matchByKind kind=" kind " cursor=" state.cursor:;
+if debugRulePLG  cout `"applyRepetition matchByKind kind=" kind " cursor=" state.cursor:;
         PLGitem nextItem = matchByKind(state);
         if !nextItem
             { restore(saved); break; }
@@ -349,7 +349,7 @@ String want = litText;
 
 PLGitem matchRuleRef(PLGparse state)
 {
-cout "matchRuleRef: cursor: " cursor:;
+    if debugRulePLG || ruleRef.debug  cout "matchRuleRef: cursor: " cursor:;
     return ruleRef.match(state);
 }
 

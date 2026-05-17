@@ -46,7 +46,8 @@ DoubleLink 	*dlink = 0;
 Element 	*elem = 0;
 int 		result = 1;
 int 		elemIdx = 0;
-	::printf("Alternative match elements: %d\n",elements->length);
+	if ( state->debugRulePLG )
+		::printf("Alternative match elements: %d\n",elements->length);
 	collected->itemStart = state->cursor;
 	for ( link = elements->first; link; link = link->next )
 		{
@@ -64,11 +65,13 @@ int 		elemIdx = 0;
 		else
 		if ( elem->kind == 1 && elem->litText )
 			what = elem->litText;
-		::printf("    elem[%d] kind=%u target='%s' min=%d label='%s' cursor-offset=%lu\n",elemIdx,elem->kind,what,elem->minimum,elem->label,(state->cursor - state->buffer->start));
+		if ( state->debugRulePLG )
+			::printf("    elem[%d] kind=%u target='%s' min=%d label='%s' cursor-offset=%lu\n",elemIdx,elem->kind,what,elem->minimum,elem->label,(state->cursor - state->buffer->start));
 		}
 		char *beforeCursor = state->cursor;
 		PLGitem *item = elem->match(state);
-		::printf("    elem[%d] result=%s cursor-now=%lu consumed=%lu\n",elemIdx,(item ? "MATCH" : "null"),(state->cursor - state->buffer->start),(state->cursor - beforeCursor));
+		if ( state->debugRulePLG )
+			::printf("    elem[%d] result=%s cursor-now=%lu consumed=%lu\n",elemIdx,(item ? "MATCH" : "null"),(state->cursor - state->buffer->start),(state->cursor - beforeCursor));
 		if ( !item )
 			{
 			// Banged elements (`!`, min=-1) ARE required even though their
@@ -108,4 +111,3 @@ int 		elemIdx = 0;
 		}
 	return result;
 }
-// Ignoring declaration of unused variable altStart in method: match(PLGparse*,PLGitem*)
