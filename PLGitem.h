@@ -28,6 +28,7 @@ PLGitem();
 PLGitem(char *s);
 PLGitem(char *start, long length);
 int compare(PLGitem *item);
+PLGitem *getLabel(char *name);
 void runDeferred(PLGparse *state);
 char *string();
 char *toString();

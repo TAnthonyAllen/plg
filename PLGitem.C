@@ -73,6 +73,19 @@ int PLGitem::compare(PLGitem *item)
 }
 
 /*****************************************************************************
+    getLabel — direct accessor for a labeled child by name. Returns null
+    on absent key. plg's simpler equivalent of incant's getLabelGroup;
+    no wrapper-peel loop because PLGitem has no GROUP/Method/Rule
+    distinctions to walk through. Consumed by labels-as-locals shorthand
+    in .act splice content (via `external PLGitem { initializer getLabel; }`).
+*****************************************************************************/
+PLGitem *PLGitem::getLabel(char *name)
+{
+PLGitem 	*result = (PLGitem*)children->get(name);
+	return result;
+}
+
+/*****************************************************************************
     runDeferred — walk this item's deferred list (each entry is a PLGitem
     whose deferRule field names the rule whose defer callback to fire).
     Cascade is built bottom-up: PLGrule.match adds (rule, result) to
