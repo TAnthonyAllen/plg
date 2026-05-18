@@ -450,12 +450,21 @@ char 		*first = 0;
 }
 
 /*******************************************************************************
-	IncludeplgNow — fires when an Include directive matches. Resolves the
-	filename (sourceDir + name), loads the content, and runs Body.match
-	in a loop on a diverted input until the include is exhausted. The
-	outer parse resumes seamlessly via revertInput. PLGincludes-style
-	non-grammar headers gracefully no-op when the diverted parse can't
-	make progress.
+	IncludeplgNow — fires when an Include directive matches. Routes by file
+	extension:
+	  .g (or no extension) — grammar sub-parse via Body.match loop on a
+	    diverted input. Existing path.
+	  .rtn — append file content verbatim to spliceAccumulator. plg does
+	    not parse .rtn content; tok consumes it after Brief 4 splices it
+	    into the generated output.
+	  .act — parse the leading `actions Name1, ...;` declarations line
+	    (names pushed onto actionNames Stak), then append the remaining
+	    content verbatim to spliceAccumulator. Old-shape .act files with
+	    no declarations line splice whole, leaving actionNames empty.
+
+	The outer parse resumes seamlessly via revertInput on the .g branch.
+	PLGincludes-style non-grammar headers in .g content gracefully no-op
+	when the diverted parse can't make progress.
 *******************************************************************************/
 int IncludeplgNow(PLGparse *state, PLGitem *iTEM)
 {
@@ -463,6 +472,8 @@ PLGitem 	*fileItem = 0;
 char 		*filename = 0;
 char 		*content = 0;
 char 		*fullPath = 0;
+char 		*extension = 0;
+char 		*tail = 0;
 PLGitem 	*bodyResult = 0;
 char 		*before = 0;
 int 		dirLen = 0;
@@ -497,6 +508,30 @@ int 		iters = 0;
 		::fprintf(stderr,"IncludeplgNow: could not load '%s' — skipping\n",fullPath);
 		return 0;
 		}
+	// Extension dispatch. strrchr finds the last '.' in filename
+	// (not fullPath — fullPath may contain '.' in directory names).
+	// Skip past the '.' so extension points at "g"/"rtn"/"act".
+	extension = strrchr(filename,'.');
+	if ( extension )
+		{
+		extension++;
+		}
+	else {
+		extension = "";
+		}
+	if ( ::strcmp(extension,"rtn") == 0 )
+		{
+		state->spliceAccumulator->appendString(content,0,0);
+		return 1;
+		}
+	if ( ::strcmp(extension,"act") == 0 )
+		{
+		tail = state->parseActDeclarations(content);
+		state->spliceAccumulator->appendString(tail,0,0);
+		return 1;
+		}
+	// .g path — default for unknown / missing extension. Preserves
+	// existing behavior for PLGincludes-style non-grammar headers.
 	if ( !state->bodyRule )
 		{
 		::fprintf(stderr,"IncludeplgNow: bodyRule not set — process() must run first\n");
@@ -929,6 +964,17 @@ char 		*base = strrchr(filename,'/');
 	twkOut->flush();
 	::printf("wrote %s\n",outFile);
 	::free(outFile);
+	// Brief 3 diagnostic — confirm IncludeplgNow's .rtn/.act routing
+	// populated the accumulators. Remove (or repurpose) when Brief 4
+	// wires the accumulator into generated output.
+	::printf("=== Brief 3 accumulators ===\n");
+	if ( parser->actionNames )
+		::printf("  actionNames count: %d\n",parser->actionNames->length);
+	else	::printf("  actionNames: (null)\n");
+	if ( parser->spliceAccumulator && parser->spliceAccumulator->length() > 0 )
+		::printf("  spliceAccumulator (%d bytes):\n%s\n",parser->spliceAccumulator->length(),parser->spliceAccumulator->toString());
+	else	::printf("  spliceAccumulator: (empty)\n");
+	::printf("=== end Brief 3 accumulators ===\n");
 	// Restore meta-grammar tables (so future parses still work).
 	parser->rules = metaRules;
 	parser->setTable = metaSetTable;
@@ -1513,5 +1559,6 @@ void PLG::setRules()
 }
 /*	Warning: the following methods were referenced but not declared
 	strrchr(char*,char)
+	parseActDeclarations(char*)
 */
 // Ignoring declaration of unused variable newSet in method: SetVariableplgNow(PLGparse*,PLGitem*)

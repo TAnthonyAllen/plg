@@ -37,17 +37,21 @@ boolean
     setsInitialized
     skipping
     ;
+Buffer      spliceAccumulator;
+Stak        actionNames;
 
 /*******************************************************************************
 	PLGparse constructors
 *******************************************************************************/
 PLGparse()
 {
-    rules           = new;
-    setTable        = new;
-    keyWordTable    = new;
-    conditionTable  = new;
-    variableTable   = new;
+    rules               = new;
+    setTable            = new;
+    keyWordTable        = new;
+    conditionTable      = new;
+    variableTable       = new;
+    spliceAccumulator   = new("splice", 8192);
+    actionNames         = new;
     if !itemEmpty
         {
         itemEmpty          = new;
@@ -58,15 +62,17 @@ PLGparse()
 PLGparse(String input)
 {
 use buffer
-    buffer          = new;
-    buffer          += input;
-    cursor          = start;
-    eof             = end;
-    rules           = new;
-    setTable        = new;
-    keyWordTable    = new;
-    conditionTable  = new;
-    variableTable   = new;
+    buffer              = new;
+    buffer              += input;
+    cursor              = start;
+    eof                 = end;
+    rules               = new;
+    setTable            = new;
+    keyWordTable        = new;
+    conditionTable      = new;
+    variableTable       = new;
+    spliceAccumulator   = new("splice", 8192);
+    actionNames         = new;
     if !itemEmpty
         {
         itemEmpty = new;
@@ -451,6 +457,66 @@ char    quote;
         }
     *dst = 0;
     return out;
+}
+
+/*****************************************************************************
+    parseActDeclarations — extract a leading `actions Name1, Name2, ...;`
+    declarations line from .act file content. Each declared name is pushed
+    onto this.actionNames as a freshly-allocated String. Returns a pointer
+    into the input string at the position just past the `;` (and trailing
+    newline if present), so the caller can append the remaining content
+    verbatim to spliceAccumulator.
+
+    If no leading "actions" keyword is found (after skipping whitespace),
+    the input is returned unchanged — the entire file body is splice
+    content, no declared names. This is the expected shape for old-style
+    .act files migrating into the new pipeline.
+
+    plg does not own .act content beyond this one line; the rest is for
+    tok to consume after Brief 4 splices it into generated output.
+*****************************************************************************/
+String parseActDeclarations(String input)
+{
+char    *src;
+char    *nameStart;
+int     nameLen;
+char    *name;
+    if !input return input;
+    src = input;
+    // Skip leading whitespace
+    while *src == ' ' || *src == '\t' || *src == '\n' || *src == '\r' || *src == '\f'
+        src++;
+    // Check for "actions" keyword followed by whitespace
+    if strncmp(src, "actions", 7) != 0
+        return input;
+    if !(*(src + 7) == ' ' || *(src + 7) == '\t')
+        return input;
+    src += 7;
+    // Scan comma-separated names until `;`
+    while *src && *src != ';'
+        {
+        // Skip whitespace and commas
+        while *src == ' ' || *src == '\t' || *src == ',' || *src == '\n' || *src == '\r'
+            src++;
+        if !*src || *src == ';' break;
+        // Capture name — non-whitespace, non-comma, non-`;`
+        nameStart = src;
+        while *src && *src != ' ' && *src != '\t' && *src != ',' && *src != ';' && *src != '\n' && *src != '\r'
+            src++;
+        nameLen = src - nameStart;
+        if nameLen > 0
+            {
+            name = (char*)malloc(nameLen + 1);
+            strncpy(name, nameStart, nameLen);
+            *(name + nameLen) = 0;
+            actionNames.push((void*)name);
+            }
+        }
+    if *src == ';' src++;
+    // Consume the newline after `;` if present, so spliced content
+    // doesn't start with a stray blank line.
+    if *src == '\n' src++;
+    return src;
 }
 
 /*****************************************************************************

@@ -290,6 +290,20 @@ String base = strrchr(filename, '/');
     cout "wrote " outFile:;
     free(outFile);
 
+    // Brief 3 diagnostic — confirm IncludeplgNow's .rtn/.act routing
+    // populated the accumulators. Remove (or repurpose) when Brief 4
+    // wires the accumulator into generated output.
+    cout "=== Brief 3 accumulators ===":;
+    if parser.actionNames
+        cout "  actionNames count: " parser.actionNames.length:;
+    else
+        cout "  actionNames: (null)":;
+    if parser.spliceAccumulator && parser.spliceAccumulator.length() > 0
+        cout "  spliceAccumulator (" parser.spliceAccumulator.length() " bytes):\n" parser.spliceAccumulator.toString():;
+    else
+        cout "  spliceAccumulator: (empty)":;
+    cout "=== end Brief 3 accumulators ===":;
+
     // Restore meta-grammar tables (so future parses still work).
     parser.rules        = metaRules;
     parser.setTable     = metaSetTable;
@@ -1691,12 +1705,21 @@ char    *first;
 }
 
 /*******************************************************************************
-	IncludeplgNow — fires when an Include directive matches. Resolves the
-	filename (sourceDir + name), loads the content, and runs Body.match
-	in a loop on a diverted input until the include is exhausted. The
-	outer parse resumes seamlessly via revertInput. PLGincludes-style
-	non-grammar headers gracefully no-op when the diverted parse can't
-	make progress.
+	IncludeplgNow — fires when an Include directive matches. Routes by file
+	extension:
+	  .g (or no extension) — grammar sub-parse via Body.match loop on a
+	    diverted input. Existing path.
+	  .rtn — append file content verbatim to spliceAccumulator. plg does
+	    not parse .rtn content; tok consumes it after Brief 4 splices it
+	    into the generated output.
+	  .act — parse the leading `actions Name1, ...;` declarations line
+	    (names pushed onto actionNames Stak), then append the remaining
+	    content verbatim to spliceAccumulator. Old-shape .act files with
+	    no declarations line splice whole, leaving actionNames empty.
+
+	The outer parse resumes seamlessly via revertInput on the .g branch.
+	PLGincludes-style non-grammar headers in .g content gracefully no-op
+	when the diverted parse can't make progress.
 *******************************************************************************/
 int IncludeplgNow(PLGparse state, PLGitem iTEM)
 {
@@ -1704,6 +1727,8 @@ PLGitem fileItem;
 String  filename;
 String  content;
 String  fullPath;
+String  extension;
+String  tail;
 PLGitem bodyResult;
 String  before;
 int     dirLen;
@@ -1739,6 +1764,31 @@ int     iters;
         cerr "IncludeplgNow: could not load '" fullPath "' — skipping":;
         return false;
         }
+    // Extension dispatch. strrchr finds the last '.' in filename
+    // (not fullPath — fullPath may contain '.' in directory names).
+    // Skip past the '.' so extension points at "g"/"rtn"/"act".
+    extension = strrchr(filename, '.');
+    if extension
+        {
+        extension++;
+        }
+    else
+        {
+        extension = "";
+        }
+    if strcmp(extension, "rtn") == 0
+        {
+        state.spliceAccumulator += content;
+        return true;
+        }
+    if strcmp(extension, "act") == 0
+        {
+        tail = state.parseActDeclarations(content);
+        state.spliceAccumulator += tail;
+        return true;
+        }
+    // .g path — default for unknown / missing extension. Preserves
+    // existing behavior for PLGincludes-style non-grammar headers.
     if !state.bodyRule
         {
         cerr "IncludeplgNow: bodyRule not set — process() must run first":;

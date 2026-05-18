@@ -74,6 +74,8 @@ PLGparse::PLGparse()
 	keyWordTable = new BaseHash();
 	conditionTable = new BaseHash();
 	variableTable = new BaseHash();
+	spliceAccumulator = new Buffer("splice",8192);
+	actionNames = new Stak();
 	if ( !PLGitem::itemEmpty )
 		{
 		PLGitem::itemEmpty = new PLGitem();
@@ -120,6 +122,8 @@ PLGparse::PLGparse(char *input)
 	keyWordTable = new BaseHash();
 	conditionTable = new BaseHash();
 	variableTable = new BaseHash();
+	spliceAccumulator = new Buffer("splice",8192);
+	actionNames = new Stak();
 	if ( !PLGitem::itemEmpty )
 		{
 		PLGitem::itemEmpty = new PLGitem();
@@ -286,7 +290,6 @@ PLGrule 	*rule = 0;
 PLGitem *PLGparse::parse(PLGrule *rule)
 {
 	if ( rule )
-		debugRulePLG = 1;
 		return rule->match(this);
 	return 0;
 }
@@ -300,6 +303,70 @@ PLGrule 	*rule = (PLGrule*)rules->get(name);
 		return 0;
 		}
 	return rule->match(this);
+}
+
+/*****************************************************************************
+    parseActDeclarations — extract a leading `actions Name1, Name2, ...;`
+    declarations line from .act file content. Each declared name is pushed
+    onto this.actionNames as a freshly-allocated String. Returns a pointer
+    into the input string at the position just past the `;` (and trailing
+    newline if present), so the caller can append the remaining content
+    verbatim to spliceAccumulator.
+
+    If no leading "actions" keyword is found (after skipping whitespace),
+    the input is returned unchanged — the entire file body is splice
+    content, no declared names. This is the expected shape for old-style
+    .act files migrating into the new pipeline.
+
+    plg does not own .act content beyond this one line; the rest is for
+    tok to consume after Brief 4 splices it into generated output.
+*****************************************************************************/
+char *PLGparse::parseActDeclarations(char *input)
+{
+char 	*src = 0;
+char 	*nameStart = 0;
+int 	nameLen = 0;
+char 	*name = 0;
+	if ( !input )
+		return input;
+	src = input;
+	// Skip leading whitespace
+	while ( *src == ' ' || *src == '\t' || *src == '\n' || *src == '\r' || *src == '\f' )
+		src++;
+	// Check for "actions" keyword followed by whitespace
+	if ( ::strncmp(src,"actions",7) != 0 )
+		return input;
+	if ( !(*(src + 7) == ' ' || *(src + 7) == '\t') )
+		return input;
+	src += 7;
+	// Scan comma-separated names until `;`
+	while ( *src && *src != ';' )
+		{
+		// Skip whitespace and commas
+		while ( *src == ' ' || *src == '\t' || *src == ',' || *src == '\n' || *src == '\r' )
+			src++;
+		if ( !*src || *src == ';' )
+			break;
+		// Capture name — non-whitespace, non-comma, non-`;`
+		nameStart = src;
+		while ( *src && *src != ' ' && *src != '\t' && *src != ',' && *src != ';' && *src != '\n' && *src != '\r' )
+			src++;
+		nameLen = src - nameStart;
+		if ( nameLen > 0 )
+			{
+			name = (char*)::malloc(nameLen + 1);
+			::strncpy(name,nameStart,nameLen);
+			*(name + nameLen) = 0;
+			actionNames->push((void*)name);
+			}
+		}
+	if ( *src == ';' )
+		src++;
+	// Consume the newline after `;` if present, so spliced content
+	// doesn't start with a stray blank line.
+	if ( *src == '\n' )
+		src++;
+	return src;
 }
 
 void PLGparse::reportError(Alternative *alt, char *message)

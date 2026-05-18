@@ -55,6 +55,8 @@ struct
 	unsigned int setsInitialized:1;
 	unsigned int skipping:1;
 	};
+Buffer *spliceAccumulator;
+Stak *actionNames;
 PLGparse();
 PLGparse(char *input);
 void addTest(int kind, char *data, char *label, int min, int max, char *skipSet);
@@ -67,6 +69,7 @@ PLGset *getSet(PLGset *named, char *specs);
 void initialize();
 PLGitem *parse(PLGrule *rule);
 PLGitem *parse(char *name);
+char *parseActDeclarations(char *input);
 void reportError(Alternative *alt, char *message);
 void restore(char *s);
 void revertInput();
