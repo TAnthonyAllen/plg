@@ -52,7 +52,6 @@ PLGitem 	*atElement = 0;
 				state->pendingNoSkip = 1;
 			}
 		}
-	::printf("AlternativeplgAct fired: pendingLabel=%s pendingNoSkip=%u\n",state->pendingLabel,state->pendingNoSkip);
 }
 
 /*******************************************************************************
@@ -99,12 +98,12 @@ int 			noSkip = 0;
 	state->pendingLabel = 0;
 	state->pendingNoSkip = 0;
 	parentName = state->currentRule->name;
-	buf = ::bufferFactory3("blockHelper",256);
+	buf = new Buffer("blockHelper",256);
 	buf->appendString(parentName,0,0);
 	buf->appendString("Block",0,0);
 	buf->appendInt(state->helperCount++,0,0);
 	helperName = buf->toString();
-	::printf("BlockplgAct: creating helper '%s' under parent '%s'\n",helperName,parentName);
+	::printf("");
 	savedRule = state->currentRule;
 	savedAlt = state->currentAlt;
 	helper = state->getRule(helperName);
@@ -156,7 +155,6 @@ int 			noSkip = 0;
 	if ( noSkip )
 		elem->noSkip = 1;
 	state->currentAlt->elements->add(elem);
-	::printf("BlockplgAct: added kRuleRef -> '%s' on parent '%s' label='%s' noSkip=%u\n",helperName,parentName,elem->label,elem->noSkip);
 }
 
 /*******************************************************************************
@@ -204,7 +202,6 @@ char 		opt = 0;
 		maximum = (PLGitem*)iTEM->children->get("maximum");
 		if ( maximum )
 			elem->maximum = ::atoi(maximum->toString());
-		::printf("ElementTypeplgAct: explicit min=%d max=%d\n",elem->minimum,elem->maximum);
 		return;
 		}
 	// Alt 2: single option char from *+?!%
@@ -253,7 +250,6 @@ char 		opt = 0;
 		elem->skipOverMatch = 1;
 		elem->skipSet = 0;
 		}
-	::printf("ElementTypeplgAct: opt='%c' min=%d max=%d\n",opt,elem->minimum,elem->maximum);
 }
 
 /*******************************************************************************
@@ -416,7 +412,6 @@ int 		handled = 0;
 		state->pendingNoSkip = 0;
 		}
 	state->currentAlt->elements->add(elem);
-	::printf("ElementplgAct fired: kind=%u text='%s' label='%s' added to alt in rule '%s'\n",elem->kind,text,elem->label,state->currentRule->name);
 }
 
 int ForwardDeclplgNow(PLGparse *state, PLGitem *iTEM)
@@ -441,7 +436,6 @@ char 		*first = 0;
 	first = (char*)::malloc(i + 1);
 	::strncpy(first,s,i);
 	*(first + i) = 0;
-	::printf("ForwardDeclplgNow: pre-registering '%s'\n",first);
 	state->getRule(first);
 	// Subsequent matches are linked via head.next — each has its own
 	// proper start/length, so toString() works correctly.
@@ -449,20 +443,12 @@ char 		*first = 0;
 	while ( n )
 		{
 		name = n->toString();
-		::printf("ForwardDeclplgNow: pre-registering '%s'\n",name);
 		state->getRule(name);
 		n = n->itemNext;
 		}
 	return 1;
 }
 
-/*******************************************************************************
-	RuleplgNow — immediate action fired when a Rule alternative matches in
-	Testing.g (or any .g file the parser is processing). Looks up the
-	"ruleName" capture, calls state.getRule() so a fresh rule entry is
-	created in parser.rules, then cascades the deferred action chain
-	(RuleOptionsplgAct etc.) for the rule's body.
-*******************************************************************************/
 /*******************************************************************************
 	IncludeplgNow — fires when an Include directive matches. Resolves the
 	filename (sourceDir + name), loads the content, and runs Body.match
@@ -505,7 +491,6 @@ int 		iters = 0;
 		::strcpy(fullPath,state->sourceDir);
 		::strcat(fullPath,filename);
 		}
-	::printf("IncludeplgNow: resolving '%s' -> '%s'\n",filename,fullPath);
 	content = ::getStringFromFile(fullPath);
 	if ( !content )
 		{
@@ -528,7 +513,6 @@ int 		iters = 0;
 			break;
 		iters++;
 		}
-	::printf("IncludeplgNow: '%s' parsed %d Body items\n",filename,iters);
 	state->revertInput();
 	return 1;
 }
@@ -552,7 +536,6 @@ Alternative 	*alt = 0;
 	alt = new Alternative();
 	state->currentRule->addAlternative(alt);
 	state->currentAlt = alt;
-	::printf("RuleOptionplgAct fired: new alt in rule '%s'\n",state->currentRule->name);
 }
 
 /*******************************************************************************
@@ -562,9 +545,16 @@ Alternative 	*alt = 0;
 *******************************************************************************/
 void RuleOptionsplgAct(PLGparse *state, PLGitem *iTEM)
 {
-	::printf("RuleOptionsplgAct fired\n");
+	//cout "RuleOptionsplgAct fired":;
 }
 
+/*******************************************************************************
+	RuleplgNow — immediate action fired when a Rule alternative matches in
+	Testing.g (or any .g file the parser is processing). Looks up the
+	"ruleName" capture, calls state.getRule() so a fresh rule entry is
+	created in parser.rules, then cascades the deferred action chain
+	(RuleOptionsplgAct etc.) for the rule's body.
+*******************************************************************************/
 int RuleplgNow(PLGparse *state, PLGitem *iTEM)
 {
 PLGitem 	*ruleName = 0;
@@ -575,7 +565,6 @@ char 		*name = 0;
 	if ( !ruleName )
 		return 0;
 	name = ruleName->toString();
-	::printf("RuleplgNow: matched rule '%s'\n",name);
 	state->currentRule = state->getRule(name);
 	state->helperCount = 0;
 	// per-rule reset for BlockplgAct helper naming
@@ -597,7 +586,6 @@ char 		keyword = 0;
 PLGitem 	*nameItem = 0;
 PLGitem 	*listItem = 0;
 char 		*itemName = 0;
-PLGset 		*newSet = 0;
 KeyTable 	*keyTable = 0;
 char 		*p = 0;
 char 		*firstWord = 0;
@@ -611,14 +599,27 @@ char 		ch = 0;
 	keyword = *text;
 	if ( keyword == 'S' )
 		{
+		PLGitem 	*setItem = 0;
+		PLGitem 	*specItem = 0;
+		char 		*specs = 0;
 		nameItem = (PLGitem*)iTEM->children->get("name");
 		if ( !nameItem )
 			return 0;
 		itemName = nameItem->toString();
-		newSet = new PLGset(itemName);
-		newSet->name = itemName;
-		state->setTable->add(itemName,(void*)newSet);
-		::printf("SetVariableplgNow: Set '%s' registered\n",itemName);
+		setItem = (PLGitem*)iTEM->children->get("set");
+		if ( !setItem )
+			{
+			state->getSet(itemName,"");
+			return 1;
+			}
+		specItem = (PLGitem*)setItem->children->get("text");
+		if ( !specItem )
+			{
+			::fprintf(stderr,"SetVariableplgNow: Set '%s' has StringSet but no 'text' child\n",itemName);
+			return 0;
+			}
+		specs = specItem->toString();
+		state->getSet(itemName,specs);
 		return 1;
 		}
 	if ( keyword == 'K' )
@@ -655,10 +656,7 @@ char 		ch = 0;
 				}
 			}
 		state->keyWordTable->add(itemName,(void*)keyTable);
-		::printf("SetVariableplgNow: KeyWord '%s' registered\n",itemName);
-		return 1;
 		}
-	::printf("SetVariableplgNow: keyword '%c' (Variable/Rules/Condition/Debug — port from BeforeRefactor when needed)\n",keyword);
 	return 1;
 }
 
@@ -814,11 +812,11 @@ char 			*data = 0;
 void PLG::init()
 {
 	parser = new PLGparse();
-	output = ::bufferFactory3("plgOutput",10000);
-	buffer = ::bufferFactory2("plgBuffer");
-	headerBuffer = ::bufferFactory2("plgHeader");
-	includeBuffer = ::bufferFactory2("plgInclude");
-	parseBuffer = ::bufferFactory2("plgParse");
+	output = new Buffer("plgOutput",10000);
+	buffer = new Buffer("plgBuffer");
+	headerBuffer = new Buffer("plgHeader");
+	includeBuffer = new Buffer("plgInclude");
+	parseBuffer = new Buffer("plgParse");
 	parser->parserName = "PLG";
 	ruleStack = new Stak();
 	testStack = new Stak();
@@ -880,12 +878,6 @@ PLGrule 	*startRule = (PLGrule*)parser->rules->get("Start");
 	if ( result )
 		::printf("parsed %ld chars from %s\n",result->itemLength,filename);
 	else	::printf("parse failed on %s\n",filename);
-	::printf("=== fresh rules table after parse (callback-populated) ===\n");
-	parser->rules->listKeys();
-	::printf("=== fresh setTable after parse ===\n");
-	parser->setTable->listKeys();
-	::printf("=== end fresh tables ===\n");
-	dumpRules(parser->rules);
 	// Demo: if the parsed table contains a "Test" rule, run it against
 	// a tiny input ("42") and dump the result's children to prove that
 	// labeled captures land in result.children. divertInput pushes a
@@ -912,10 +904,9 @@ PLGrule 	*testRule = (PLGrule*)parser->rules->get("Test");
 		parser->revertInput();
 		::printf("=== end Test demo ===\n");
 		}
-	// Build output path: foo.g -> foo.regen.twk in CWD. Strip any leading
+	// Build output path: foo.g -> foo.twk in CWD. Strip any leading
 	// directory from filename so output lands where plg was fired, not
-	// next to the source file. The .regen suffix avoids overwriting an
-	// existing foo.twk source.
+	// next to the source file.
 char 		*base = strrchr(filename,'/');
 	if ( base )
 		base++;
@@ -927,12 +918,12 @@ char 		*base = strrchr(filename,'/');
 		{
 		*dot = '\0';
 		}
-	::strcat(outFile,".regen.twk");
+	::strcat(outFile,".twk");
 	// Generate from the FRESH parser.rules (the rules parsed out of
 	// Testing.g) BEFORE restoring the meta-grammar. This is the real
 	// bootstrap output: setRules code derived from the user's grammar
 	// file, not a copy of the meta-grammar.
-	twkOut = ::bufferFactory3("twk-output",50000);
+	twkOut = new Buffer("twk-output",50000);
 	parser->generateRules(twkOut);
 	twkOut->setFile(outFile);
 	twkOut->flush();
@@ -941,6 +932,7 @@ char 		*base = strrchr(filename,'/');
 	// Restore meta-grammar tables (so future parses still work).
 	parser->rules = metaRules;
 	parser->setTable = metaSetTable;
+	parser->summary(10);
 }
 
 /*******************************************************************************
@@ -1519,10 +1511,7 @@ void PLG::setRules()
 	parser->addTest(1,"\n","",1,1,"defaultSKIP");
 	parser->currentRule->alternatives->add(parser->currentAlt);
 }
-// Ignoring declaration of unused variable key in method: dumpRules(BaseHash*)
-// Ignoring declaration of unused variable alt in method: setRules()
-// Ignoring declaration of unused variable elem in method: setRules()
 /*	Warning: the following methods were referenced but not declared
 	strrchr(char*,char)
 */
-// Ignoring declaration of unused variable textItem in method: ElementplgAct(PLGparse*,PLGitem*)
+// Ignoring declaration of unused variable newSet in method: SetVariableplgNow(PLGparse*,PLGitem*)

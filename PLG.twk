@@ -104,6 +104,68 @@ PLG(String input)
     setInput(input);
 }
 
+/*******************************************************************************
+	dumpRules — walk a rules table and print each rule's alternatives and
+	their elements. Used to verify callback-built rule structures look
+	right (kinds, min/max, labels, set/litText/ruleRef contents).
+*******************************************************************************/
+void dumpRules(BaseHash table)
+{
+PLGrule     rule;
+Alternative alt;
+Element     elem;
+DoubleLink  altLink;
+DoubleLink  elemLink;
+int         altNum;
+int         elemNum;
+String      kindName;
+String      data;
+    if !table return;
+    cout "=== rule structures ===":;
+    table.resetIterator();
+    while rule = table.next()
+        {
+        cout "rule '" rule.name "' (" rule.alternatives.length() " alts):":;
+        altNum = 0;
+        for altLink = rule.alternatives.first
+            {
+            alt = altLink.value;
+            altNum++;
+            cout "  alt " altNum ":":;
+            elemNum = 0;
+            for elemLink = alt.elements.first
+                {
+                elem = elemLink.value;
+                elemNum++;
+                kindName = "?";
+                data     = "";
+                if elem.kind == 1
+                    {
+                    kindName = "kLit";
+                    if elem.litText  data = elem.litText;
+                    }
+                if elem.kind == 3
+                    {
+                    kindName = "kSet";
+                    if elem.setRef && elem.setRef.name  data = elem.setRef.name;
+                    }
+                if elem.kind == 4   kindName = "kAny";
+                if elem.kind == 5   kindName = "kEof";
+                if elem.kind == 6
+                    {
+                    kindName = "kRuleRef";
+                    if elem.ruleRef  data = elem.ruleRef.name;
+                    }
+                if elem.kind == 7   kindName = "kKeyTable";
+                if elem.kind == 8   kindName = "kCondition";
+                if elem.kind == 9   kindName = "kVariable";
+                cout "    elem " elemNum ": " kindName "(" data ") min=" elem.minimum " max=" elem.maximum " label=" elem.label:;
+                }
+            }
+        }
+    cout "=== end rule structures ===":;
+}
+
 void init()
 {
     parser          = new;
@@ -116,20 +178,6 @@ void init()
     ruleStack       = new;
     testStack       = new;
     parser          = new;
-}
-
-/*******************************************************************************
-	Method to test the parse
-*******************************************************************************/
-void run()
-{
-    setRules();
-    initialize();
-    setInput(",678");
-PLGitem result = parse("Max");
-    if result
-        cout "matched " result.itemLength " chars: " result.toString():;
-    else cout "no match":;
 }
 
 /*******************************************************************************
@@ -190,13 +238,6 @@ PLGrule startRule = parser.rules["Start"];
         cout "parsed " result.itemLength " chars from " filename:;
     else cout "parse failed on " filename:;
 
-    cout "=== fresh rules table after parse (callback-populated) ===":;
-    parser.rules.listKeys();
-    cout "=== fresh setTable after parse ===":;
-    parser.setTable.listKeys();
-    cout "=== end fresh tables ===":;
-    dumpRules(parser.rules);
-
     // Demo: if the parsed table contains a "Test" rule, run it against
     // a tiny input ("42") and dump the result's children to prove that
     // labeled captures land in result.children. divertInput pushes a
@@ -223,10 +264,9 @@ PLGrule testRule = parser.rules["Test"];
         cout "=== end Test demo ===":;
         }
 
-    // Build output path: foo.g -> foo.regen.twk in CWD. Strip any leading
+    // Build output path: foo.g -> foo.twk in CWD. Strip any leading
     // directory from filename so output lands where plg was fired, not
-    // next to the source file. The .regen suffix avoids overwriting an
-    // existing foo.twk source.
+    // next to the source file.
 String base = strrchr(filename, '/');
     if base
         base++;
@@ -237,7 +277,7 @@ String base = strrchr(filename, '/');
     dot = strrchr(outFile, '.');
     if dot
         { *dot = '\0'; }
-    strcat(outFile, ".regen.twk");
+    strcat(outFile, ".twk");
 
     // Generate from the FRESH parser.rules (the rules parsed out of
     // Testing.g) BEFORE restoring the meta-grammar. This is the real
@@ -253,69 +293,21 @@ String base = strrchr(filename, '/');
     // Restore meta-grammar tables (so future parses still work).
     parser.rules        = metaRules;
     parser.setTable     = metaSetTable;
+    summary(10);
 }
 
 /*******************************************************************************
-	dumpRules — walk a rules table and print each rule's alternatives and
-	their elements. Used to verify callback-built rule structures look
-	right (kinds, min/max, labels, set/litText/ruleRef contents).
+	Method to test the parse
 *******************************************************************************/
-void dumpRules(BaseHash table)
+void run()
 {
-PLGrule     rule;
-Alternative alt;
-Element     elem;
-DoubleLink  altLink;
-DoubleLink  elemLink;
-String      key;
-int         altNum;
-int         elemNum;
-String      kindName;
-String      data;
-    if !table return;
-    cout "=== rule structures ===":;
-    table.resetIterator();
-    while rule = table.next()
-        {
-        cout "rule '" rule.name "' (" rule.alternatives.length() " alts):":;
-        altNum = 0;
-        for altLink = rule.alternatives.first
-            {
-            alt = altLink.value;
-            altNum++;
-            cout "  alt " altNum ":":;
-            elemNum = 0;
-            for elemLink = alt.elements.first
-                {
-                elem = elemLink.value;
-                elemNum++;
-                kindName = "?";
-                data     = "";
-                if elem.kind == 1
-                    {
-                    kindName = "kLit";
-                    if elem.litText  data = elem.litText;
-                    }
-                if elem.kind == 3
-                    {
-                    kindName = "kSet";
-                    if elem.setRef && elem.setRef.name  data = elem.setRef.name;
-                    }
-                if elem.kind == 4   kindName = "kAny";
-                if elem.kind == 5   kindName = "kEof";
-                if elem.kind == 6
-                    {
-                    kindName = "kRuleRef";
-                    if elem.ruleRef  data = elem.ruleRef.name;
-                    }
-                if elem.kind == 7   kindName = "kKeyTable";
-                if elem.kind == 8   kindName = "kCondition";
-                if elem.kind == 9   kindName = "kVariable";
-                cout "    elem " elemNum ": " kindName "(" data ") min=" elem.minimum " max=" elem.maximum " label=" elem.label:;
-                }
-            }
-        }
-    cout "=== end rule structures ===":;
+    setRules();
+    initialize();
+    setInput(",678");
+PLGitem result = parse("Max");
+    if result
+        cout "matched " result.itemLength " chars: " result.toString():;
+    else cout "no match":;
 }
 
 /*******************************************************************************
@@ -324,8 +316,6 @@ String      data;
 void setRules()
 {
 use parser
-Alternative alt;
-Element     elem;
     setSkip();
 alternateSet = getSet("alternateSet","#([~'a-zA-Z");
 characterSet = getSet("characterSet","[a-zA-Z");
@@ -1262,158 +1252,41 @@ singleQuote  = getSet("singleQuote","'");
 }
 
 /*******************************************************************************
-	RuleplgNow — immediate action fired when a Rule alternative matches in
-	Testing.g (or any .g file the parser is processing). Looks up the
-	"ruleName" capture, calls state.getRule() so a fresh rule entry is
-	created in parser.rules, then cascades the deferred action chain
-	(RuleOptionsplgAct etc.) for the rule's body.
+	AlternativeplgAct — fires after a plg-Alternative meta-rule match
+	(deferred). A plg-Alternative is one element-with-modifiers; its only
+	job at this layer is to surface any labeled-capture name (`name=`) so
+	the immediately-following ElementplgAct can stamp it onto the Element
+	it creates. Does NOT create a C++ Alternative — that's RuleOptionplgAct.
 *******************************************************************************/
-/*******************************************************************************
-	IncludeplgNow — fires when an Include directive matches. Resolves the
-	filename (sourceDir + name), loads the content, and runs Body.match
-	in a loop on a diverted input until the include is exhausted. The
-	outer parse resumes seamlessly via revertInput. PLGincludes-style
-	non-grammar headers gracefully no-op when the diverted parse can't
-	make progress.
-*******************************************************************************/
-int IncludeplgNow(PLGparse state, PLGitem iTEM)
+void AlternativeplgAct(PLGparse state, PLGitem iTEM)
 {
-PLGitem fileItem;
-String  filename;
-String  content;
-String  fullPath;
-PLGitem bodyResult;
-String  before;
-int     dirLen;
-int     fileLen;
-int     iters;
-    if !iTEM || !iTEM.children
-        return false;
-    fileItem = iTEM.children["file"];
-    if !fileItem
+PLGitem     atLabel;
+PLGitem     atElement;
+    state.pendingLabel  = null;
+    state.pendingNoSkip = false;
+    if iTEM && iTEM.children
         {
-        cerr "IncludeplgNow: no file capture":;
-        return false;
-        }
-    filename = fileItem.toString();
-    if !filename || !*filename
-        {
-        cerr "IncludeplgNow: empty filename":;
-        return false;
-        }
-    if *filename == '/' || !state.sourceDir
-        fullPath = filename;
-    else
-        {
-        dirLen   = strlen(state.sourceDir);
-        fileLen  = strlen(filename);
-        fullPath = (char*)malloc(dirLen + fileLen + 1);
-        strcpy(fullPath, state.sourceDir);
-        strcat(fullPath, filename);
-        }
-    cout "IncludeplgNow: resolving '" filename "' -> '" fullPath "'":;
-    content = getStringFromFile(fullPath);
-    if !content
-        {
-        cerr "IncludeplgNow: could not load '" fullPath "' — skipping":;
-        return false;
-        }
-    if !state.bodyRule
-        {
-        cerr "IncludeplgNow: bodyRule not set — process() must run first":;
-        return false;
-        }
-    content = state.stripComments(content);
-    state.divertInput(content);
-    iters = 0;
-    while state.cursor < state.eof
-        {
-        before     = state.cursor;
-        bodyResult = state.bodyRule.match(state);
-        if !bodyResult || state.cursor == before
-            break;
-        iters++;
-        }
-    cout "IncludeplgNow: '" filename "' parsed " iters " Body items":;
-    state.revertInput();
-    return true;
-}
-
-/*******************************************************************************
-    SetVariableplgNow — fires when SetVariable matches. Dispatches by first-
-    keyword character to register captured names in the parser's tables.
-    The Set branch is the round-trip fix: registering excludeSet/singleQuote
-    etc. in setTable makes later element refs resolve via getSet instead of
-    falling through to getRule as zombie empty rules.
-*******************************************************************************/
-int SetVariableplgNow(PLGparse state, PLGitem iTEM)
-{
-char    *text;
-char    keyword;
-PLGitem nameItem;
-PLGitem listItem;
-String  itemName;
-PLGset  newSet;
-KeyTable keyTable;
-char    *p;
-char    *firstWord;
-int     wordLen;
-char    ch;
-    if !iTEM
-        return false;
-    text = iTEM.toString();
-    if !text || !*text
-        return false;
-    keyword = *text;
-    if keyword == 'S'
-        {
-        nameItem = iTEM.children["name"];
-        if !nameItem return false;
-        itemName = nameItem.toString();
-        newSet = new PLGset(itemName);
-        newSet.name = itemName;
-        state.setTable[itemName] = (void*)newSet;
-        cout "SetVariableplgNow: Set '" itemName "' registered":;
-        return true;
-        }
-    if keyword == 'K'
-        {
-        // KeyWord <name> <words>* ;  — register a KeyTable group
-        nameItem = iTEM.children["name"];
-        if !nameItem return false;
-        itemName = nameItem.toString();
-        keyTable = new KeyTable(itemName);
-        listItem = iTEM.children["list"];
-        if listItem && listItem.length > 0
+        // iTEM.children["atLabel"] is the Label meta-rule match (`Name '='`).
+        // To get just the Name string, drill into Label's own children
+        // where the Name is also captured under "atLabel".
+        atLabel = iTEM.children["atLabel"];
+        if atLabel && atLabel.children
             {
-            // Head item's length spans the full Word* repetition; scan to
-            // first word boundary (whitespace or ;) instead of toString().
-            // Subsequent items via .next have correct individual lengths.
-            p = listItem.start;
-            wordLen = 0;
-            ch = *(p + wordLen);
-            while ch && ch != ' ' && ch != '\t' && ch != '\n' && ch != '\r' && ch != '\f' && ch != ';'
-                {
-                wordLen++;
-                ch = *(p + wordLen);
-                }
-            firstWord = (char*)malloc(wordLen + 1);
-            strncpy(firstWord, p, wordLen);
-            *(firstWord + wordLen) = 0;
-            keyTable.add(firstWord);
-            listItem = listItem.next;
-            while listItem
-                {
-                keyTable.add(listItem.toString());
-                listItem = listItem.next;
-                }
+            PLGitem nameItem = atLabel.children["atLabel"];
+            if nameItem
+                state.pendingLabel = nameItem.toString();
             }
-        state.keyWordTable[itemName] = (void*)keyTable;
-        cout "SetVariableplgNow: KeyWord '" itemName "' registered":;
-        return true;
+        // The `&` (noSkip) modifier sits on the Balanced/Block wrapper that
+        // is captured as `atElement`. Pull it out so the next ElementplgAct
+        // can stamp elem.noSkip.
+        atElement = iTEM.children["atElement"];
+        if atElement && atElement.children
+            {
+            PLGitem ns = atElement.children["noSkip"];
+            if ns
+                state.pendingNoSkip = true;
+            }
         }
-    cout "SetVariableplgNow: keyword '" keyword "' (Variable/Rules/Condition/Debug — port from BeforeRefactor when needed)":;
-    return true;
 }
 
 /*******************************************************************************
@@ -1464,7 +1337,7 @@ int         noSkip;
     buf = new Buffer("blockHelper", 256);
     print(buf) parentName "Block" state.helperCount++;
     helperName = buf.toString();
-    cout "BlockplgAct: creating helper '" helperName "' under parent '" parentName "'":;
+    print();
 
     savedRule = state.currentRule;
     savedAlt  = state.currentAlt;
@@ -1519,131 +1392,6 @@ int         noSkip;
     if noSkip
         elem.noSkip = true;
     state.currentAlt.elements += elem;
-    cout "BlockplgAct: added kRuleRef -> '" helperName "' on parent '" parentName "' label='" elem.label "' noSkip=" elem.noSkip:;
-}
-
-int ForwardDeclplgNow(PLGparse state, PLGitem iTEM)
-{
-PLGitem n;
-String  name;
-String  s;
-int     i;
-char    *first;
-    if !iTEM || !iTEM.children
-        return false;
-    n = iTEM.children["names"];
-    if !n  return false;
-    // Head's length was overwritten by Element.applyRepetition to span
-    // the full repetition. Extract the head's NAME (alpha-prefix) by
-    // scanning from its start until the first non-name char.
-    s = n.start;
-    i = 0;
-    while *(s + i) && (((*(s + i) >= 'A') && (*(s + i) <= 'Z')) || ((*(s + i) >= 'a') && (*(s + i) <= 'z')) || ((*(s + i) >= '0') && (*(s + i) <= '9')) || (*(s + i) == '_'))
-        i++;
-    first = (char*)malloc(i + 1);
-    strncpy(first, s, i);
-    *(first + i) = 0;
-    cout "ForwardDeclplgNow: pre-registering '" first "'":;
-    state.getRule(first);
-    // Subsequent matches are linked via head.next — each has its own
-    // proper start/length, so toString() works correctly.
-    n = n.next;
-    while n
-        {
-        name = n.toString();
-        cout "ForwardDeclplgNow: pre-registering '" name "'":;
-        state.getRule(name);
-        n = n.next;
-        }
-    return true;
-}
-
-int RuleplgNow(PLGparse state, PLGitem iTEM)
-{
-PLGitem ruleName;
-String  name;
-    if !iTEM || !iTEM.children
-        return false;
-    ruleName = iTEM.children["ruleName"];
-    if !ruleName
-        return false;
-    name = ruleName.toString();
-    cout "RuleplgNow: matched rule '" name "'":;
-    state.currentRule = state.getRule(name);
-    state.helperCount = 0;        // per-rule reset for BlockplgAct helper naming
-    iTEM.runDeferred(state);
-    return true;
-}
-
-/*******************************************************************************
-	RuleOptionsplgAct — fires after a RuleOptions match completes (deferred).
-	Stub for now; real implementation will populate the current rule's
-	alternatives from the captured RuleOption sub-items.
-*******************************************************************************/
-void RuleOptionsplgAct(PLGparse state, PLGitem iTEM)
-{
-    cout "RuleOptionsplgAct fired":;
-}
-
-/*******************************************************************************
-	RuleOptionplgAct — fires after a RuleOption match completes (deferred).
-	A plg "RuleOption" is a SEQUENCE of plg-Alternatives separated by `|`
-	at the RuleOptions level. Each RuleOption maps to ONE C++ Alternative
-	whose elements are the SEQUENCE of items inside it. So this callback
-	is what creates the C++ Alternative bucket — appends it to currentRule
-	and parks it on state.currentAlt for incoming ElementplgAct calls.
-*******************************************************************************/
-void RuleOptionplgAct(PLGparse state, PLGitem iTEM)
-{
-Alternative alt;
-    if !state.currentRule
-        {
-        cerr "RuleOptionplgAct: no currentRule":;
-        return;
-        }
-    alt = new Alternative();
-    state.currentRule.addAlternative(alt);
-    state.currentAlt = alt;
-    cout "RuleOptionplgAct fired: new alt in rule '" state.currentRule.name "'":;
-}
-
-/*******************************************************************************
-	AlternativeplgAct — fires after a plg-Alternative meta-rule match
-	(deferred). A plg-Alternative is one element-with-modifiers; its only
-	job at this layer is to surface any labeled-capture name (`name=`) so
-	the immediately-following ElementplgAct can stamp it onto the Element
-	it creates. Does NOT create a C++ Alternative — that's RuleOptionplgAct.
-*******************************************************************************/
-void AlternativeplgAct(PLGparse state, PLGitem iTEM)
-{
-PLGitem     atLabel;
-PLGitem     atElement;
-    state.pendingLabel  = null;
-    state.pendingNoSkip = false;
-    if iTEM && iTEM.children
-        {
-        // iTEM.children["atLabel"] is the Label meta-rule match (`Name '='`).
-        // To get just the Name string, drill into Label's own children
-        // where the Name is also captured under "atLabel".
-        atLabel = iTEM.children["atLabel"];
-        if atLabel && atLabel.children
-            {
-            PLGitem nameItem = atLabel.children["atLabel"];
-            if nameItem
-                state.pendingLabel = nameItem.toString();
-            }
-        // The `&` (noSkip) modifier sits on the Balanced/Block wrapper that
-        // is captured as `atElement`. Pull it out so the next ElementplgAct
-        // can stamp elem.noSkip.
-        atElement = iTEM.children["atElement"];
-        if atElement && atElement.children
-            {
-            PLGitem ns = atElement.children["noSkip"];
-            if ns
-                state.pendingNoSkip = true;
-            }
-        }
-    cout "AlternativeplgAct fired: pendingLabel=" state.pendingLabel " pendingNoSkip=" state.pendingNoSkip:;
 }
 
 /*******************************************************************************
@@ -1670,7 +1418,6 @@ void ElementplgAct(PLGparse state, PLGitem iTEM)
 {
 Element     elem;
 PLGitem     atElement;
-PLGitem     textItem;
 String      text;
 String      spec;
 String      litText;
@@ -1810,7 +1557,6 @@ int         handled = 0;
         state.pendingNoSkip = false;
         }
     state.currentAlt.elements += elem;
-    cout "ElementplgAct fired: kind=" elem.kind " text='" text "' label='" elem.label "' added to alt in rule '" state.currentRule.name "'":;
 }
 
 /*******************************************************************************
@@ -1859,7 +1605,6 @@ char        opt;
         maximum = iTEM.children["maximum"];
         if maximum
             elem.maximum = atoi(maximum.toString());
-        cout "ElementTypeplgAct: explicit min=" elem.minimum " max=" elem.maximum:;
         return;
         }
 
@@ -1909,5 +1654,246 @@ char        opt;
         elem.skipOverMatch = true;
         elem.skipSet = null;
         }
-    cout "ElementTypeplgAct: opt='" opt "' min=" elem.minimum " max=" elem.maximum:;
+}
+
+int ForwardDeclplgNow(PLGparse state, PLGitem iTEM)
+{
+PLGitem n;
+String  name;
+String  s;
+int     i;
+char    *first;
+    if !iTEM || !iTEM.children
+        return false;
+    n = iTEM.children["names"];
+    if !n  return false;
+    // Head's length was overwritten by Element.applyRepetition to span
+    // the full repetition. Extract the head's NAME (alpha-prefix) by
+    // scanning from its start until the first non-name char.
+    s = n.start;
+    i = 0;
+    while *(s + i) && (((*(s + i) >= 'A') && (*(s + i) <= 'Z')) || ((*(s + i) >= 'a') && (*(s + i) <= 'z')) || ((*(s + i) >= '0') && (*(s + i) <= '9')) || (*(s + i) == '_'))
+        i++;
+    first = (char*)malloc(i + 1);
+    strncpy(first, s, i);
+    *(first + i) = 0;
+    getRule(first);
+    // Subsequent matches are linked via head.next — each has its own
+    // proper start/length, so toString() works correctly.
+    n = n.next;
+    while n
+        {
+        name = n.toString();
+        getRule(name);
+        n = n.next;
+        }
+    return true;
+}
+
+/*******************************************************************************
+	IncludeplgNow — fires when an Include directive matches. Resolves the
+	filename (sourceDir + name), loads the content, and runs Body.match
+	in a loop on a diverted input until the include is exhausted. The
+	outer parse resumes seamlessly via revertInput. PLGincludes-style
+	non-grammar headers gracefully no-op when the diverted parse can't
+	make progress.
+*******************************************************************************/
+int IncludeplgNow(PLGparse state, PLGitem iTEM)
+{
+PLGitem fileItem;
+String  filename;
+String  content;
+String  fullPath;
+PLGitem bodyResult;
+String  before;
+int     dirLen;
+int     fileLen;
+int     iters;
+    if !iTEM || !iTEM.children
+        return false;
+    fileItem = iTEM.children["file"];
+    if !fileItem
+        {
+        cerr "IncludeplgNow: no file capture":;
+        return false;
+        }
+    filename = fileItem.toString();
+    if !filename || !*filename
+        {
+        cerr "IncludeplgNow: empty filename":;
+        return false;
+        }
+    if *filename == '/' || !state.sourceDir
+        fullPath = filename;
+    else
+        {
+        dirLen   = strlen(state.sourceDir);
+        fileLen  = strlen(filename);
+        fullPath = (char*)malloc(dirLen + fileLen + 1);
+        strcpy(fullPath, state.sourceDir);
+        strcat(fullPath, filename);
+        }
+    content = getStringFromFile(fullPath);
+    if !content
+        {
+        cerr "IncludeplgNow: could not load '" fullPath "' — skipping":;
+        return false;
+        }
+    if !state.bodyRule
+        {
+        cerr "IncludeplgNow: bodyRule not set — process() must run first":;
+        return false;
+        }
+    content = state.stripComments(content);
+    divertInput(content);
+    iters = 0;
+    while state.cursor < state.eof
+        {
+        before     = state.cursor;
+        bodyResult = state.bodyRule.match(state);
+        if !bodyResult || state.cursor == before
+            break;
+        iters++;
+        }
+    revertInput();
+    return true;
+}
+
+/*******************************************************************************
+	RuleplgNow — immediate action fired when a Rule alternative matches in
+	Testing.g (or any .g file the parser is processing). Looks up the
+	"ruleName" capture, calls state.getRule() so a fresh rule entry is
+	created in parser.rules, then cascades the deferred action chain
+	(RuleOptionsplgAct etc.) for the rule's body.
+*******************************************************************************/
+int RuleplgNow(PLGparse state, PLGitem iTEM)
+{
+PLGitem ruleName;
+String  name;
+    if !iTEM || !iTEM.children
+        return false;
+    ruleName = iTEM.children["ruleName"];
+    if !ruleName
+        return false;
+    name = ruleName.toString();
+    currentRule = getRule(name);
+    helperCount = 0;        // per-rule reset for BlockplgAct helper naming
+    iTEM.runDeferred(state);
+    return true;
+}
+
+/*******************************************************************************
+	RuleOptionplgAct — fires after a RuleOption match completes (deferred).
+	A plg "RuleOption" is a SEQUENCE of plg-Alternatives separated by `|`
+	at the RuleOptions level. Each RuleOption maps to ONE C++ Alternative
+	whose elements are the SEQUENCE of items inside it. So this callback
+	is what creates the C++ Alternative bucket — appends it to currentRule
+	and parks it on state.currentAlt for incoming ElementplgAct calls.
+*******************************************************************************/
+void RuleOptionplgAct(PLGparse state, PLGitem iTEM)
+{
+Alternative alt;
+    if !state.currentRule
+        {
+        cerr "RuleOptionplgAct: no currentRule":;
+        return;
+        }
+    alt = new Alternative();
+    state.currentRule.addAlternative(alt);
+    state.currentAlt = alt;
+}
+
+/*******************************************************************************
+	RuleOptionsplgAct — fires after a RuleOptions match completes (deferred).
+	Stub for now; real implementation will populate the current rule's
+	alternatives from the captured RuleOption sub-items.
+*******************************************************************************/
+void RuleOptionsplgAct(PLGparse state, PLGitem iTEM)
+{
+    //cout "RuleOptionsplgAct fired":;
+}
+
+/*******************************************************************************
+    SetVariableplgNow — fires when SetVariable matches. Dispatches by first-
+    keyword character to register captured names in the parser's tables.
+    The Set branch is the round-trip fix: registering excludeSet/singleQuote
+    etc. in setTable makes later element refs resolve via getSet instead of
+    falling through to getRule as zombie empty rules.
+*******************************************************************************/
+int SetVariableplgNow(PLGparse state, PLGitem iTEM)
+{
+char    *text;
+char    keyword;
+PLGitem nameItem;
+PLGitem listItem;
+String  itemName;
+PLGset  newSet;
+KeyTable keyTable;
+char    *p;
+char    *firstWord;
+int     wordLen;
+char    ch;
+    if !iTEM
+        return false;
+    text = iTEM.toString();
+    if !text || !*text
+        return false;
+    keyword = *text;
+    if keyword == 'S'
+        {
+        PLGitem setItem;
+        PLGitem specItem;
+        String  specs;
+        nameItem = iTEM.children["name"];
+        if !nameItem return false;
+        itemName = nameItem.toString();
+        setItem = iTEM.children["set"];
+        if !setItem {
+            state.getSet(itemName, "");
+            return true;
+            }
+        specItem = setItem.children["text"];
+        if !specItem {
+            cerr "SetVariableplgNow: Set '" itemName "' has StringSet but no 'text' child":;
+            return false;
+            }
+        specs = specItem.toString();
+        state.getSet(itemName, specs);
+        return true;
+        }
+    if keyword == 'K'
+        {
+        // KeyWord <name> <words>* ;  — register a KeyTable group
+        nameItem = iTEM.children["name"];
+        if !nameItem return false;
+        itemName = nameItem.toString();
+        keyTable = new KeyTable(itemName);
+        listItem = iTEM.children["list"];
+        if listItem && listItem.length > 0
+            {
+            // Head item's length spans the full Word* repetition; scan to
+            // first word boundary (whitespace or ;) instead of toString().
+            // Subsequent items via .next have correct individual lengths.
+            p = listItem.start;
+            wordLen = 0;
+            ch = *(p + wordLen);
+            while ch && ch != ' ' && ch != '\t' && ch != '\n' && ch != '\r' && ch != '\f' && ch != ';'
+                {
+                wordLen++;
+                ch = *(p + wordLen);
+                }
+            firstWord = (char*)malloc(wordLen + 1);
+            strncpy(firstWord, p, wordLen);
+            *(firstWord + wordLen) = 0;
+            keyTable.add(firstWord);
+            listItem = listItem.next;
+            while listItem
+                {
+                keyTable.add(listItem.toString());
+                listItem = listItem.next;
+                }
+            }
+        keyWordTable[itemName] = (void*)keyTable;
+        }
+    return true;
 }
