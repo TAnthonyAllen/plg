@@ -150,6 +150,15 @@ PLGrule	rule;
 PLGset	set;
 String  name;
 int     nameLen;
+    // Brief 4: include directives so tok can resolve class types
+    // (PLGparse, PLGitem, PLGset, Buffer, etc.) when consuming the
+    // generated .twk. Matches PLGparse.twk's own top-of-file block.
+    // Hard-coded paths are the prevailing convention; portability is
+    // a tracking item for later, not generation-time concern.
+    print(output) "include /Users/anthony/Dropbox/data/InProcess/Include/globals":;
+    print(output) "include /Users/anthony/Dropbox/data/InProcess/Include/frame":;
+    print(output) "include /Users/anthony/Dropbox/data/InProcess/Include/PLGrevision":;
+    print(output) "":;
     // Brief 4: externs block. One declaration per name collected from
     // .act declarations lines by IncludeplgNow's act-branch. Uniform
     // (PLGparse state, PLGitem iTEM) signature per Session 9 design;
