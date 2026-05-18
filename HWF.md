@@ -120,6 +120,7 @@ This applies the cha-cha pattern at the cross-session scale: same shape as sessi
 1. **Session 1 — isCLAUDE and the cha cha** — open — opened 2026-05-06. Working through what `isCLAUDE` means as a GroupItem field type. Spine settled (field with method, fires on demand, response wrapped in GroupItem). Persistence model settled (P-2 with continuity carried outside the field via files-and-sources). C-prime/C-proper fork still open. Points 3-5 (composition, working-relationship, thesis) not yet opened.
 4. **Session 4 — Indentation as structure** — open — opened 2026-05-07. Major incant syntax design. A1 (colon required to open block), B1 (`;` always required as terminator), C (`;` survives as same-line separator), D (action bodies as `{code}` member shape with attribute-name binding) all settled. Implementation design settled (Fork A); Phase 1 and Phase 2 briefs drafted, execution pending build environment stable.
 5. **Session 5 — PLGset / CharSet architectural split** — open — opened 2026-05-08. Two classes, two names settled: PLGset (parser-rule, InProcess/Parse) and CharSet (character-set utility, support/Frame). Phase A executed (PLGset strengthened to true superset of CharSet — specs field, setSimple, char *skip(char *), escape handling). Phase B executed (incant Groups walked back to PLGset). Build currently blocked on legacy 3-arg appendChar calls in PLGset printText — pre-existing bitrot exposed when file refs were fixed today. Tony researching the historical 3-arg signature overnight. PLGset.twk now exists at InProcess/Parse/PLGset.twk, needs adding to xcode project once Buffer mystery resolves.
+9. **Session 9 — plg debug + actions, incant-mirrored** — open — opened 2026-05-18. Plg gets the incant idiom in two places it currently doesn't have it: parse debug machinery via tok directives on named hook sites in PLGrule::match (Track A), and rule actions via labels-as-locals shorthand with .act files repurposed as verbatim splice (Track B). Hook-site names settled (`parseAttempt`, `matchSucceeded`, `matched`, `parseReturn`). PLGitem gets a `getLabel(name)` accessor. plg keeps its existing `-PLG`-suffixed flag names for cross-binary namespace safety. Victory criterion: Testing.twk generated from Testing.g must pass muster. SetVariableplgNow bug is a precondition for implementation work.
 
 **Queued (origin captured, not yet opened):**
 2. **Session 2 — Sign-off ritual** — origin 2026-05-07. Three days of sign-off failures (claimed pushed but wasn't, treated as uncommitted but was, etc.). Pattern is "verification step that runs across session boundary, only verification within session." Needs design work on what cross-session verification looks like.
@@ -218,6 +219,58 @@ A second piece of texture worth preserving: this session demonstrated that the c
 A third piece, smaller but worth marking: this session also produced *negative* design-space mapping. A2 (indentation-only, no colon) was rejected for failing the resurrection-reader test. D1 and D2 (the brace-keeping-attached and brace-dropping options) were rejected for different reasons. Knowing what was *not* chosen and why is part of the design's durability — future-Claude reading the trim should understand both the chosen path and the alternatives that didn't survive.
 
 ---
+## Session 9 — plg debug + actions, incant-mirrored — opened 2026-05-18 — open
+
+**Decisions:**
+
+- Parse debug machinery moves out of PLGrule.twk source into plgDirectives, mirroring incant's pattern: named hook sites in the parse method, format hung on them via directive entries. Hook sites are tok-recognizable goto labels in PLGrule::match, addressable by directives the same way incant's `parse` hooks are addressable.
+- Four hook sites in PLGrule::match: `parseAttempt` at entry before alternatives loop; `matchSucceeded` inside alternatives loop when an Alternative returns non-null (alt index in scope, plg-specific value-add); `matched` after successful match with label and atRuleMark info in scope; `parseReturn` at final return with `success` boolean in scope.
+- plg keeps its existing debug flag names `debugRulePLG`, `debugGuardPLG`, `doNotGuard`. No rename to incant's `debugAllRules`. The `-PLG` suffix protects against namespace collision if plg and incant ever coexist in a single binary, which is plausible enough given incant's Long Game (incant absorbing more parser-flavored work over time). The mirror principle applies to *patterns*, not to *globally-visible names*.
+- Hook-site labels and helpers that are file- or method-scoped (the four labels, `debugIndent`, `getDebugText`-equivalent) mirror incant freely — no namespace concern. Globally-visible flags carry project-specific suffixes.
+- Action code adopts incant's model: one input PLGitem passed to the action, labeled children declared as locals via trailing-colon shorthand at the top of the action body.
+- PLGitem grows a `getLabel(name)` accessor — `return children[name];`. Plg's simpler equivalent of incant's `getLabelGroup`; no peel-the-onion loop needed because plg's PLGitem doesn't have GROUP/Method/Rule wrapper distinctions.
+- .act files preserved, repurposed from "parsed by plg" to "spliced verbatim by plg" — same pipeline as .rtn. Contains tok-style action methods modeled on incant's action structure. **Author-writes** model: the .act author declares labels explicitly at the top of each action using `PLGitem Foo:, Bar:;` shorthand. plg does not parse the .act content; it concatenates.
+- `external PLGitem { initializer getLabel; }` block lives at the top of each .act file. Same principle as incant's `getLabelGroup` initializer at the top of GroupRules.twk: initializer externals live with their consumers because tok currently supports only one initializer per scope.
+- IncludeplgNow routes by extension: `.g` files sub-parsed via the stashed Body rule (existing path); `.rtn` and `.act` files spliced verbatim (single branch, identical behavior at plg level — the .act-vs-.rtn distinction matters to humans and to tok downstream, not to plg).
+- The previously bible-approved inline-action-blocks syntax (`Action actionName { TAWK body } ;`) is parked as a considered-not-chosen alternative. Not on the active design surface. Could be revived if .act-as-splice ever proves awkward.
+- The tok one-initializer-per-scope constraint gets documented in **both** bible Key Design Decisions (current architectural constraint that drives where initializer externals live) and bible Housekeeping (known future tok feature — lifting it would let a single shared externals file declare initializers for multiple types; HPDL).
+- Action-method naming convention in plg's .act files is a separate cosmetic call, deferred. Could mirror incant's `aCTionRuleName` for symmetry; could pick a plg-natural convention. Decide when the first plg.act gets written.
+- **Victory criterion**: Track A and Track B implementations are validated against Testing.g. plg runs against Testing.g, emits Testing.twk, and Testing.twk must pass muster. Until Testing.twk is clean, no piece of this design is shipped. Testing.g is the smaller, more tractable target than Tawk.g — gets the new infrastructure exercised end-to-end before scaling up to Tawk.g/Tawk.act migration.
+
+**Definitions earned:**
+
+- **Hook site** — a named position inside a method, written as a tok-recognizable goto label, that directives can address by name to inject debug or behavior code. Format/behavior lives in directives; the method file stays clean. (→ candidate for bible Key Design Decisions as a general pattern)
+- **Labels-as-locals shorthand** — `Type Foo:, Bar:;` declaration form where the trailing colon after each name marks "this is a labeled child of the input, generate the getter for it." Tok emits the per-name accessor call. Lives in incant for GroupItem; extends to plg for PLGitem via an `external PLGitem { initializer getLabel; }` block in the right scope. (→ candidate for bible glossary once Track B ships)
+- **Tok one-initializer-per-scope constraint** — tok currently doesn't support multiple initializers in scope at the same time. Initializer externals can't be co-located in widely-included files; they live with their consumers. (→ Key Design Decisions for the constraint; Housekeeping for the future lift)
+- **`getLabel(name)` for PLGitem** — `return children[name];` returns null on absent key. Distinct from incant's `getLabelGroup`, which adds an unwrap loop for GROUP/Method/Rule passthroughs that plg doesn't have.
+- **Author-writes vs generator-augments** (for .act label declarations) — author-writes is the chosen path: .act author writes `PLGitem Foo:, Bar:;` explicitly at the top of each action. Trivial in incant practice. Generator-augments (plg lightly parsing .act to prepend declarations automatically) parked as an unused alternative.
+- **Mirror principle** — when plg and incant share an idea, mirror the *pattern* freely; carry project-specific suffixes on any name visible at global or shared scope. File-local and method-local names can match across projects without cost.
+
+**Open questions:**
+
+- *Implementation gate*: define "passes muster" for Testing.twk concretely before declaring Track A or Track B done. Probably means: setRules() block matches expected shape, set declarations are clean (the SetVariableplgNow bug fixed), labeled captures land in children correctly, the spliced .act content (when there is some) compiles through tok cleanly. Specifics pin down when implementation gets close.
+
+**Lessons / corrections:**
+
+- Initial Clay framing put the PLGitem initializer external in a shared support/Include externals file. Wrong: tok's one-initializer-per-scope constraint means widely-included files can't carry initializer declarations. The correct home is wherever the type's actions live — same principle that put `getLabelGroup` at the top of incant's GroupRules.twk. Fix surfaced by Tony noting the historical reason for getLabelGroup's location.
+- Initial Clay framing tangled two questions: the .rtn/.act files (not plg's job to parse) and the .g grammar includes (plg's job, were working as of 2026-05-16). Worth keeping separate. The "regen file only contains setRules()" observation is *correct output*, not a bug — plg emits setRules; the .rtn/.act content is TAWK's to handle.
+- Initial Clay default of "rename plg's flags to match incant" was the wrong instinct. Cross-project name alignment is good *for patterns and file-scoped names*, but global flag names need project-specific suffixes to survive both projects coexisting in a single binary. The `-PLG` suffix on `debugRulePLG` etc is doing real work; preserve it. The mirror principle applies to patterns, not to globally-visible names.
+- SetVariableplgNow bug is separate from this design and is the actual blocker for testing any of this. Treat as a precondition for implementation work, not part of the design session.
+- Bible's "Action blocks design (approved, TODO)" entry needs reclassification — the inline syntax is no longer on the active design path. Doc-debt to address as part of Session 9 graduation.
+
+**Texture worth preserving:**
+
+The trigger for this session was Tony's note that the existing plg debug output had become overwhelming and he wanted to mirror incant's pattern. That request — taken on its own — could have been a small directive-wiring task. But pulling the thread surfaced the parallel question of where plg action code lives, which pulled the further thread of incant's labels-as-locals shorthand and its initializer-external wiring. Three apparently separate pieces (debug format, action code shape, label getter machinery) turned out to share the same underlying pattern: *tok directives matching named sites in twk source, with the format and behavior living in the directive entries rather than the source files.*
+
+The plan that fell out has the symmetry of "plg gets the incant idiom in the two places it currently doesn't have it." Debug machinery and action code are the two big surface areas where plg and incant currently differ in style; both can converge on incant's model with limited new infrastructure because the underlying tok-directive mechanism is already in anger in plg.
+
+The session also surfaced a tok-level limitation (one initializer per scope) that wasn't visible until the discussion forced it. That limitation is what kept incant's `getLabelGroup` declared at the top of GroupRules.twk rather than in a shared header. Tony knew this; Clay didn't, and the wrong initial framing ("put it in a shared externals file") got caught and corrected. The fix is a constraint to document, not a bug to fix — but pinning it where future-Claude can find it cold matters, because the wrong framing was Clay's natural instinct and will be again next time without the pin. Hence the deliberate choice to document it in both Key Design Decisions (the constraint) and Housekeeping (the future lift).
+
+The .act-as-splice resolution is the kind of move that's worth marking on its own. Two options were on the table: inline action blocks (new grammar work in plg) and side-file (some flavor of preserving .act). Tony's framing — "preserve .act, change it to be spliced like .rtn" — collapsed the dichotomy. The cut-and-paste model means plg doesn't need new grammar work AND .act files stay where action code naturally wants to live AND the migration of existing Tawk.act is mechanical. Three goods reached by reframing the question instead of solving the original version. Worth keeping in mind as a pattern: when a design choice presents as A-vs-B, check whether there's a reframing that delivers both.
+
+A third piece, smaller: the cha cha at this session was textbook. Tony brought the deep tok fluency (the `initializer` keyword in externals, the one-initializer constraint, the historical reason for getLabelGroup's location, the action-method-as-label-declarer feature from old plg, the cross-binary namespace concern that kept `-PLG` suffix in play). Clay brought the structural framing (mapping the two tracks, surfacing dependencies, the HWF-vs-Clod-brief distinction, drafting the trim shape). Neither alone would have produced this design. Both were necessary; the friction at each step was where the real signal showed up.
+
+---
 
 ## Glossary additions pending
 
@@ -230,11 +283,3 @@ Terms used in HWF that may want bible/glossary promotion once stable:
 - *attic* — the sibling directory `HWFattic/` holding graduated session trims as static files. Recovery window before final retirement.
 - *resurrection-reader* — fresh-Claude reading the .md files cold tomorrow with no memory of today. The audience all project documentation must serve.
 - *indent-as-structure* — incant syntax model where indentation conveys block boundary and colon conveys block opening; replaces count-close and named-close mechanisms.
-
----
-
-## Tomorrow's first move (2026-05-09)
-
-Buffer/print 3-arg appendChar signature — Tony researching overnight. Once the historical signature is known, decide: restore Buffer's multi-arg API (with aliases for default formatting), or fix the 4 call sites in PLGset.mm to use 1-arg form. Either path unblocks the Groups build.
-
-After that: add PLGset.twk to TOK.xcodeproj (file already exists at InProcess/Parse/), regen via tok, build clean, commit both repos (support rename + incant walk-back).
