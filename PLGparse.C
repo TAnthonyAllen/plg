@@ -231,7 +231,7 @@ int 		nameLen = 0;
 	// anything else) → int. Empty actionNames skips the block entirely.
 	if ( actionNames->length > 0 )
 		{
-		output->appendString("extern",0,0);
+		output->appendString("external",0,0);
 		output->appendString("\n",0,0);
 		output->appendString("{",0,0);
 		output->appendString("\n",0,0);

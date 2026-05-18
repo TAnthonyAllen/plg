@@ -166,7 +166,7 @@ int     nameLen;
     // anything else) → int. Empty actionNames skips the block entirely.
     if actionNames.length > 0
         {
-        print(output) "extern":;
+        print(output) "external":;
         print(output) "{":;
         actionNames.entry = null;
         while name = (char*)actionNames.next()
