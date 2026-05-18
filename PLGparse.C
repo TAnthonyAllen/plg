@@ -209,6 +209,51 @@ void PLGparse::generateRules(Buffer *output)
 {
 PLGrule 	*rule = 0;
 PLGset 		*set = 0;
+char 		*name = 0;
+int 		nameLen = 0;
+	// Brief 4: externs block. One declaration per name collected from
+	// .act declarations lines by IncludeplgNow's act-branch. Uniform
+	// (PLGparse state, PLGitem iTEM) signature per Session 9 design;
+	// return type follows the convention: `Act` → void, `Now` (or
+	// anything else) → int. Empty actionNames skips the block entirely.
+	if ( actionNames->length > 0 )
+		{
+		output->appendString("extern",0,0);
+		output->appendString("\n",0,0);
+		output->appendString("{",0,0);
+		output->appendString("\n",0,0);
+		actionNames->entry = 0;
+		while ( name = (char*)actionNames->next() )
+			{
+			nameLen = ::strlen(name);
+			if ( nameLen >= 3 && ::strcmp(name + nameLen - 3,"Act") == 0 )
+				{
+				output->appendString("    void ",0,0);
+				output->appendString(name,0,0);
+				output->appendString("(PLGparse state, PLGitem iTEM);",0,0);
+				output->appendString("\n",0,0);
+				}
+			else {
+				output->appendString("    int  ",0,0);
+				output->appendString(name,0,0);
+				output->appendString("(PLGparse state, PLGitem iTEM);",0,0);
+				output->appendString("\n",0,0);
+				}
+			}
+		output->appendString("}",0,0);
+		output->appendString("\n",0,0);
+		output->appendString("",0,0);
+		output->appendString("\n",0,0);
+		}
+	// Brief 4: splice flush. Verbatim dump of .rtn/.act content that
+	// IncludeplgNow accumulated during the parse pass. Lands above
+	// setRules so tok sees action method bodies (and their externs
+	// declared just above) before the rules that wire them.
+	if ( spliceAccumulator && spliceAccumulator->length() > 0 )
+		{
+		output->appendString(spliceAccumulator->toString(),0,0);
+		output->appendString("\n",0,0);
+		}
 	output->appendString("\nvoid setRules()\n{\n	setSkip();",0,0);
 	output->appendString("\n",0,0);
 	setTable->hashList->resetIterator();

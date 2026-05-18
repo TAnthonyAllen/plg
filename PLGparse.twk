@@ -148,6 +148,35 @@ void generateRules(Buffer output)
 {
 PLGrule	rule;
 PLGset	set;
+String  name;
+int     nameLen;
+    // Brief 4: externs block. One declaration per name collected from
+    // .act declarations lines by IncludeplgNow's act-branch. Uniform
+    // (PLGparse state, PLGitem iTEM) signature per Session 9 design;
+    // return type follows the convention: `Act` → void, `Now` (or
+    // anything else) → int. Empty actionNames skips the block entirely.
+    if actionNames.length > 0
+        {
+        print(output) "extern":;
+        print(output) "{":;
+        actionNames.entry = null;
+        while name = (char*)actionNames.next()
+            {
+            nameLen = strlen(name);
+            if nameLen >= 3 && strcmp(name + nameLen - 3, "Act") == 0
+                print(output) "    void " name "(PLGparse state, PLGitem iTEM);":;
+            else
+                print(output) "    int  " name "(PLGparse state, PLGitem iTEM);":;
+            }
+        print(output) "}":;
+        print(output) "":;
+        }
+    // Brief 4: splice flush. Verbatim dump of .rtn/.act content that
+    // IncludeplgNow accumulated during the parse pass. Lands above
+    // setRules so tok sees action method bodies (and their externs
+    // declared just above) before the rules that wire them.
+    if spliceAccumulator && spliceAccumulator.length() > 0
+        print(output) spliceAccumulator.toString():;
     print(output) "
 void setRules()
 {
