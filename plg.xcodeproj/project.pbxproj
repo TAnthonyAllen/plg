@@ -165,7 +165,7 @@
 		EB395B035ABFBC1F22855FE1 /* Layout.twk */ = {isa = PBXFileReference; lastKnownFileType = text; path = Layout.twk; sourceTree = "<group>"; };
 		EB80A95E35D97A3E85B22C2B /* TapeSegment.C */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = TapeSegment.C; sourceTree = "<group>"; };
 		ECB269DC07D8CB031AEAC60B /* GroupBody.twk */ = {isa = PBXFileReference; lastKnownFileType = text; path = GroupBody.twk; sourceTree = "<group>"; };
-		ED0C2E01435518992A8FF766 /* Support */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = Support; path = ../../../support/support.xcodeproj; sourceTree = "<group>"; };
+		ED0C2E01435518992A8FF766 /* Support */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; name = Support; path = ../../support/support.xcodeproj; sourceTree = "<group>"; };
 		EE9188B88ACF471B9AF6604B /* groups.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = groups.mm; sourceTree = "<group>"; };
 		EF0E239842EF8DD5FB9D9CBA /* PLGmain.twk */ = {isa = PBXFileReference; lastKnownFileType = text; path = PLGmain.twk; sourceTree = "<group>"; };
 		F0639EC80423B76977484BD2 /* plgDirectives */ = {isa = PBXFileReference; lastKnownFileType = text; name = plgDirectives; path = ../plgDirectives; sourceTree = "<group>"; };
@@ -694,10 +694,10 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				HEADER_SEARCH_PATHS = (
 					"$(SRCROOT)",
-					"$(SRCROOT)/../../../support/Frame",
-					"$(SRCROOT)/../../../support/Maps",
-					"$(SRCROOT)/../../../support/KeyTable",
-					"$(SRCROOT)/../../../support/Include",
+					"$(SRCROOT)/../../support/Frame",
+					"$(SRCROOT)/../../support/Maps",
+					"$(SRCROOT)/../../support/KeyTable",
+					"$(SRCROOT)/../../support/Include",
 				);
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -726,10 +726,10 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				HEADER_SEARCH_PATHS = (
 					"$(SRCROOT)",
-					"$(SRCROOT)/../../../support/Frame",
-					"$(SRCROOT)/../../../support/Maps",
-					"$(SRCROOT)/../../../support/KeyTable",
-					"$(SRCROOT)/../../../support/Include",
+					"$(SRCROOT)/../../support/Frame",
+					"$(SRCROOT)/../../support/Maps",
+					"$(SRCROOT)/../../support/KeyTable",
+					"$(SRCROOT)/../../support/Include",
 				);
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
