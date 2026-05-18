@@ -252,6 +252,8 @@ When a grammar rule contains inline `( A | B )` syntax, PLG decomposes it into a
 
 Cross-references: TAWK Known Issues #12 (the user-visible trap as it currently surfaces), TODO Housekeeping entry for the PLGrevision PLG/PLGparse field contamination audit (a concrete instance surfaced during Brief 3).
 
+**Real instance**: Brief 2 (2026-05-18) added `PLGitem.getLabel` to the class definition without updating PLGrevision's external mirror. The omission was silent until Brief 7's tok parse two briefs later — Brief 7's `InitializerItem` expansion of the labels-as-locals shorthand triggered the cross-file lookup that finally surfaced the gap. Staleness detection at the source would have caught this at Brief 2's `PLGitem.twk` parse, not at the downstream consumer.
+
 ---
 
 ## Incant / PLG Convergence
