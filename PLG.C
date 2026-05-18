@@ -953,13 +953,18 @@ char 		*base = strrchr(filename,'/');
 		{
 		*dot = '\0';
 		}
+	// Brief 8: snapshot the stripped basename — Testing.g → "Testing" —
+	// to drive the generated class wrapper name. Must copy now because
+	// strcat below extends outFile in place to "<BaseName>.twk".
+char 		*baseName = (char*)::malloc(::strlen(outFile) + 1);
+	::strcpy(baseName,outFile);
 	::strcat(outFile,".twk");
 	// Generate from the FRESH parser.rules (the rules parsed out of
 	// Testing.g) BEFORE restoring the meta-grammar. This is the real
 	// bootstrap output: setRules code derived from the user's grammar
 	// file, not a copy of the meta-grammar.
 	twkOut = new Buffer("twk-output",50000);
-	parser->generateRules(twkOut);
+	parser->generateRules(twkOut,baseName);
 	twkOut->setFile(outFile);
 	twkOut->flush();
 	::printf("wrote %s\n",outFile);

@@ -144,7 +144,7 @@ use buffer
 /*****************************************************************************
 	Loop thru rules and generate code to implement them
 *****************************************************************************/
-void generateRules(Buffer output)
+void generateRules(Buffer output, String baseName)
 {
 PLGrule	rule;
 PLGset	set;
@@ -186,6 +186,14 @@ int     nameLen;
     // declared just above) before the rules that wire them.
     if spliceAccumulator && spliceAccumulator.length() > 0
         print(output) spliceAccumulator.toString():;
+    // Brief 8: class wrapper. Tok requires a class definition to emit
+    // .C output, mirroring production .twk files (e.g. Tokf/Tawk.twk's
+    // `class Tawk extends PLGparse { ... }`). Only setRules lives
+    // inside; action method bodies stay extern at top level above.
+    // BaseName comes from the input grammar filename stem (Testing.g
+    // → "Testing"), derived by process() before calling here.
+    print(output) "class " baseName " extends PLGparse":;
+    print(output) "{":;
     print(output) "
 void setRules()
 {
@@ -197,7 +205,8 @@ void setRules()
     rules.entry = null;
     while rule = rules.next()
 		rule.generate(output);
-	print "}":;    // end of setup
+	print "}":;    // end of setRules
+    print(output) "}":;    // end of class
 }
 
 /*****************************************************************************

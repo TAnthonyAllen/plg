@@ -205,7 +205,7 @@ void PLGparse::divertInput(char *s)
 /*****************************************************************************
 	Loop thru rules and generate code to implement them
 *****************************************************************************/
-void PLGparse::generateRules(Buffer *output)
+void PLGparse::generateRules(Buffer *output, char *baseName)
 {
 PLGrule 	*rule = 0;
 PLGset 		*set = 0;
@@ -267,6 +267,18 @@ int 		nameLen = 0;
 		output->appendString(spliceAccumulator->toString(),0,0);
 		output->appendString("\n",0,0);
 		}
+	// Brief 8: class wrapper. Tok requires a class definition to emit
+	// .C output, mirroring production .twk files (e.g. Tokf/Tawk.twk's
+	// `class Tawk extends PLGparse { ... }`). Only setRules lives
+	// inside; action method bodies stay extern at top level above.
+	// BaseName comes from the input grammar filename stem (Testing.g
+	// → "Testing"), derived by process() before calling here.
+	output->appendString("class ",0,0);
+	output->appendString(baseName,0,0);
+	output->appendString(" extends PLGparse",0,0);
+	output->appendString("\n",0,0);
+	output->appendString("{",0,0);
+	output->appendString("\n",0,0);
 	output->appendString("\nvoid setRules()\n{\n	setSkip();",0,0);
 	output->appendString("\n",0,0);
 	setTable->hashList->resetIterator();
@@ -277,7 +289,10 @@ int 		nameLen = 0;
 		rule->generate(output);
 	output->appendString("}",0,0);
 	output->appendString("\n",0,0);
-	// end of setup
+	// end of setRules
+	output->appendString("}",0,0);
+	output->appendString("\n",0,0);
+	// end of class
 }
 
 /*****************************************************************************
