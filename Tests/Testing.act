@@ -1,25 +1,70 @@
+actions TestNow, StringSetAct, StringSet2Now, StringSet2Act;
 
-StringSet!
-    currentSet = new(text.toString());
-|
-	currentSet = setTable[name.string()];
-	name.unString();
-.
-	currentSet = setTable[name.string()];
-	name.unString();
-	if !currentSet
-		return false;
-;
+external PLGitem
+{
+    initializer
+        PLGitem     getLabel
+        ;
+}
 
-Test!
-.
-PLGitem nameItem = iTEM.children["name"];;
+/*******************************************************************
+    TestNow — Test rule callback. Reads name and set children;
+    registers the named set in state.setTable. Same logic as
+    Brief 1's SetVariableplgNow 'S' branch fix, in new-shape.
+*******************************************************************/
+int TestNow(PLGparse state, PLGitem iTEM)
+{
+PLGitem name:, set:;
+PLGitem specItem;
 String  itemName;
-PLGset  newSet;
-    if !nameItem return false;
-    itemName = nameItem.toString();
-    newSet = new PLGset(itemName);
-    newSet.name = itemName;
-    setTable[itemName] = (void*)newSet;
+String  specs;
+    if !name return false;
+    itemName = name.toString();
+    if !set {
+        state.getSet(itemName, "");
+        return true;
+    }
+    specItem = set.children["text"];
+    if !specItem {
+        cerr "TestNow: Set '" itemName "' has StringSet but no 'text' child":;
+        return false;
+    }
+    specs = specItem.toString();
+    state.getSet(itemName, specs);
     return true;
-;
+}
+
+/*******************************************************************
+    StringSetAct — alt 1 (inline-spec) post-match. Build a fresh
+    PLGset from the captured spec characters.
+*******************************************************************/
+void StringSetAct(PLGparse state, PLGitem iTEM)
+{
+PLGitem text:;
+    if !text return;
+    state.currentSet = new PLGset(text.toString());
+}
+
+/*******************************************************************
+    StringSet2Now — alt 2 (reference-by-name) immediate. Look up
+    the named set; fail if absent.
+*******************************************************************/
+int StringSet2Now(PLGparse state, PLGitem iTEM)
+{
+PLGitem name:;
+    if !name return false;
+    state.currentSet = state.setTable[name.toString()];
+    if !state.currentSet return false;
+    return true;
+}
+
+/*******************************************************************
+    StringSet2Act — alt 2 (reference-by-name) post-match. Mirrors
+    the Now-form lookup without the failure gate.
+*******************************************************************/
+void StringSet2Act(PLGparse state, PLGitem iTEM)
+{
+PLGitem name:;
+    if !name return;
+    state.currentSet = state.setTable[name.toString()];
+}
