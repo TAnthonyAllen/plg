@@ -1,0 +1,25 @@
+
+StringSet!
+    currentSet = new(text.toString());
+|
+	currentSet = setTable[name.string()];
+	name.unString();
+.
+	currentSet = setTable[name.string()];
+	name.unString();
+	if !currentSet
+		return false;
+;
+
+Test!
+.
+PLGitem nameItem = iTEM.children["name"];;
+String  itemName;
+PLGset  newSet;
+    if !nameItem return false;
+    itemName = nameItem.toString();
+    newSet = new PLGset(itemName);
+    newSet.name = itemName;
+    setTable[itemName] = (void*)newSet;
+    return true;
+;
