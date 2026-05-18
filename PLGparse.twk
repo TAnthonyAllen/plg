@@ -117,6 +117,144 @@ Element elem = new;
     currentAlt.elements.add((void*)elem);
 }
 
+/*******************************************************************************
+	divertInput loads the string passed in to a new buffer, if there is an
+    existing current buffer, it gets put on the inputStack, and the current
+    cursor is set to the contents of the new buffer
+*******************************************************************************/
+void divertInput(String s)
+{
+use buffer
+    if !inputStack inputStack = new;
+    // Save outer parse cursor on the buffer so revertInput can restore it.
+    current = cursor;
+    inputStack.push(buffer);
+    buffer  = new;
+    buffer += s;
+    cursor  = start;
+    eof     = end;
+}
+
+/*****************************************************************************
+	Loop thru rules and generate code to implement them
+*****************************************************************************/
+void generateRules(Buffer output)
+{
+PLGrule	rule;
+PLGset	set;
+    print(output) "
+void setRules()
+{
+	setSkip();":;
+
+    setTable.resetIterator();
+    while set = setTable.next()
+		set.generateNamed(output);
+    rules.entry = null;
+    while rule = rules.next()
+		rule.generate(output);
+	print "}":;    // end of setup
+}
+
+/*****************************************************************************
+	Find a rule and return it
+*****************************************************************************/
+PLGrule getRule(String name)
+{
+PLGrule rule = rules[name];
+    if !rule
+        {
+        rule = new(name);
+        rules[name] = (void*)rule;
+        }
+    return rule;
+}
+
+/*****************************************************************************
+	Look up a set in the setTable and return it
+*****************************************************************************/
+PLGset getSet(String specs)
+{
+PLGset set = setTable[specs];
+    if !set
+        {
+        set = new(specs);
+        setTable[specs] = (void*)set;
+        }
+    return set;
+}
+
+PLGset getSet(PLGset named, String specs)
+{
+    if !named
+        named = new(specs);
+    else named.set(specs);
+    setTable[named.name] = (void*)named;
+    return named;
+}
+
+PLGset getSet(String name, String specs)
+{
+PLGset set = setTable[name];
+    if !set
+        {
+        set = new(specs);
+        set.name = name;
+        setTable[name] = (void*)set;
+        }
+    return set;
+}
+
+/*****************************************************************************
+	initialize — set the skip set, then populate FIRST sets (guards) on
+	every rule for fast-rejection in PLGrule::match.
+*****************************************************************************/
+void initialize()
+{
+PLGrule rule;
+    setSkip();
+    rules.entry = null;
+    while rule = rules.next()
+        rule.setGuard();
+}
+
+/*****************************************************************************
+	The parse rules run the parse by calling match
+*****************************************************************************/
+PLGitem parse(PLGrule rule)
+{
+    if rule return rule.match(this);
+    return  null;
+}
+PLGitem parse(String name)
+{
+PLGrule rule = rules[name];
+    if !rule
+        {
+        cerr "parse: rule not found: " name:;
+        return null;
+        }
+    return rule.match(this);
+}
+
+
+/*******************************************************************************
+	revertInput undoes what divertInput done did, reseting the parser input
+    buffer back to what it was before being diverted
+*******************************************************************************/
+void revertInput()
+{
+use buffer
+    if !inputStack || !inputStack.length
+        {
+        cerr "revertInput: input stack is empty":;
+        return;
+        }
+    buffer  = inputStack.pop();
+    cursor  = current;
+    eof     = end;
+}
+
 /*****************************************************************************
     Set noSkip on the most-recently-added element on currentAlt. Used in
     setRules() to express the `&` (no-skip) modifier on a preceding element
@@ -164,6 +302,48 @@ Element    e;
     if !last return;
     e = last.value;
     if e e.isIgnored = true;
+}
+
+/*******************************************************************************
+	Load input into the parse buffer
+*******************************************************************************/
+void setInput(String s)
+{
+use buffer
+    if !buffer buffer = new;
+    reset();
+    buffer += s;
+    cursor  = start;
+    eof     = end;
+}
+
+void setInput(PLGitem item)
+{
+use buffer
+    if !buffer buffer = new;
+    reset();
+    buffer    += item.toString();
+    cursor     = start;
+    eof        = end;
+}
+
+/*******************************************************************************
+	Create skipSet
+*******************************************************************************/
+void setSkip()
+{
+    if !defaultSkip
+        defaultSkip = new(" \t\n\r\f");
+    skipSet = defaultSkip;
+}
+
+/*******************************************************************************
+	Skip space and advance the current cursor
+*******************************************************************************/
+void skip()
+{
+    if skipSet
+        cursor = skipSet.skip(cursor);
 }
 
 /*****************************************************************************
@@ -273,186 +453,22 @@ char    quote;
     return out;
 }
 
-/*******************************************************************************
-	divertInput loads the string passed in to a new buffer, if there is an
-    existing current buffer, it gets put on the inputStack, and the current
-    cursor is set to the contents of the new buffer
-*******************************************************************************/
-void divertInput(String s)
-{
-use buffer
-    if !inputStack inputStack = new;
-    // Save outer parse cursor on the buffer so revertInput can restore it.
-    current = cursor;
-    inputStack.push(buffer);
-    buffer  = new;
-    buffer += s;
-    cursor  = start;
-    eof     = end;
-}
-
 /*****************************************************************************
-	Loop thru rules and generate code to implement them
+	Debugging routine to list out the rules and the number of times
+	each one was run
 *****************************************************************************/
-void generateRules(Buffer output)
+void summary(int threshold)
 {
 PLGrule	rule;
-PLGset	set;
-    print(output) "
-void setRules()
-{
-	setSkip();":;
-
-    setTable.resetIterator();
-    while set = setTable.next()
-		set.generate(output);
-    rules.entry = null;
-    while rule = rules.next()
-		rule.generate(output);
-	print "}":;    // end of setup
+int		total;
+    cout "Rules":;
+    while rule = rules.next() {
+		cout ``rule.name:;
+		total++; }
+    cout `"Rules processed:",total:;
+}
 }
 
-/*****************************************************************************
-	Find a rule and return it
-*****************************************************************************/
-PLGrule getRule(String name)
-{
-PLGrule rule = rules[name];
-    if !rule
-        {
-        rule = new(name);
-        rules[name] = (void*)rule;
-        }
-    return rule;
-}
-
-/*****************************************************************************
-	Look up a set in the setTable and return it
-*****************************************************************************/
-PLGset getSet(String specs)
-{
-PLGset set = setTable[specs];
-    if !set
-        {
-        set = new(specs);
-        setTable[specs] = (void*)set;
-        }
-    return set;
-}
-
-PLGset getSet(PLGset named, String specs)
-{
-    if !named
-        named = new(specs);
-    else named.set(specs);
-    setTable[named.name] = (void*)named;
-    return named;
-}
-
-PLGset getSet(String name, String specs)
-{
-PLGset set = setTable[name];
-    if !set
-        {
-        set = new(specs);
-        set.name = name;
-        setTable[name] = (void*)set;
-        }
-    return set;
-}
-
-/*****************************************************************************
-	initialize — set the skip set, then populate FIRST sets (guards) on
-	every rule for fast-rejection in PLGrule::match.
-*****************************************************************************/
-void initialize()
-{
-PLGrule rule;
-    setSkip();
-    rules.entry = null;
-    while rule = rules.next()
-        rule.setGuard();
-}
-
-/*****************************************************************************
-	The parse rules run the parse by calling match
-*****************************************************************************/
-PLGitem parse(String name)
-{
-PLGrule rule = rules[name];
-    if !rule
-        {
-        cerr "parse: rule not found: " name:;
-        return null;
-        }
-    return rule.match(this);
-}
-
-PLGitem parse(PLGrule rule)
-{
-    if !rule return null;
-    return rule.match(this);
-}
-
-/*******************************************************************************
-	revertInput undoes what divertInput done did, reseting the parser input
-    buffer back to what it was before being diverted
-*******************************************************************************/
-void revertInput()
-{
-use buffer
-    if !inputStack || !inputStack.length
-        {
-        cerr "revertInput: input stack is empty":;
-        return;
-        }
-    buffer  = inputStack.pop();
-    cursor  = current;
-    eof     = end;
-}
-
-/*******************************************************************************
-	Load input into the parse buffer
-*******************************************************************************/
-void setInput(String s)
-{
-use buffer
-    if !buffer buffer = new;
-    reset();
-    buffer += s;
-    cursor  = start;
-    eof     = end;
-}
-
-void setInput(PLGitem item)
-{
-use buffer
-    if !buffer buffer = new;
-    reset();
-    buffer    += item.toString();
-    cursor     = start;
-    eof        = end;
-}
-
-/*******************************************************************************
-	Create skipSet
-*******************************************************************************/
-void setSkip()
-{
-    if !defaultSkip
-        defaultSkip = new(" \t\n\r\f");
-    skipSet = defaultSkip;
-}
-
-/*******************************************************************************
-	Skip space and advance the current cursor
-*******************************************************************************/
-void skip()
-{
-    if skipSet
-        cursor = skipSet.skip(cursor);
-}
-}
 /*******************************************************************************
 	foundIn — free function (was PLGset::foundIn(PLGitem) before PLGset
 	moved into the support library, where PLGitem is unreachable).
@@ -470,22 +486,5 @@ int foundIn(PLGset set, PLGitem item)
                     return true;
         }
     return false;
-}
-/*******************************************************************************
-	Main
-*******************************************************************************/
-int main(int argc, char **argv)
-{
-PLG state;
-    if argc > 1
-        {
-        state = new();
-        state.process(argv[1]);
-        }
-    else
-        {
-        state = new("12345 hello");
-        state.run();
-        }
 }
 

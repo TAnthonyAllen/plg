@@ -107,10 +107,8 @@ Alternative 	*test = 0;
 	if ( guardSet )
 		guardSet->generate(output);
 	alternatives->resetIterator();
-	::fprintf(stderr,"alternatives count: %d\n",alternatives->length);
 	while ( test = (Alternative*)alternatives->next() )
 		{
-		::fprintf(stderr,"generating alternative\n");
 		test->generate(output);
 		if ( test->guardSet )
 			{

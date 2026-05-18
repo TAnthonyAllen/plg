@@ -76,10 +76,8 @@ Alternative test;
 		print "currentRule.doNotGuard = true;":;
 	or guardSet guardSet.generate(output);
     alternatives.reset();
-    cerr "alternatives count: " alternatives.length():;
 	while test = alternatives.next()
 		{
-        cerr "generating alternative":;
 		test.generate(output);
 		if test.guardSet
 			{

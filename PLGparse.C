@@ -34,23 +34,6 @@ extern "C" int foundIn(PLGset *set, PLGitem *item)
 }
 
 /*******************************************************************************
-	Main
-*******************************************************************************/
-int main(int argc, char **argv)
-{
-PLG 	*state = 0;
-	if ( argc > 1 )
-		{
-		state = new PLG();
-		state->process(argv[1]);
-		}
-	else {
-		state = new PLG("12345 hello");
-		state->run();
-		}
-}
-
-/*******************************************************************************
 	PLGparse constructors
 *******************************************************************************/
 PLGparse::PLGparse()
@@ -128,7 +111,7 @@ PLGparse::PLGparse(char *input)
 	doNotGuard = 0;
 	setsInitialized = 0;
 	skipping = 0;
-	buffer = ::bufferFactory1();
+	buffer = new Buffer();
 	buffer->appendString(input,0,0);
 	cursor = buffer->start;
 	eof = buffer->end;
@@ -209,7 +192,7 @@ void PLGparse::divertInput(char *s)
 	// Save outer parse cursor on the buffer so revertInput can restore it.
 	buffer->current = cursor;
 	inputStack->push(buffer);
-	buffer = ::bufferFactory1();
+	buffer = new Buffer();
 	buffer->appendString(s,0,0);
 	cursor = buffer->start;
 	eof = buffer->end;
@@ -226,7 +209,7 @@ PLGset 		*set = 0;
 	output->appendString("\n",0,0);
 	setTable->hashList->resetIterator();
 	while ( set = (PLGset*)setTable->hashList->next() )
-		set->generate(output);
+		set->generateNamed(output);
 	rules->hashList->entry = 0;
 	while ( rule = (PLGrule*)rules->hashList->next() )
 		rule->generate(output);
@@ -300,6 +283,14 @@ PLGrule 	*rule = 0;
 /*****************************************************************************
 	The parse rules run the parse by calling match
 *****************************************************************************/
+PLGitem *PLGparse::parse(PLGrule *rule)
+{
+	if ( rule )
+		debugRulePLG = 1;
+		return rule->match(this);
+	return 0;
+}
+
 PLGitem *PLGparse::parse(char *name)
 {
 PLGrule 	*rule = (PLGrule*)rules->get(name);
@@ -308,13 +299,6 @@ PLGrule 	*rule = (PLGrule*)rules->get(name);
 		::fprintf(stderr,"parse: rule not found: %s\n",name);
 		return 0;
 		}
-	return rule->match(this);
-}
-
-PLGitem *PLGparse::parse(PLGrule *rule)
-{
-	if ( !rule )
-		return 0;
 	return rule->match(this);
 }
 
@@ -387,7 +371,7 @@ Element 	*e = 0;
 void PLGparse::setInput(char *s)
 {
 	if ( !buffer )
-		buffer = ::bufferFactory1();
+		buffer = new Buffer();
 	buffer->reset();
 	buffer->appendString(s,0,0);
 	cursor = buffer->start;
@@ -397,7 +381,7 @@ void PLGparse::setInput(char *s)
 void PLGparse::setInput(PLGitem *item)
 {
 	if ( !buffer )
-		buffer = ::bufferFactory1();
+		buffer = new Buffer();
 	buffer->reset();
 	buffer->appendString(item->toString(),0,0);
 	cursor = buffer->start;
@@ -590,6 +574,23 @@ char 	quote = 0;
 	*dst = 0;
 	return out;
 }
+
+/*****************************************************************************
+	Debugging routine to list out the rules and the number of times
+	each one was run
+*****************************************************************************/
+void PLGparse::summary(int threshold)
+{
+PLGrule 	*rule = 0;
+int 		total = 0;
+	::printf("Rules\n");
+	while ( rule = (PLGrule*)rules->hashList->next() )
+		{
+		::printf("\t\t%s\n",rule->name);
+		total++;
+		}
+	::printf("\tRules processed: %d\n",total);
+}
 /*	Warning: the following methods were referenced but not declared
-	process(char*)
+	generateNamed(Buffer*)
 */

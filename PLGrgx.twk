@@ -1,3 +1,5 @@
+include /Users/anthony/Dropbox/data/InProcess/Include/globals
+include /Users/anthony/Dropbox/data/InProcess/Include/frame
 include /Users/anthony/Dropbox/data/InProcess/Include/PLGrevision
 
 /*****************************************************************************
