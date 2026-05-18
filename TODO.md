@@ -208,6 +208,7 @@ Clod runs `git diff --stat HEAD` in each repo after reading docs. Tony fills con
 - [ ] **Visibility-gap discipline:** source-of-truth files MUST live in tracked locations. PLGrgx and PLGset resolutions exemplify the fix.
 - [ ] **Tests/ just-in-case stash** — Parse/Tests/ contents are mostly dangling symlinks post-flatten. Tony may want a copy stashed somewhere just-in-case before fully forgetting about it.
 - [ ] **PLGset.init() stub** — dead code, retained for API compatibility with older lazy-parse lineage. Can be removed in support/Frame cleanup pass.
+- [ ] **PLGrevision PLG/PLGparse field contamination audit** — `external PLGparse { ... }` in `support/Include/PLGrevision` (lines ~192-200) currently lists `alternateSet`, `characterSet`, `commandSet`, `commentSet`, `elementSet`, `excludeSet`, `nameSet`, `numberSet`, `singleQuote`. Those are fields of the **PLG** class (in `Parse/PLG.twk`), not PLGparse. The mis-placement causes tok to emit those fields inside the PLGparse class body in `PLGparse.h`, cross-contaminating the two classes' member lists. Discovered during Brief 3 execution. Move them to a separate `external PLG { ... }` block (and verify no consumer relies on the contamination), or remove them outright if they're already declared in PLG.twk's class def. Audit only — not a Brief 3 dependency. Separate from the broader hand-maintained-mirror trap entry in bible.
 
 ---
 

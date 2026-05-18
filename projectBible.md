@@ -238,6 +238,7 @@ When a grammar rule contains inline `( A | B )` syntax, PLG decomposes it into a
 9. **No include search paths** — all includes must be absolute paths.
 10. **TAWK iteration trap** — `for` loop already advances. Never add manual advance inside body.
 11. **TAWK Directives** — debug injection without source pollution. `tawk filename directiveFile`. Directive files exist for PLG, Incant, TAWK. Use BEFORE adding print statements to source.
+12. **Hand-maintained external-mirror trap** — when a `.twk` file defines a class, tok reads field info for CROSS-FILE references from `external ClassName { ... }` blocks in shared include files (e.g. `support/Include/PLGrevision`'s `external PLGparse { ... }`), NOT from the regenerated `.h`. Adding a field to the class definition without also updating the external block silently breaks tok's translation in *consumer* `.twk` files: references like `state.newField` emit `state-> ERROR FieldBody: could not find newField` in the generated `.C`, often without halting tok and sometimes dropping whole function bodies. Methods are picked up from `.h` (so method adds usually work), but field adds need the external block too. The .h being correct makes the mismatch confusing — the file LOOKS right because it compiles in isolation, but consumer tok runs fail. Workaround: every class field addition needs a paired entry in the relevant `external ClassName { ... }` block. Long-term fix candidate: have tok auto-derive externals from class definitions (see Housekeeping).
 
 ---
 
