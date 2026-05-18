@@ -229,6 +229,8 @@ Grammar under test is in `setRules.twk` — hand-written bootstrap for `Max` and
 **Clod (Claude Code)** — execution, file changes, GitHub.
 
 **Standing permissions**: Change any code in source directories without asking.
-Ask before GitHub pushes.
+Trivial repo operations (commits, pushes for routine work) happen at Clod's
+discretion; flag non-trivial or uncertain situations before acting. Same
+commit-and-push freedom — no verification round-trip on routine work.
 
 See `projectBible.md` for the full glossary, HWF protocol, and ecosystem context.
