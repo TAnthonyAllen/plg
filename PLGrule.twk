@@ -24,6 +24,7 @@ boolean
     doNotGuard
     debug
     guardComputed
+    succeeded
     ;
 
 PLGitem match(PLGparse state);
@@ -95,31 +96,20 @@ DoubleLink  link = null;
 Alternative alt;
 PLGitem     result;
 int         altNum = 0;
-int         altCount = alternatives.length();
 String      saved;
     // Auto-revert at end of any diverted buffer so include-resolved
     // content flows seamlessly back to the outer parse stream.
-    while state.cursor >= state.eof && state.inputStack && state.inputStack.length
-        state.revertInput();
-    if guardSet && state.cursor < state.eof && !guardSet.contains(*state.cursor)
-        {
-        char ch = *state.cursor;
-        if debugRulePLG || debug  cout "PLGrule: " name " GUARD-REJECTED at offset " (state.cursor - state.buffer.start) " char='" ch "' guard=[" guardSet.toString() "]":;
-        return null;
-        }
+    while cursor >= eof && inputStack && inputStack.length
+        revertInput();
+    if guardSet && cursor < eof && !guardSet.contains(*cursor)  {
+        return null; }
 parseAttempt:
-    if debugRulePLG || debug  cout "PLGrule: " name " (" altCount " alts) at offset " (state.cursor - state.buffer.start):;
     for link = alternatives.first {
         alt = link.value;
         altNum++;
-        saved = state.cursor;
-        if debugRulePLG || debug  cout "  " name " try alt " altNum "/" altCount " at offset " (saved - state.buffer.start):;
-        if alt.match(state, result)
-            {
-matchSucceeded:
-            if state.cursor > saved
-                {
-                if debugRulePLG || debug  cout "  " name " alt " altNum " SUCCEEDED -> offset " (state.cursor - state.buffer.start):;
+        saved = cursor;
+        if alt.match(state, result) {
+            if cursor > saved {
                 if immediate  immediate(state, result);
                 if defer
                     {
@@ -136,25 +126,11 @@ matchSucceeded:
                     result.deferred += result;
                     if childEntries
                         for dlink = childEntries.first
-                            result.deferred += dlink.value;
-                    }
-matched:
-                return result;
-                }
-            if debugRulePLG || debug  cout "  " name " alt " altNum " ZERO-ADVANCE — treating as fail":;
-            // Restore cursor — Alternative.match may have advanced
-            // through partial matches before its required element failed.
-            // Without this, the next alt starts at the wrong position.
-            state.cursor = saved;
-            }
-        else
-            {
-            if debugRulePLG || debug  cout "  " name " alt " altNum " FAILED at offset " (state.cursor - state.buffer.start) " (was " (saved - state.buffer.start) ")":;
-            state.cursor = saved;
-            }
-        }
-    if debugRulePLG || debug  cout "  " name " ALL " altCount " alts failed":;
-parseReturn:
+                            result.deferred += dlink.value; }
+matchSucceeded:
+                return result; }}
+        cursor = saved; }
+matchFailed:
     return null;
 }
 

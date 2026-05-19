@@ -1,5 +1,6 @@
 #include <string.h>
 #include <stdio.h>
+#include "StringRoutines.h"
 #include "DoubleLinkList.h"
 #include "Alternative.h"
 #include "DoubleLink.h"
@@ -30,6 +31,7 @@ PLGrule::PLGrule(char *s)
 	doNotGuard = 0;
 	debug = 0;
 	guardComputed = 0;
+	succeeded = 0;
 	alternatives = new DoubleLinkList();
 	name = s;
 }
@@ -107,9 +109,11 @@ Alternative 	*test = 0;
 	if ( guardSet )
 		guardSet->generate(output);
 	alternatives->resetIterator();
+	::printf("alternatives count: %d\n",alternatives->length);
 	while ( test = (Alternative*)alternatives->next() )
 		{
 		test->generate(output);
+		::printf("generating alternative\n");
 		if ( test->guardSet )
 			{
 			test->guardSet->generate(output);
@@ -136,7 +140,6 @@ DoubleLink 		*link = 0;
 Alternative 	*alt = 0;
 PLGitem 		*result = 0;
 int 			altNum = 0;
-int 			altCount = alternatives->length;
 char 			*saved = 0;
 	// Auto-revert at end of any diverted buffer so include-resolved
 	// content flows seamlessly back to the outer parse stream.
@@ -144,28 +147,33 @@ char 			*saved = 0;
 		state->revertInput();
 	if ( guardSet && state->cursor < state->eof && !guardSet->contains(*state->cursor) )
 		{
-		char 	ch = *state->cursor;
 		if ( state->debugRulePLG || debug )
-			::printf("PLGrule: %s GUARD-REJECTED at offset %lu char='%c' guard=[%s]\n",name,(state->cursor - state->buffer->start),ch,guardSet->toString());
+			{
+			::printf("PLGrule: %s GUARD-REJECTED at offset %s\n",name,::headToCount(state->cursor,10));
+			;
+			guardSet->toString();
+			}
 		return 0;
 		}
 parseAttempt:
 	if ( state->debugRulePLG || debug )
-		::printf("PLGrule: %s (%d alts) at offset %lu\n",name,altCount,(state->cursor - state->buffer->start));
+		{
+		if ( StringRoutines::debugIndent < 0 )
+			StringRoutines::debugIndent = 0;
+		::indent(StringRoutines::debugIndent,"  ",0);
+		::printf("Match %s on text: %s\n",name,::headToCount(state->cursor,20));
+		StringRoutines::debugIndent++;
+		succeeded = 0;
+		}
 	for ( link = alternatives->first; link; link = link->next )
 		{
 		alt = (Alternative*)link->value;
 		altNum++;
 		saved = state->cursor;
-		if ( state->debugRulePLG || debug )
-			::printf("  %s try alt %d/%d at offset %lu\n",name,altNum,altCount,(saved - state->buffer->start));
 		if ( alt->match(state,result) )
 			{
-matchSucceeded:
 			if ( state->cursor > saved )
 				{
-				if ( state->debugRulePLG || debug )
-					::printf("  %s alt %d SUCCEEDED -> offset %lu\n",name,altNum,(state->cursor - state->buffer->start));
 				if ( immediate )
 					immediate(state,result);
 				if ( defer )
@@ -185,25 +193,30 @@ matchSucceeded:
 						for ( dlink = childEntries->first; dlink; dlink = dlink->next )
 							result->deferred->add(dlink->value);
 					}
-matched:
+matchSucceeded:
+				if ( state->debugRulePLG || debug )
+					{
+					StringRoutines::debugIndent--;
+					::indent(StringRoutines::debugIndent,"  ",0);
+					::printf("%s succeeded at: %s\n",name,::headToCount(state->cursor,10));
+					succeeded = 1;
+					}
 				return result;
 				}
-			if ( state->debugRulePLG || debug )
-				::printf("  %s alt %d ZERO-ADVANCE — treating as fail\n",name,altNum);
-			// Restore cursor — Alternative.match may have advanced
-			// through partial matches before its required element failed.
-			// Without this, the next alt starts at the wrong position.
-			state->cursor = saved;
 			}
-		else {
-			if ( state->debugRulePLG || debug )
-				::printf("  %s alt %d FAILED at offset %lu (was %lu)\n",name,altNum,(state->cursor - state->buffer->start),(saved - state->buffer->start));
-			state->cursor = saved;
-			}
+		state->cursor = saved;
 		}
+matchFailed:
 	if ( state->debugRulePLG || debug )
-		::printf("  %s ALL %d alts failed\n",name,altCount);
-parseReturn:
+		{
+		StringRoutines::debugIndent--;
+		::indent(StringRoutines::debugIndent,"  ",0);
+		if ( succeeded )
+			::printf("%s not failure",name);
+		else	::printf("%s match failed\n",name);
+		::printf(" at: %s\n",::headToCount(state->cursor,10));
+		succeeded = 0;
+		}
 	return 0;
 }
 

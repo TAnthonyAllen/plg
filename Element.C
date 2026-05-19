@@ -258,8 +258,6 @@ PLGitem *Element::match(PLGparse *state)
 {
 char 		*savedCursor = 0;
 PLGitem 	*result = 0;
-	if ( state->debugRulePLG )
-		::printf("Element match\n");
 	//trace?.enterElement(this, state);
 	// Skip-set handling — done once, per element, before the kind-specific match
 	if ( !noSkip )

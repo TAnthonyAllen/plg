@@ -1,5 +1,6 @@
 #include <string.h>
 #include <stdio.h>
+#include "StringRoutines.h"
 #include "DoubleLinkList.h"
 #include "PLGrule.h"
 #include "DoubleLink.h"
@@ -46,11 +47,10 @@ DoubleLink 	*dlink = 0;
 Element 	*elem = 0;
 int 		result = 1;
 int 		elemIdx = 0;
-	if ( state->debugRulePLG )
-		::printf("Alternative match elements: %d\n",elements->length);
 	collected->itemStart = state->cursor;
 	for ( link = elements->first; link; link = link->next )
 		{
+		char 	*what = "?";
 		elem = (Element*)link->value;
 		elemIdx++;
 		// Verbose per-element trace: index, kind, target, cursor before.
@@ -58,20 +58,12 @@ int 		elemIdx = 0;
 		// tells us which sub-match was attempted at which offset.
 		// NOTE: kRuleRef etc. are TEST macros not values (CLAUDE.md TAWK
 		// quirks) — use numeric kind values for assignment/comparison.
-{
-		char 	*what = "?";
 		if ( elem->kind == 6 && elem->ruleRef )
 			what = elem->ruleRef->name;
 		else
 		if ( elem->kind == 1 && elem->litText )
 			what = elem->litText;
-		if ( state->debugRulePLG )
-			::printf("    elem[%d] kind=%u target='%s' min=%d label='%s' cursor-offset=%lu\n",elemIdx,elem->kind,what,elem->minimum,elem->label,(state->cursor - state->buffer->start));
-		}
-		char *beforeCursor = state->cursor;
 		PLGitem *item = elem->match(state);
-		if ( state->debugRulePLG )
-			::printf("    elem[%d] result=%s cursor-now=%lu consumed=%lu\n",elemIdx,(item ? "MATCH" : "null"),(state->cursor - state->buffer->start),(state->cursor - beforeCursor));
 		if ( !item )
 			{
 			// Banged elements (`!`, min=-1) ARE required even though their
@@ -81,11 +73,31 @@ int 		elemIdx = 0;
 			if ( elem->minimum > 0 || elem->banged )
 				{
 				result = 0;
+elementFail:
+				if ( state->debugRulePLG )
+					{
+					::indent(StringRoutines::debugIndent,"  ",0);
+					::printf("elem[%d] failed",elemIdx);
+					if ( elem->label )
+						::printf(" label: %s",elem->label);
+					else	::printf(" w/no label");
+					::printf(" at: %s\n",::headToCount(state->cursor,10));
+					}
 				break;
 				}
 			// optional element didn't match — keep going, cursor unchanged
 			}
 		else {
+elementSuccess:
+			if ( state->debugRulePLG )
+				{
+				::indent(StringRoutines::debugIndent,"  ",0);
+				::printf("elem[%d] succeeded",elemIdx);
+				if ( item->itemLabel )
+					::printf(" label: %s",item->itemLabel);
+				else	::printf(" w/no label");
+				::printf(" at: %s\n",::headToCount(state->cursor,10));
+				}
 			if ( item->itemLabel )
 				{
 				if ( !collected->children )

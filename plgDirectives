@@ -1,0 +1,140 @@
+
+/*******************************************************************************
+	Global
+*******************************************************************************/
+#globals
+BlockplgAct helperName active
+    cout "BlockplgAct: creating helper '" helperName "' under parent '" parentName "'":;
+#;
+BlockplgAct ending active
+    cout "BlockplgAct: added kRuleRef -> '" helperName "' on parent '" parentName "' label='" elem.label "' noSkip=" elem.noSkip:;
+#;
+ElementTypeplgAct "if maximum" before active
+    cout "ElementTypeplgAct: explicit min=" elem.minimum " max=" elem.maximum:;
+#;
+ElementTypeplgAct ending active
+    cout "ElementTypeplgAct: opt='" opt "' min=" elem.minimum " max=" elem.maximum:;
+#;
+ForwardDeclplgNow getRule before active
+    cout "ForwardDeclplgNow: pre-registering '" first "'":;
+#;
+ForwardDeclplgNow name active
+    cout "ForwardDeclplgNow: pre-registering '" name "'":;
+#;
+IncludeplgNow content before active
+    cout "IncludeplgNow: resolving '" filename "' -> '" fullPath "'":;
+#;
+IncludeplgNow revertInput before active
+    cout "IncludeplgNow: '" filename "' parsed " iters " Body items":;
+#;
+SetVariableplgNow setTable active
+    cout "SetVariableplgNow: Set '" itemName "' registered":;
+#;
+SetVariableplgNow keyWordTable active
+    cout "SetVariableplgNow: KeyWord '" itemName "' registered":;
+#;
+SetVariableplgNow return before active
+    cout "SetVariableplgNow: keyword '" keyword "' (Variable/Rules/Condition/Debug — port from BeforeRefactor when needed)":;
+#;
+RuleplgNow name active
+    cout "RuleplgNow: matched rule '" name "'":;
+#;
+RuleOptionplgAct ending active
+    cout "RuleOptionplgAct fired: new alt in rule '" state.currentRule.name "'":;
+#;
+AlternativeplgAct ending active
+	cout "AlternativeplgAct fired: pendingLabel " pendingLabel "pendingNoSkip " pendingNoSkip:;
+#;
+ElementplgAct ending active
+    cout "ElementplgAct fired: kind=" elem.kind " text='" text "' label='" elem.label "' added to alt in rule '" state.currentRule.name "'":;
+#;
+
+/*******************************************************************************
+	PLG
+*******************************************************************************/
+#PLG
+process "if result" active
+    cout "=== fresh rules table after parse (callback-populated) ===":;
+    parser.rules.listKeys();
+    cout "=== fresh setTable after parse ===":;
+    parser.setTable.listKeys();
+    cout "=== end fresh tables ===":;
+    dumpRules(parser.rules);
+#;
+
+/*******************************************************************************
+	PLGparse
+*******************************************************************************/
+#PLGparse
+parse return before active
+    debugRulePLG = true;
+#;
+
+/*******************************************************************************
+	PLGrule
+*******************************************************************************/
+#PLGrule
+generate alternatives active
+    cout "alternatives count: " alternatives.length():;
+#;
+generate "test.generate" active
+    cout "generating alternative":;
+#;
+/*******************************************************************************
+	parse debugging
+        if tag eq "MemberS"   doNothing = false;
+*******************************************************************************/
+match return before active
+    if debugRulePLG || debug {
+        cout "PLGrule: " name " GUARD-REJECTED at offset " headToCount(cursor,10):;;
+        guardSet.toString(); }
+#;
+match parseAttempt active
+    if debugRulePLG || debug {
+        if debugIndent < 0 debugIndent = 0;
+        indent("  ");
+        cout "Match",name,"on text: " headToCount(cursor,20):;
+        debugIndent++;
+        succeeded = false; }
+#;
+match matchSucceeded active
+    if debugRulePLG || debug {
+        debugIndent--;
+        indent("  ");
+        cout name,"succeeded at: " headToCount(cursor,10):;
+        succeeded = true; }
+#;
+match matchFailed active
+    if debugRulePLG || debug {
+        debugIndent--;
+        indent("  ");
+        if succeeded cout name,"not failure";
+        else    cout name,"match failed":;
+        cout ,"at: " headToCount(cursor,10):;
+        succeeded = false; }
+#;
+setGuard endSetGuard before ctive
+    if guardSet cout guardSet;
+#;
+
+/*******************************************************************************
+	Alternative
+*******************************************************************************/
+#Alternative
+match elementFail active
+    if debugRulePLG {
+        indent("  ");
+        cout "elem[" elemIdx "] failed";
+        if elem.label  cout ,"label:",elem.label;
+        else           cout " w/no label";
+        cout ,"at: " headToCount(cursor,10):; }
+#;
+match elementSuccess active
+    if debugRulePLG {
+        indent("  ");
+        cout "elem[" elemIdx "] succeeded";
+        if item.label  cout ,"label:",item.label;
+        else           cout " w/no label";
+        cout ,"at: " headToCount(cursor,10):; }
+#;
+

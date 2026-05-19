@@ -44,9 +44,9 @@ DoubleLink  dlink = null;
 Element     elem;
 int         result = true;
 int         elemIdx = 0;
-if debugRulePLG  cout "Alternative match elements: " elements.length():;
-    collected.start = state.cursor;
+    collected.start = cursor;
     for link = elements.first {
+        String  what = "?";
         elem = link.value;
         elemIdx++;
         // Verbose per-element trace: index, kind, target, cursor before.
@@ -54,15 +54,9 @@ if debugRulePLG  cout "Alternative match elements: " elements.length():;
         // tells us which sub-match was attempted at which offset.
         // NOTE: kRuleRef etc. are TEST macros not values (CLAUDE.md TAWK
         // quirks) — use numeric kind values for assignment/comparison.
-        {
-        String      what = "?";
         if elem.kind == 6 && elem.ruleRef   what = elem.ruleRef.name;
         else if elem.kind == 1 && elem.litText  what = elem.litText;
-        if debugRulePLG  cout "    elem[" elemIdx "] kind=" elem.kind " target='" what "' min=" elem.minimum " label='" elem.label "' cursor-offset=" (state.cursor - state.buffer.start):;
-        }
-        String beforeCursor = state.cursor;
         PLGitem item = elem.match(state);
-        if debugRulePLG  cout "    elem[" elemIdx "] result=" (item ? "MATCH" : "null") " cursor-now=" (state.cursor - state.buffer.start) " consumed=" (state.cursor - beforeCursor):;
         if !item
             {
             // Banged elements (`!`, min=-1) ARE required even though their
@@ -72,12 +66,14 @@ if debugRulePLG  cout "Alternative match elements: " elements.length():;
             if elem.minimum > 0 || elem.banged
                 {
                 result = false;
+elementFail:
                 break;
                 }
             // optional element didn't match — keep going, cursor unchanged
             }
         else
             {
+elementSuccess:
             if item.label
                 {
                 if !collected.children  collected.children = new;
@@ -95,7 +91,7 @@ if debugRulePLG  cout "Alternative match elements: " elements.length():;
             }
         }
     if result {
-        collected.length = state.cursor - collected.start;
+        collected.length = cursor - collected.start;
         out = collected; }
     return result;
 }

@@ -160,7 +160,6 @@ PLGitem match(PLGparse state)
 {
 String      savedCursor;
 PLGitem     result;
-if debugRulePLG  cout "Element match":;
     //trace?.enterElement(this, state);
 
     // Skip-set handling — done once, per element, before the kind-specific match
