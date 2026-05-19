@@ -149,6 +149,7 @@ char 			*saved = 0;
 			::printf("PLGrule: %s GUARD-REJECTED at offset %lu char='%c' guard=[%s]\n",name,(state->cursor - state->buffer->start),ch,guardSet->toString());
 		return 0;
 		}
+parseAttempt:
 	if ( state->debugRulePLG || debug )
 		::printf("PLGrule: %s (%d alts) at offset %lu\n",name,altCount,(state->cursor - state->buffer->start));
 	for ( link = alternatives->first; link; link = link->next )
@@ -160,6 +161,7 @@ char 			*saved = 0;
 			::printf("  %s try alt %d/%d at offset %lu\n",name,altNum,altCount,(saved - state->buffer->start));
 		if ( alt->match(state,result) )
 			{
+matchSucceeded:
 			if ( state->cursor > saved )
 				{
 				if ( state->debugRulePLG || debug )
@@ -183,6 +185,7 @@ char 			*saved = 0;
 						for ( dlink = childEntries->first; dlink; dlink = dlink->next )
 							result->deferred->add(dlink->value);
 					}
+matched:
 				return result;
 				}
 			if ( state->debugRulePLG || debug )
@@ -200,6 +203,7 @@ char 			*saved = 0;
 		}
 	if ( state->debugRulePLG || debug )
 		::printf("  %s ALL %d alts failed\n",name,altCount);
+parseReturn:
 	return 0;
 }
 
