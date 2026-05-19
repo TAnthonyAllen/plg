@@ -29,6 +29,7 @@ struct
 	unsigned int doNotGuard:1;
 	unsigned int debug:1;
 	unsigned int guardComputed:1;
+	unsigned int succeeded:1;
 	};
 PLGrule(char *s);
 void addAlternative(Alternative *alt);

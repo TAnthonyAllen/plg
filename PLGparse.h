@@ -61,7 +61,7 @@ PLGparse();
 PLGparse(char *input);
 void addTest(int kind, char *data, char *label, int min, int max, char *skipSet);
 void divertInput(char *s);
-void generateRules(Buffer *output);
+void generateRules(Buffer *output, char *baseName);
 PLGrule *getRule(char *name);
 PLGset *getSet(char *specs);
 PLGset *getSet(char *name, char *specs);
