@@ -119,6 +119,9 @@ Generators are incant's parse-tree-walking machinery: they traverse GroupItems a
 9. **Two-table pattern** — process() swaps rules/setTable to fresh BaseHashes before parse. Callbacks build into fresh tables.
 10. **TAWK error propagation** — unresolved references embedded as errors in generated C++. Feature — errors appear in context.
 11. **Library/program separation** — PLGparse stays a library citizen; PLGmain owns `main()`. Anyone linking against PLGparse picks up no unexpected entry point.
+12. **Tok one-initializer-per-scope constraint** — tok currently supports at most one `initializer` external per scope. Consequence: initializer externals (like `external PLGitem { initializer getLabel; }`) live with their consumers, not in widely-included shared files. Example: incant's `getLabelGroup` initializer lives at the top of GroupRules.twk (where incant rule actions live); plg's `getLabel` initializer lives at the top of each .act file (where plg rule actions live). Widely-included files (globals, frame) cannot carry initializer declarations because each consumer would inherit the wrong initializer. See Housekeeping for the future tok feature that would relax this.
+13. **Hook sites** — a named position inside a method, written as a tok-recognizable goto label, that tok directives can address by name to inject debug or behavior code. Format/behavior lives in directives; the method file stays clean. PLGrule::match has four hook sites (`parseAttempt`, `matchSucceeded`, `matched`, `parseReturn`) wired this way. The pattern works at any method where format/behavior wants to be tunable without re-tokking the source.
+14. **Mirror principle** — when plg and incant share an idea, mirror the *pattern* freely; carry project-specific suffixes on any name visible at global or shared scope. File-local and method-local names can match across projects without cost. Examples: hook-site names (`parseAttempt`, `matched`, etc.) and helper functions (`indent`, `debugIndent`) mirror incant freely; global flags (`debugRulePLG` vs incant's `debugAllRules`) carry the `-PLG` suffix for cross-binary namespace safety; the `debug` field on PLGrule (vs `debugged` in incant) is a name divergence the principle accepts.
 
 ### The Match Chain
 ```
@@ -165,12 +168,12 @@ Grammar source in `Parse/Grammar/` (post-flatten path):
 
 **Quote character gotcha**: Matching `'` or `"` inside PLG grammar. Options: (1) use the other delimiter — `"'"` matches single-quote; (2) set notation `[']` — always unambiguous. The `[']` approach preferred when both quote types need matching in same grammar.
 
-**Action blocks design** (approved, TODO):
+**Action blocks design** (considered, parked):
 ```
 Action actionName { TAWK body } ;
 ```
-Generates: `void actionName(PLGparse *state, PLGitem *item) { body }`
-Goal: grammar files self-contained, no separate .act/.rtn files needed.
+Would generate: `void actionName(PLGparse *state, PLGitem *item) { body }`.
+Inline action-block syntax was approved as a future plg feature in earlier discussion, but Session 9 (2026-05-18) chose a different path: .act files preserved and repurposed as splice-verbatim content (same pipeline as .rtn). The .act-as-splice model means plg doesn't need new grammar work for action definitions — actions live in .act files in tok-style, plg concatenates them into generated output. Inline action blocks remain available as a future option if .act-as-splice ever proves awkward, but they're off the active design surface.
 
 ---
 
@@ -238,21 +241,6 @@ When a grammar rule contains inline `( A | B )` syntax, PLG decomposes it into a
 9. **No include search paths** — all includes must be absolute paths.
 10. **TAWK iteration trap** — `for` loop already advances. Never add manual advance inside body.
 11. **TAWK Directives** — debug injection without source pollution. `tawk filename directiveFile`. Directive files exist for PLG, Incant, TAWK. Use BEFORE adding print statements to source.
-12. **Hand-maintained external-mirror trap** — when a `.twk` file defines a class, tok reads field info for CROSS-FILE references from `external ClassName { ... }` blocks in shared include files (e.g. `support/Include/PLGrevision`'s `external PLGparse { ... }`), NOT from the regenerated `.h`. Adding a field to the class def without also updating the external block surfaces loudly at the *consumer parse*: references like `state.newField` emit `state-> ERROR FieldBody: could not find newField` in the generated `.C`, and tok can drop whole function bodies as a downstream effect of the broken translation. Not silent — but the failure point is downstream of the source, so diagnosis requires a hop from "consumer parse complained" to "the external block back in the shared include is stale." Methods are picked up from `.h` (so method adds usually work); field adds need the external block too. Workaround: every class field addition needs a paired entry in the relevant `external ClassName { ... }` block. Long-term QoL: tok staleness detection at the source (see Housekeeping).
-
----
-
-## Housekeeping
-
-*Long-term QoL items not blocking current work — pinned here so they don't get lost.*
-
-**Staleness detection for `external ClassName { ... }` blocks.** Today's pattern: every class field/method addition to a `.twk` requires a paired entry in the matching `external ClassName { ... }` block in the shared include (e.g. `support/Include/PLGrevision`). The mirror is hand-maintained. Tok DOES catch staleness loudly — when a consumer parses a `.twk` that references the missing field, it emits `ERROR FieldBody: could not find ...` in the generated `.C`, so this is not a silent-failure trap. But the failure surfaces at the consumer parse, downstream of where the divergence actually lives. Quality-of-life improvement: have tok flag external-block staleness AT THE SOURCE — either during the class `.twk` parse (when the class def gains a field not declared in any visible external for that class) or when the external block itself is loaded against the current class def in scope. Either point catches the drift before any consumer tries to use the field and gets the downstream error.
-
-**Not auto-generation.** Externals are deliberately selective: an `external` block exposes only what consumers need to see, not the whole class surface. PLGparse's `parseActDeclarations`, for example, is in the class def but not currently in `external PLGparse { ... }` — and that's fine; no consumer references it. Auto-generation would over-disclose and break the selective-disclosure pattern. Staleness detection respects that — it flags only when something the external *claims to declare* drifts from the class def, not when the class has fields the external chose to omit.
-
-Cross-references: TAWK Known Issues #12 (the user-visible trap as it currently surfaces), TODO Housekeeping entry for the PLGrevision PLG/PLGparse field contamination audit (a concrete instance surfaced during Brief 3).
-
-**Real instance**: Brief 2 (2026-05-18) added `PLGitem.getLabel` to the class definition without updating PLGrevision's external mirror. The omission was silent until Brief 7's tok parse two briefs later — Brief 7's `InitializerItem` expansion of the labels-as-locals shorthand triggered the cross-file lookup that finally surfaced the gap. Staleness detection at the source would have caught this at Brief 2's `PLGitem.twk` parse, not at the downstream consumer.
 
 ---
 
@@ -393,15 +381,26 @@ See HWF.md for active session content. Bible carries the index so resurrection-r
 
 ## Working Relationship
 
-**Anthony (Haps)** — architect, domain expert, final authority.
-**Clay** (Claude at claude.ai) — design, reasoning, architecture, HWF navigation.
-**Clod** (Claude Code) — execution, file edits, GitHub, build verification.
+**Anthony (Haps)** — architect, domain expert, final authority. Brings the living architecture, the in-the-moment instinct, the hard-won experience. *Does not read .md files* — preparation for the day is whatever lives in his head plus stickies plus the chat he opens with. The cha cha is built around that asymmetry.
+**Clay** (Claude at claude.ai) — design, reasoning, architecture, HWF navigation. Brings the .md-archival memory: prior decisions, pinned constraints, working patterns, lessons learned. When Tony's instinct conflicts with the .md record, Clay surfaces the conflict gently — neither dominates; the conflict is signal.
+**Clod** (Claude Code) — execution, file edits, GitHub, build verification. Brings execution rigor and findings discipline. The findings-not-failures pattern depends on Clay matching the tone from the design side.
 
-**Standing permissions**: Clod changes any code in source directories without asking. Ask before GitHub pushes. No option menus — do the needful.
+**Three seats, three roles, one cha cha.** None redundant. None subordinate. The morning woodshed has two seats actively present; Clod's contribution lands when he wakes up but the *work he'll do* shapes the design even before then.
+
+**Standing permissions**: Relaxed repo-maintenance protocol — Clod commits trivial repo ops at his discretion, flags non-trivial or uncertain cases. No option menus — do the needful.
 **Clod protocols**: "got it" when message lands. "ready" when done. PLG:/Incant: labels when parallel tracks.
-**End-of-session ritual**: Clay drafts bible + TODO, Clod pushes to all 4 repos. Before every Goodnight Gracie.
 
-**Resurrection-reader standard**: All .md files in this project (bible, HWF.md, TODO, CLAUDE.md, jit.md, etc.) must make sense to fresh-Claude reading them cold tomorrow with no memory of today. The .md files exist to make resurrection work — reading them is how Claude/Clod start each day, and that reading is how project continuity persists. See HWF.md preamble for the full statement. This is the primary writing standard for project documentation.
+**The woodshed pattern (morning planning rhythm)**: For execution-flavored sessions, the design conversation happens *before* Clod enters the loop. Clay drafts a working-level plan; Tony takes it "out to the woodshed" for an attitude adjustment — torques it down, brings hard-won fluency to bear, surfaces calls Clay couldn't make alone. The output is a working-level plan with brief sequence + dependencies + victory criterion. Clod stays asleep until the woodshed work is done. The cost of design-during-execution is high (Clod waits, context dilutes, briefs drift); the cost of design-before-execution is your morning attention plus a stretch of Clay-Tony cha cha. The morning attention is repaid many times over. Naming the move "the woodshed" captures the right tone: discipline, soft assumptions tested, plan made tight.
+
+**The woodshed pattern doesn't fit every session.** For exploration-flavored sessions (research, recon, "is this even possible" investigations), the design *is* the execution — there's no plan to torque down before the question is well-posed. The wake-up question to ask: is this an execution-flavored or exploration-flavored session today? Then the corresponding opening move.
+
+**Absorb-don't-react (standing affordance)**: Tony can signal "more coming" mid-thought and Clay holds. Defaults to listening rather than reacting. Stops Clay from chasing squirrels before the full picture lands.
+
+**Findings, not failures**: Clod's execution-side discipline of surfacing observations rather than treating them as recovery from setbacks. Clay matches the tone from the design side — when Clod surfaces a finding, Clay treats it as the system working correctly, not as a problem to recover from. The discipline collapses if either side breaks it; today it holds because both sides hold it.
+
+**End-of-session ritual**: Clay drafts bible + TODO, Clod pushes to all 4 repos. Before every Goodnight Gracie. Cross-doc consistency check is part of the draft pass: bible index ↔ HWF.md trims ↔ TODO session references ↔ Priority Plan phases all agree, or discrepancies are surfaced and resolved before sign-off (resurrection-reader sanity check, lightweight version). Tony optionally leads on a "how did the cha cha work today" beat as the session closes.
+
+**Resurrection-reader standard**: All .md files in this project (bible, HWF.md, TODO, CLAUDE.md, jit.md, etc.) must make sense to fresh-Claude reading them cold tomorrow with no memory of today. The .md files exist to make resurrection work — *Claude* reads them as the day's starting move, not Tony. That asymmetry shapes how the files are written: for Claude/Clod's resurrection, not for Tony's review. See HWF.md preamble for the full statement.
 
 ---
 

@@ -46,7 +46,7 @@ Items left open in Session 9 and pinned during working-level planning:
 
 **Verification**: run plg against Testing.g. setTable diagnostic output (already in process()) should show one entry — `excludeSet` with spec `A-Za-z:.|`.
 
-*Runtime verification deferred*: the 'S' branch fix landed and is visually confirmed in PLG.C (commit 19f9f68). Runtime verification was blocked by an unrelated parse failure in the Start rule (see Brief 1.5). Runtime confirmation lands once Brief 1.5 unblocks plg parsing Testing.g end-to-end.
+*Status*: ✅ **landed and runtime verified** (commit 19f9f68 for the fix, paired with the Testing.g fixture fix in af39a11). Testing.twk's setRules() contains `excludeSet = getSet("excludeSet", ".:ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz|");` — the expanded form of `A-Za-z:.|` (PLGset's constructor resolves ranges into literal characters at registration time; same set, different surface).
 
 **Scope**: 'S' branch only. Other branches (V/R/K/C/D) remain as-is — out of scope for unblocking Testing.g.
 
@@ -54,35 +54,21 @@ Items left open in Session 9 and pinned during working-level planning:
 
 ---
 
-### Brief 1.5 — Start rule fails on optional Header
+### Brief 1.5 — Testing.g fixture missing terminating semicolon
 
-**File**: most likely `PLG.twk` (Start rule definition in setRules), or `PLGrule.twk` / `Alternative.twk` if the regression lives in optional-element handling in the match path. Diagnosis required.
+**File**: `Tests/Testing.g`.
 
-**Problem**: surfaced during Brief 1 execution. Running plg against Testing.g produces:
+**Problem**: surfaced during Brief 1 execution. The initial trace appeared to show optional-element handling failing on Header. Closer trace inspection (Clod's second pass) revealed optional-element handling was working correctly — Header returned itemEmpty and the alt continued. The actual failure was downstream: Body matched SetVariable's Set alternative, captured `name=excludeSet` and `set=[A-Za-z:.|]`, then failed because the meta-grammar's SetVariable.alt4 requires a terminating `;` and Testing.g's Set declaration was missing it.
 
-    PLGrule: Start (2 alts) at offset 0
-      Start try alt 1/2 at offset 0
-        elem[1] kind=6 target='Header' min=0 label='' cursor-offset=0
-    PLGrule: Header (2 alts) at offset 0
-      Header try alt 1/2 — Include GUARD-REJECTED at offset 0 char='%' (guard wants 'i')
-      Header try alt 2/2 — Comment alt — also fails
-      Header all 2 alts failed
-      Start alt 1 FAILED at offset 0
+**Fix**: add `;` to the end of `Set excludeSet [A-Za-z:.|]` in Testing.g. One character.
 
-Header has min=0 (optional). Header failing should not fail Start.alt1 — the optional element is skipped and parse advances. Instead, Start.alt1 dies the moment Header fails. The trace confirms the parser sees min=0; something in optional-element handling treats Header as required.
+**Verification**: run plg against Testing.g. Expected: parse advances to SetVariable.alt4 success, SetVariableplgNow fires, setTable contains `excludeSet`. Testing.twk's setRules() contains the getSet call.
 
-**Triage candidates**:
+*Status*: ✅ **closed** (commit af39a11). Testing.g + `;` added; Testing.g and Testing.act force-added past Tests/ gitignore to make Session 9 spec-referenced fixtures available to fresh-Clod.
 
-1. **PLGrule::match or Alternative::match optional-element handling** — most likely. A `min=0` element failure should advance with zero matches, not fail the surrounding alternative.
-2. **Start rule definition in setRules** — less likely (trace confirms min=0 is what the parser sees), but worth ruling out by inspecting the setRules code for the Start rule.
+**Lesson surfaced**: first-pass parse traces can mislead about which level failed. The shape "inner rule failed, then outer alt failed" doesn't establish causation — the outer alt may be failing for its own downstream reason. Consume/cursor data on each element resolves the ambiguity; without it, the hypothesis can chase a non-bug. Fold into bible Lessons at Session 9 graduation.
 
-**Fix**: depends on diagnosis. Likely a one-method, one-branch change in the match path.
-
-**Verification**: run plg against Testing.g. Expected: Start rule succeeds, parse advances through `%%`, reaches the `Set excludeSet [A-Za-z:.|]` line, SetVariableplgNow fires, setTable contains `excludeSet` with spec `A-Za-z:.|`. Testing.twk's setRules() contains `excludeSet = getSet("excludeSet","A-Za-z:.|");`. Brief 1's deferred runtime verification closes alongside.
-
-**Scope**: surgical fix of the optional-element handling, or rule-definition correction. Not a broader refactor of the match path. If the bug turns out to be in a third location, surface as a finding and stop for Tony's call before expanding scope.
-
-**Dependencies**: none. Blocks runtime verification of Brief 1 and all subsequent briefs in both tracks.
+**Dependencies**: none. Blocked runtime verification of Brief 1; now closed.
 
 ---
 
@@ -93,6 +79,10 @@ Header has min=0 (optional). Header failing should not fail Start.alt1 — the o
 **Addition**: a `getLabel(String name)` accessor method. Body is `return children[name];` — a hash lookup returning null on absent key.
 
 **Verification**: compile cleanly. No behavior change to existing parse paths.
+
+*Status*: ✅ **landed and verified** (commit 9fc46aa). Build clean; Testing.g still parses 500 chars, Testing.twk regen unchanged, no regression.
+
+**Implementation note**: tok auto-casts on typed assignment LHS but not on direct return. The body is written as `PLGitem result = children[name]; return result;` rather than `return children[name];` to get the cast right. Matches the existing PLG.C idiom of `(PLGitem*)iTEM->children->get("...")` at call sites.
 
 **Dependencies**: none. Lands when ready, consumed by Briefs 5 and 7.
 
@@ -121,16 +111,17 @@ Header has min=0 (optional). Header failing should not fail Start.alt1 — the o
 
 ### Brief 4 — Generation pipeline reshape
 
-**File**: `PLG.twk` (process(), generateRules()).
+**File**: `PLGparse.twk` (generateRules() body). *Brief 4's earlier text said PLG.twk — actually PLGparse.twk; corrected here.*
 
 **Changes**:
 
 1. Add externs block emission at top of generated output — one extern per action method name harvested by Brief 3's declarations parse. All externs use the uniform action signature `(PLGparse state, PLGitem iTEM)`; return type per convention (Now → int, Act → void).
 2. Add splice point between externs and setRules() — flush the Brief 3 accumulator there.
 3. Update file shape to: `[includes] [extern block] [.act splice] [setRules()] [main/runtime]`.
-4. Output naming decision: Tony's overnight rename from `<base>.regen.twk` to `<base>.twk` is in effect. Confirm in process(). Optionally restore overwrite-protection (refuse to write if target exists and isn't a prior regen) — bible's resolved-issues note about Tokf/Tawk.twk overwrite applies.
 
 **Verification**: run plg against Testing.g (with Brief 1 and Brief 3 landed). Output Testing.twk contains externs block at top, then spliced action bodies from Testing.act, then setRules, then main. Tok compiles the generated Testing.twk cleanly.
+
+*Status*: ✅ **landed and verified** (commit 29d1cb5). Both cases tested: empty actionNames (current Testing.act) → splice above setRules, no externs block; populated actionNames (temporary prepend of "actions Test, StringSet, StringSet2;") → externs block with correct return types above splice above setRules. Return-type convention working: Now → int, Act → void. Brief 1's setRules excludeSet line still intact.
 
 **Dependencies**: Brief 3.
 
@@ -151,6 +142,11 @@ Labels themselves are inert — no behavior change. They exist so plgDirectives 
 
 **Verification**: compile cleanly. No runtime difference from before the change.
 
+*Status*: ✅ **landed and verified** (commit dc5118f). Two findings:
+
+- **The `debug` field already exists** on PLGrule (PLGrule.twk:25), already mirrored in PLGrevision's `external PLGrule` block, already consumed by inline match() debug couts via `debugRulePLG || debug`. Brief 5 option (A) added nothing new; the existing per-rule toggle is `rule.debug`, not `rule.debugged`. Brief 6 consumes `rule.debug`. Mirror principle absorbs the name divergence — incant's `debugged` and plg's `debug` are the same pattern with different names.
+- **parseReturn fires fail-only.** match() has two return paths — `return result` on success (after `matched:`) and `return null` on all-alts-failed (where `parseReturn:` was placed). Brief 6's directive design path α: accept the split, `matched` does success-branch debug, `parseReturn` does fail-branch debug. No match() refactor needed.
+
 **Dependencies**: none.
 
 ---
@@ -159,9 +155,11 @@ Labels themselves are inert — no behavior change. They exist so plgDirectives 
 
 **File**: `plgDirectives`.
 
-**Tony's seat**, not Clod's. Format mirrors incant's groupDirectives shape — directive entries with `cout` lines, `indent()` calls, `debugIndent` counter. Each of the four hook sites gets a directive entry that fires when `debugRulePLG || rule.debugged`. plg-specific addition: alt index logged at the `matchSucceeded` site.
+**Tony's seat**, not Clod's. Format mirrors incant's groupDirectives shape — directive entries with `cout` lines, `indent()` calls, `debugIndent` counter. Each of the four hook sites gets a directive entry that fires when `debugRulePLG || rule.debug`. Path α split per Brief 5's finding: `matched` does success-branch debug, `parseReturn` does fail-branch debug. plg-specific addition: alt index logged at the `matchSucceeded` site.
 
 **Verification**: regen via tok with plgDirectives present produces a PLGrule.C with debug output mirroring incant's format. Without plgDirectives, clean PLGrule.C without debug. Run plg against Testing.g with debug on; output reads tree-style.
+
+*Status*: 🪑 **Tony's seat, after-hours.** Track A closes when this lands.
 
 **Dependencies**: Brief 5.
 
@@ -208,19 +206,22 @@ All seven boxes ticked = Session 9 graduates.
 
 **Other SetVariable branches** (Variable, Rules, KeyWord, Condition, Debug) — partially implemented at best. Not exercised by Testing.g. Revisit when broader .g files (Tawk.g) get tested.
 
+**Tests/ gitignore policy.** Force-added Testing.g and Testing.act as Session 9 spec-referenced fixtures (commit af39a11). Broader audit of Tests/ contents — what else should be tracked vs stay ignored — deferred to Tony's call. Standalone work item.
+
 ---
 
 ## Order of execution
 
 Strict dependency order:
 
-1. Brief 1 — SetVariableplgNow ✅ landed (commit 19f9f68, runtime verification deferred to 1.5)
-2. Brief 1.5 — Start rule optional-Header triage (blocks runtime verification of Brief 1 and all subsequent)
-3. Brief 2 — PLGitem getLabel (could parallel Briefs 1 and 1.5)
-4. Brief 3 — IncludeplgNow routing
-5. Brief 4 — Generation pipeline reshape
-6. Brief 5 — Hook sites in PLGrule::match (could parallel Briefs 1-4)
-7. Brief 6 — plgDirectives entries (Tony's seat)
-8. Brief 7 — First new-shape Testing.act
+1. Brief 1 — SetVariableplgNow ✅ landed and runtime verified (commits 19f9f68 + af39a11)
+2. Brief 1.5 — Testing.g fixture fix ✅ closed (commit af39a11)
+3. Brief 2 — PLGitem getLabel ✅ landed (commit 9fc46aa) + polish (commit 0e4d04a)
+4. Brief 3 — IncludeplgNow routing ✅ landed (commits d5cbda6 + e026ade + b9264ce + 82b9bf8)
+5. Brief 4 — Generation pipeline reshape ✅ landed (commit 29d1cb5) + polish 1 (commit 233794b) + polish 2 (commit 454fdc3)
+6. Brief 5 — Hook sites in PLGrule::match ✅ landed (commit dc5118f)
+7. Brief 6 — plgDirectives entries 🪑 **Tony's seat, after-hours**
+8. Brief 7 — First new-shape Testing.act ✅ landed (commit c6e5314, verification closed alongside Brief 8)
+9. Brief 8 — Class wrapper emission ✅ landed end-to-end (commits 6f45f5c + 06083f0)
 
-Briefs 1.5, 2, 5 are now the independent set. Briefs 3-4-7 are the Track B chain. Briefs 5-6 are the Track A pair. Recommended cadence: serial execution, surfacing on-disk state at each brief landing to inform the next draft.
+Briefs 2 and 5 are independent and parallelizable. Briefs 3-4-7 are the Track B chain. Briefs 5-6 are the Track A pair. Recommended cadence: serial execution, surfacing on-disk state at each brief landing to inform the next draft.
