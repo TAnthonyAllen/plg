@@ -142,6 +142,32 @@ use buffer
 }
 
 /*****************************************************************************
+	Diverts input to the string passed in and fires up the rule. After the
+    rule runs, reverts the input back and returns the result of the parse.
+*****************************************************************************/
+PLGitem divertInput(String s,PLGrule rule)
+{
+PLGitem		item;
+    divertInput(s);
+	item = parse(rule);
+	revertInput();
+	return item;
+}
+
+/*****************************************************************************
+	Like divertInput(s,rule) but looks the rule up by name. The rule lookup
+    (and not-found diagnostic) is handled by parse(String name).
+*****************************************************************************/
+PLGitem divertInput(String s,String ruleName)
+{
+PLGitem		item;
+    divertInput(s);
+	item = parse(ruleName);
+	revertInput();
+	return item;
+}
+
+/*****************************************************************************
 	Loop thru rules and generate code to implement them
 *****************************************************************************/
 void generateRules(Buffer output, String baseName)

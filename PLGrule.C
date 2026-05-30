@@ -1,6 +1,5 @@
 #include <string.h>
 #include <stdio.h>
-#include "StringRoutines.h"
 #include "DoubleLinkList.h"
 #include "Alternative.h"
 #include "DoubleLink.h"
@@ -109,11 +108,9 @@ Alternative 	*test = 0;
 	if ( guardSet )
 		guardSet->generate(output);
 	alternatives->resetIterator();
-	::printf("alternatives count: %d\n",alternatives->length);
 	while ( test = (Alternative*)alternatives->next() )
 		{
 		test->generate(output);
-		::printf("generating alternative\n");
 		if ( test->guardSet )
 			{
 			test->guardSet->generate(output);
@@ -147,24 +144,9 @@ char 			*saved = 0;
 		state->revertInput();
 	if ( guardSet && state->cursor < state->eof && !guardSet->contains(*state->cursor) )
 		{
-		if ( state->debugRulePLG || debug )
-			{
-			::printf("PLGrule: %s GUARD-REJECTED at offset %s\n",name,::headToCount(state->cursor,10));
-			;
-			guardSet->toString();
-			}
 		return 0;
 		}
 parseAttempt:
-	if ( state->debugRulePLG || debug )
-		{
-		if ( StringRoutines::debugIndent < 0 )
-			StringRoutines::debugIndent = 0;
-		::indent(StringRoutines::debugIndent,"  ",0);
-		::printf("Match %s on text: %s\n",name,::headToCount(state->cursor,20));
-		StringRoutines::debugIndent++;
-		succeeded = 0;
-		}
 	for ( link = alternatives->first; link; link = link->next )
 		{
 		alt = (Alternative*)link->value;
@@ -194,29 +176,12 @@ parseAttempt:
 							result->deferred->add(dlink->value);
 					}
 matchSucceeded:
-				if ( state->debugRulePLG || debug )
-					{
-					StringRoutines::debugIndent--;
-					::indent(StringRoutines::debugIndent,"  ",0);
-					::printf("%s succeeded at: %s\n",name,::headToCount(state->cursor,10));
-					succeeded = 1;
-					}
 				return result;
 				}
 			}
 		state->cursor = saved;
 		}
 matchFailed:
-	if ( state->debugRulePLG || debug )
-		{
-		StringRoutines::debugIndent--;
-		::indent(StringRoutines::debugIndent,"  ",0);
-		if ( succeeded )
-			::printf("%s not failure",name);
-		else	::printf("%s match failed\n",name);
-		::printf(" at: %s\n",::headToCount(state->cursor,10));
-		succeeded = 0;
-		}
 	return 0;
 }
 

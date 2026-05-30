@@ -61,6 +61,8 @@ PLGparse();
 PLGparse(char *input);
 void addTest(int kind, char *data, char *label, int min, int max, char *skipSet);
 void divertInput(char *s);
+PLGitem *divertInput(char *s, char *ruleName);
+PLGitem *divertInput(char *s, PLGrule *rule);
 void generateRules(Buffer *output, char *baseName);
 PLGrule *getRule(char *name);
 PLGset *getSet(char *specs);

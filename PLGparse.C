@@ -203,6 +203,32 @@ void PLGparse::divertInput(char *s)
 }
 
 /*****************************************************************************
+	Like divertInput(s,rule) but looks the rule up by name. The rule lookup
+    (and not-found diagnostic) is handled by parse(String name).
+*****************************************************************************/
+PLGitem *PLGparse::divertInput(char *s, char *ruleName)
+{
+PLGitem 	*item = 0;
+	divertInput(s);
+	item = parse(ruleName);
+	revertInput();
+	return item;
+}
+
+/*****************************************************************************
+	Diverts input to the string passed in and fires up the rule. After the
+    rule runs, reverts the input back and returns the result of the parse.
+*****************************************************************************/
+PLGitem *PLGparse::divertInput(char *s, PLGrule *rule)
+{
+PLGitem 	*item = 0;
+	divertInput(s);
+	item = parse(rule);
+	revertInput();
+	return item;
+}
+
+/*****************************************************************************
 	Loop thru rules and generate code to implement them
 *****************************************************************************/
 void PLGparse::generateRules(Buffer *output, char *baseName)

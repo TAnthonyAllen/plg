@@ -66,7 +66,7 @@ Each repo has `CLAUDE.md`, `TODO.md`, this bible, and `jit.md` mirrored.
 
 **APFS case-insensitive gotcha**: `plg.twk` and `PLG.twk` are the SAME file on macOS. Generated artifacts must live in a subdirectory. Grammar/ was created specifically to avoid this collision.
 
-**PLG regen output**: `PLG.process()` writes to `<base>.regen.twk` in the directory where plg was invoked (CWD). When running on Tokf/Tawk.g from Tokf/Tests, output goes to Tokf/Tests/Tawk.regen.twk — NOT Tokf/Tawk.twk (the real source). plg's contract is "this file here, output here" — invocation-directory-relative, not source-file-resolved.
+**PLG regen output**: `PLG.process()` writes to `<base>.twk` in the directory where plg was invoked (CWD). (Was `<base>.regen.twk` until ~May 19; the `.regen` suffix is gone — see Phase Generate Tawk note. Running `plg Tawk.g` from Tokf/ now overwrites `Tokf/Tawk.twk` directly, which is why the regen must be tokkable before that's safe — currently it is NOT; see the generateRules blocker.) plg's contract is "this file here, output here" — invocation-directory-relative, not source-file-resolved.
 
 **Visibility-gap discipline**: source-of-truth files must live in tracked locations. The PLGrgx case (untracked in legacy Parse/, moved into plg repo as pre-flatten step, commit 139064b) and the PLGset case (untracked in legacy Parse/, moved to support/Frame as sister of CharSet) both exemplify the fix. Untracked source-of-truth invites the commit-vs-disk drift that the sign-off ritual (HWF Session 2) is meant to catch.
 
@@ -345,10 +345,32 @@ The JIT is the enabling technology. Without JIT, incant is an interpreter. With 
 
 ## Priority Plan (current)
 
-**Phase Generate Tawk: PLG → Tawk.g ✅ COMPLETE**
+**Phase Generate Tawk: PLG → Tawk.g — ⚠️ BLOCKED (not complete)**
 - PLG parses plg.g ✅ — 39 rules
 - PLG parses Tawk.g ✅ — 200 rules, 177 populated
-- Tawk.regen.twk generated in new format ✅
+- setRules() body generated in new format ✅
+- Output naming ✅ — plg now writes `<base>.twk` directly (the `.regen.twk`
+  name is gone). The source did this since ~May 19; the installed `~/bin/plg`
+  was a stale May-17 binary. Rebuilt 2026-05-30 (Debug); `~/bin/plg` is now a
+  symlink → `Parse/build/Debug/plg`. (Release config is broken — `support`
+  target can't find `PLGparse.h`; Debug used instead.)
+
+- **🚧 BLOCKER — generateRules emits an un-tokkable Tawk.twk (class-body /
+  extern split). Found 2026-05-30.** `plg Tawk.g → Tawk.twk` now runs, but the
+  result will not tok. generateRules' "splice flush" dumps the entire `.act/.rtn`
+  splice ABOVE the `class Tawk extends PLGparse { … }` wrapper, on the theory
+  that action-method bodies are top-level externs. True for the bodies — but the
+  same splice ALSO carries Tawk's **class field declarations** (`#autoGetSet`,
+  `SymbolType currentClass,…`, accessed as `parser->currentClass` from the
+  handlers). Field declarations cannot live at file scope, so tok fails with
+  `ERROR Inheritance` on the first field and emits an empty `Tawk.h` + stale
+  `Tawk.C`. Fix = teach generateRules to split class-body material (fields →
+  INSIDE the class wrapper) from extern bodies (→ top level). This is design
+  work (woodshed session), not a patch. Until it lands, Tawk.twk must be the
+  hand-maintained legacy file (commit `89a3abc`, old format, toks), NOT the
+  regen. The two broken intermediates to avoid: HEAD `ef2730d` (Phase Splice —
+  new-format setRules with C++ `elem->` arrows tok can't parse) and any fresh
+  `plg Tawk.g` overwrite (fields-outside-class).
 
 **Phase Integrate: TAWK Runtime Replacement (multi-session arc)**
 - Recon, file-by-file migration of Tokf/, build ~/bin/tokTemp, validate, promote

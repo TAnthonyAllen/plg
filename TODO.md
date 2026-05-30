@@ -4,6 +4,36 @@
 
 ---
 
+## Phase Generate Tawk — BLOCKER + today's state (2026-05-30)
+
+**🚧 generateRules class-body/extern split (THE blocker).** `plg Tawk.g → Tawk.twk`
+runs and is clean of PLGtester, but the output **does not tok**: generateRules
+dumps Tawk's class field declarations at file scope (above the `class Tawk
+extends PLGparse` wrapper, alongside the extern action bodies). tok →
+`ERROR Inheritance` on the first field → empty `Tawk.h`, stale `Tawk.C`. Fix:
+split class-body material (fields → inside the class) from extern bodies. Design
+work / woodshed session. Full writeup in projectBible.md "Phase Generate Tawk".
+
+**Done today (keep, don't redo):**
+- **plg outputs `Tawk.twk` directly** (no `.regen`). `~/bin/plg` → symlink to
+  `Parse/build/Debug/plg` (old binary at `~/bin/plg.may17.bak`). Release config
+  broken (`support` can't find `PLGparse.h`); Debug used.
+- **Two-arg `divertInput` reinstated** in PLGparse (`divertInput(s,rule)` /
+  `(s,ruleName)`) + declared in `PLGrevision`. Was dropped in the refactor;
+  unblocked Instance/Directive/etc.
+- **FAIL handlers relocated** `Tawk.g %%` → `Tok.twk` as file-scope externals
+  using a new `static Tawk Tok::testParser` (set in main). Tawk.g epilogue
+  stripped. NOTE: new regen emits **zero** `currentRule.fail` wiring (separate
+  plg FAIL-codegen gap) — handlers are defined but **dormant** until that lands.
+- **PLGset.C phantom-include hand-prune.** `support/Frame/PLGset.C` had spurious
+  `#include "PLGparse.h"` + `"PLGitem.h"` (tok auto-include bug); pruned to let
+  plg rebuild. ⚠️ Re-added on any `tok PLGset.twk` — durable fix is the tok
+  auto-include bug (FormatC.twk).
+- **Tawk.twk for now = legacy commit `89a3abc`** (old format, toks). Avoid HEAD
+  `ef2730d` (broken Phase Splice) and fresh regen overwrites.
+
+---
+
 ## Tomorrow's wake-up
 
 **Current state (end of 2026-05-26, Phase Bytecode arc — Brief 3 verification substantively closed):**

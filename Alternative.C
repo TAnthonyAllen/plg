@@ -1,6 +1,5 @@
 #include <string.h>
 #include <stdio.h>
-#include "StringRoutines.h"
 #include "DoubleLinkList.h"
 #include "PLGrule.h"
 #include "DoubleLink.h"
@@ -74,30 +73,12 @@ int 		elemIdx = 0;
 				{
 				result = 0;
 elementFail:
-				if ( state->debugRulePLG )
-					{
-					::indent(StringRoutines::debugIndent,"  ",0);
-					::printf("elem[%d] failed",elemIdx);
-					if ( elem->label )
-						::printf(" label: %s",elem->label);
-					else	::printf(" w/no label");
-					::printf(" at: %s\n",::headToCount(state->cursor,10));
-					}
 				break;
 				}
 			// optional element didn't match — keep going, cursor unchanged
 			}
 		else {
 elementSuccess:
-			if ( state->debugRulePLG )
-				{
-				::indent(StringRoutines::debugIndent,"  ",0);
-				::printf("elem[%d] succeeded",elemIdx);
-				if ( item->itemLabel )
-					::printf(" label: %s",item->itemLabel);
-				else	::printf(" w/no label");
-				::printf(" at: %s\n",::headToCount(state->cursor,10));
-				}
 			if ( item->itemLabel )
 				{
 				if ( !collected->children )

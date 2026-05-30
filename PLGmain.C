@@ -24,6 +24,3 @@ void PLGmain::run()
 {
 	return;
 }
-/*	Warning: the following methods were referenced but not declared
-	process(char*)
-*/
