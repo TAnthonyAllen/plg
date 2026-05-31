@@ -15,6 +15,8 @@ PLGitem     terminator;
 boolean     conditionResult;
 PLGitem     next;
 void*       value;
+int         amount;     // settable numeric value (e.g. array dimension). For
+                        // text-derived numerics use getAmount() instead.
 char        savedChar;
 DoubleLinkList  deferred;
 PLGrule         deferRule;
@@ -101,6 +103,16 @@ PLGitem getLabel(String name)
 {
 PLGitem result = children[name];
     return result;
+}
+
+/*****************************************************************************
+    getAmount — the old PLGitem stored atoi() of a numeric match in an
+    `amount` field. The new surface keeps only the matched text, so action
+    code that wants the numeric value calls getAmount() to recompute it.
+*****************************************************************************/
+int getAmount()
+{
+    return atoi(toString());
 }
 
 /*****************************************************************************

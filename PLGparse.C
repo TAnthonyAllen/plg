@@ -184,6 +184,140 @@ Element 	*elem = new Element();
 	currentAlt->elements->add((void*)elem);
 }
 
+// advance to the next line
+void PLGparse::attachActions(char *content)
+{
+char 		*src = 0;
+char 		*nameStart = 0;
+int 		nameLen = 0;
+char 		*tagStart = 0;
+int 		tagLen = 0;
+char 		*key = 0;
+int 		keyLen = 0;
+char 		*bodyStart = 0;
+char 		*scan = 0;
+char 		*ln = 0;
+char 		after = 0;
+int 		bodyLen = 0;
+char 		*body = 0;
+int 		isDefer = 0;
+int 		atTerminator = 0;
+PLGrule 	*rule = 0;
+	if ( !content )
+		return;
+	src = content;
+	while ( *src )
+		{
+		// Skip blank lines / whitespace between entries.
+		while ( *src == ' ' || *src == '\t' || *src == '\n' || *src == '\r' || *src == '\f' )
+			src++;
+		if ( !*src )
+			break;
+		// Header line: ruleName [':' tag] ['defer'].
+		// Read the rule name: <identifier>.
+		nameStart = src;
+		if ( (*src >= 'a' && *src <= 'z') || (*src >= 'A' && *src <= 'Z') )
+			{
+			src++;
+			while ( (*src >= 'a' && *src <= 'z') || (*src >= 'A' && *src <= 'Z') || (*src >= '0' && *src <= '9') )
+				src++;
+			}
+		nameLen = src - nameStart;
+		if ( nameLen == 0 )
+			{
+			// Not a header — skip the rest of this line and retry.
+			while ( *src && *src != '\n' )
+				src++;
+			continue;
+			}
+		// Optional ':' option tag (name or number), appended to the key:
+		// ruleName → "Block", ruleName:2 → "Block2", ruleName:cast → "Blockcast".
+		tagStart = src;
+		tagLen = 0;
+		if ( *src == ':' )
+			{
+			src++;
+			tagStart = src;
+			while ( (*src >= 'a' && *src <= 'z') || (*src >= 'A' && *src <= 'Z') || (*src >= '0' && *src <= '9') )
+				src++;
+			tagLen = src - tagStart;
+			}
+		keyLen = nameLen + tagLen;
+		key = (char*)::malloc(keyLen + 1);
+		::strncpy(key,nameStart,nameLen);
+		if ( tagLen )
+			::strncpy(key + nameLen,tagStart,tagLen);
+		*(key + keyLen) = 0;
+		// Optional 'defer' keyword → deferred action; absence → immediate.
+		isDefer = 0;
+		while ( *src == ' ' || *src == '\t' )
+			src++;
+		if ( ::strncmp(src,"defer",5) == 0 )
+			{
+			after = *(src + 5);
+			if ( !((after >= 'a' && after <= 'z') || (after >= 'A' && after <= 'Z') || (after >= '0' && after <= '9')) )
+				{
+				isDefer = 1;
+				src += 5;
+				}
+			}
+		// Consume the rest of the header line.
+		while ( *src && *src != '\n' )
+			src++;
+		if ( *src == '\n' )
+			src++;
+		// Body runs to a standalone 'enD' line. 'enD' (not 'end') is the
+		// terminator keyword precisely so it never collides with the common
+		// body variable `end` (e.g. PoundCommand's `PLGitem end = state;`).
+		// Matches action.g's `ActionEnd : 'enD' nameSet!&`.
+		bodyStart = src;
+		scan = src;
+		atTerminator = 0;
+		while ( *scan )
+			{
+			ln = scan;
+			// first char of the current line
+			while ( *ln == ' ' || *ln == '\t' )
+				ln++;
+			if ( *ln == 'e' && *(ln + 1) == 'n' && *(ln + 2) == 'D' )
+				{
+				after = *(ln + 3);
+				if ( !((after >= 'a' && after <= 'z') || (after >= 'A' && after <= 'Z') || (after >= '0' && after <= '9')) )
+					{
+					atTerminator = 1;
+					break;
+					// scan is at the 'end' line start
+					}
+				}
+			while ( *scan && *scan != '\n' )
+				scan++;
+			if ( *scan == '\n' )
+				scan++;
+			}
+		// Body excludes the terminator line; trim its trailing newline.
+		bodyLen = scan - bodyStart;
+		if ( bodyLen > 0 && *(bodyStart + bodyLen - 1) == '\n' )
+			bodyLen--;
+		body = (char*)::malloc(bodyLen + 1);
+		::strncpy(body,bodyStart,bodyLen);
+		*(body + bodyLen) = 0;
+		// Advance src past the 'end' line.
+		src = scan;
+		if ( atTerminator )
+			{
+			while ( *src && *src != '\n' )
+				src++;
+			if ( *src == '\n' )
+				src++;
+			}
+		// Bind the body to its rule, keyed by ruleName(+tag).
+		rule = getRule(key);
+		if ( isDefer )
+			rule->deferAction = new PLGitem(body);
+		else	rule->immediateAction = new PLGitem(body);
+		}
+}
+
 /*******************************************************************************
 	divertInput loads the string passed in to a new buffer, if there is an
     existing current buffer, it gets put on the inputStack, and the current
@@ -235,76 +369,46 @@ void PLGparse::generateRules(Buffer *output, char *baseName)
 {
 PLGrule 	*rule = 0;
 PLGset 		*set = 0;
-char 		*name = 0;
-int 		nameLen = 0;
-	// Brief 4: include directives so tok can resolve class types
-	// (PLGparse, PLGitem, PLGset, Buffer, etc.) when consuming the
-	// generated .twk. Matches PLGparse.twk's own top-of-file block.
-	// Hard-coded paths are the prevailing convention; portability is
-	// a tracking item for later, not generation-time concern.
-	output->appendString("include /Users/anthony/Dropbox/data/InProcess/Include/globals",0,0);
-	output->appendString("\n",0,0);
-	output->appendString("include /Users/anthony/Dropbox/data/InProcess/Include/frame",0,0);
-	output->appendString("\n",0,0);
-	output->appendString("include /Users/anthony/Dropbox/data/InProcess/Include/PLGrevision",0,0);
+	// Emit the generated parser's include manifest. The grammar's own
+	// header (Tawk.g: `include includes`) names a tok include file that
+	// pulls in frame/globals plus the `external Tawk` block (tok.ext) —
+	// the class fields, KeyTable/PLGset decls, and method signatures tok
+	// needs to compile the generated .twk. We reproduce that line here.
+	// TODO (general): capture pre-%% Header includes from the grammar
+	// (re-enable HeaderplgNow → includeBuffer) instead of hard-coding.
+	output->appendString("include includes",0,0);
 	output->appendString("\n",0,0);
 	output->appendString("",0,0);
 	output->appendString("\n",0,0);
-	// Brief 4: externs block. One declaration per name collected from
-	// .act declarations lines by IncludeplgNow's act-branch. Uniform
-	// (PLGparse state, PLGitem iTEM) signature per Session 9 design;
-	// return type follows the convention: `Act` → void, `Now` (or
-	// anything else) → int. Empty actionNames skips the block entirely.
-	if ( actionNames->length > 0 )
-		{
-		output->appendString("external",0,0);
-		output->appendString("\n",0,0);
-		output->appendString("{",0,0);
-		output->appendString("\n",0,0);
-		actionNames->entry = 0;
-		while ( name = (char*)actionNames->next() )
-			{
-			nameLen = ::strlen(name);
-			if ( nameLen >= 3 && ::strcmp(name + nameLen - 3,"Act") == 0 )
-				{
-				output->appendString("    void ",0,0);
-				output->appendString(name,0,0);
-				output->appendString("(PLGparse state, PLGitem iTEM);",0,0);
-				output->appendString("\n",0,0);
-				}
-			else {
-				output->appendString("    int  ",0,0);
-				output->appendString(name,0,0);
-				output->appendString("(PLGparse state, PLGitem iTEM);",0,0);
-				output->appendString("\n",0,0);
-				}
-			}
-		output->appendString("}",0,0);
-		output->appendString("\n",0,0);
-		output->appendString("",0,0);
-		output->appendString("\n",0,0);
-		}
-	// Brief 4: splice flush. Verbatim dump of .rtn/.act content that
-	// IncludeplgNow accumulated during the parse pass. Lands above
-	// setRules so tok sees action method bodies (and their externs
-	// declared just above) before the rules that wire them.
-	if ( spliceAccumulator && spliceAccumulator->length() > 0 )
-		{
-		output->appendString(spliceAccumulator->toString(),0,0);
-		output->appendString("\n",0,0);
-		}
-	// Brief 8: class wrapper. Tok requires a class definition to emit
-	// .C output, mirroring production .twk files (e.g. Tokf/Tawk.twk's
-	// `class Tawk extends PLGparse { ... }`). Only setRules lives
-	// inside; action method bodies stay extern at top level above.
-	// BaseName comes from the input grammar filename stem (Testing.g
-	// → "Testing"), derived by process() before calling here.
+	// Class wrapper. Per the new model the generated parser is one class:
+	// the .rtn splice (parser-state fields + helper-method bodies) AND the
+	// expanded action-body methods both live INSIDE the class, so action
+	// bodies reach parser state directly as members (no parser pointer).
+	// The matching forward declarations live in tok.ext's `external Tawk`
+	// block (pulled in via `include includes`); plg emits no externals
+	// here. BaseName is the grammar filename stem (process() derives it).
 	output->appendString("class ",0,0);
 	output->appendString(baseName,0,0);
 	output->appendString(" extends PLGparse",0,0);
 	output->appendString("\n",0,0);
 	output->appendString("{",0,0);
 	output->appendString("\n",0,0);
+	// .rtn splice flush — verbatim parser-state field declarations and
+	// helper-method bodies. Now INSIDE the class: at top level the field
+	// declarations (e.g. `SymbolType currentClass,`) tripped tok's
+	// ERROR Inheritance; inside a class they are legal members.
+	if ( spliceAccumulator && spliceAccumulator->length() > 0 )
+		{
+		output->appendString(spliceAccumulator->toString(),0,0);
+		output->appendString("\n",0,0);
+		}
+	// Expanded action-body methods, one per rule with an action attached
+	// from a .act file. Emitted inside the class, before setRules() wires
+	// them. (Step 3: writeActions implementation.)
+	rules->hashList->entry = 0;
+	while ( rule = (PLGrule*)rules->hashList->next() )
+		rule->writeActions(baseName,output);
+	// setRules() — wires rules and sets at runtime (unchanged).
 	output->appendString("\nvoid setRules()\n{\n	setSkip();",0,0);
 	output->appendString("\n",0,0);
 	setTable->hashList->resetIterator();
@@ -312,7 +416,7 @@ int 		nameLen = 0;
 		set->generateNamed(output);
 	rules->hashList->entry = 0;
 	while ( rule = (PLGrule*)rules->hashList->next() )
-		rule->generate(output);
+		rule->generate(baseName,output);
 	output->appendString("}",0,0);
 	output->appendString("\n",0,0);
 	// end of setRules
@@ -389,6 +493,7 @@ PLGrule 	*rule = 0;
 PLGitem *PLGparse::parse(PLGrule *rule)
 {
 	if ( rule )
+		debugRulePLG = 1;
 		return rule->match(this);
 	return 0;
 }

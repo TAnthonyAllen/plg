@@ -19,6 +19,7 @@ PLGitem::PLGitem()
 	terminator = 0;
 	itemNext = 0;
 	itemValue = (void*)0;
+	amount = 0;
 	conditionResult = 0;
 	savedChar = 0;
 	deferred = 0;
@@ -34,6 +35,7 @@ PLGitem::PLGitem(char *s)
 	terminator = 0;
 	itemNext = 0;
 	itemValue = (void*)0;
+	amount = 0;
 	conditionResult = 0;
 	savedChar = 0;
 	deferred = 0;
@@ -49,6 +51,7 @@ PLGitem::PLGitem(char *start, long length)
 	terminator = 0;
 	itemNext = 0;
 	itemValue = (void*)0;
+	amount = 0;
 	conditionResult = 0;
 	savedChar = 0;
 	deferred = 0;
@@ -70,6 +73,16 @@ int PLGitem::compare(PLGitem *item)
 		return result;
 		}
 	return 1;
+}
+
+/*****************************************************************************
+    getAmount — the old PLGitem stored atoi() of a numeric match in an
+    `amount` field. The new surface keeps only the matched text, so action
+    code that wants the numeric value calls getAmount() to recompute it.
+*****************************************************************************/
+int PLGitem::getAmount()
+{
+	return ::atoi(toString());
 }
 
 /*****************************************************************************

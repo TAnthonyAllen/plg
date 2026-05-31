@@ -1,9 +1,11 @@
 #include <string.h>
 #include <stdio.h>
+#include "StringRoutines.h"
 #include "DoubleLinkList.h"
 #include "Alternative.h"
 #include "DoubleLink.h"
 #include "Stak.h"
+#include "BaseHash.h"
 #include "Element.h"
 #include "Buffer.h"
 #include "PLGparse.h"
@@ -55,9 +57,15 @@ void PLGrule::declareActions(Buffer *output)
 /*****************************************************************************
 	Generate the code to implement this rule
 *****************************************************************************/
-void PLGrule::generate(Buffer *output)
+void PLGrule::generate(char *parserName, Buffer *output)
 {
 Alternative 	*test = 0;
+	// parserName is passed in (the grammar's base name, e.g. "Tawk"), not
+	// read from a parentParser field — rules built for the target parser do
+	// not carry a back-pointer, and the owning PLGparse's own parserName is
+	// the meta-parser's ("PLG"). Must match the name writeActions() uses so
+	// the `currentRule.immediate = <Name><parserName>Now;` wiring resolves to
+	// the emitted action method.
 	// Blank-line separator only — `//` lines reset TAWK's field-resolution
 	// context, which strips `use parser` from the next assignment and breaks
 	// compilation when the generated body is pasted into a use-parser block.
@@ -87,7 +95,7 @@ Alternative 	*test = 0;
 		{
 		output->appendString("currentRule.immediate = ",0,0);
 		output->appendString(name,0,0);
-		output->appendString(parentParser->parserName,0,0);
+		output->appendString(parserName,0,0);
 		output->appendString("Now;",0,0);
 		output->appendString("\n",0,0);
 		}
@@ -95,7 +103,7 @@ Alternative 	*test = 0;
 		{
 		output->appendString("currentRule.defer = ",0,0);
 		output->appendString(name,0,0);
-		output->appendString(parentParser->parserName,0,0);
+		output->appendString(parserName,0,0);
 		output->appendString("Act;",0,0);
 		output->appendString("\n",0,0);
 		}
@@ -108,9 +116,11 @@ Alternative 	*test = 0;
 	if ( guardSet )
 		guardSet->generate(output);
 	alternatives->resetIterator();
+	::printf("alternatives count: %d\n",alternatives->length);
 	while ( test = (Alternative*)alternatives->next() )
 		{
 		test->generate(output);
+		::printf("generating alternative\n");
 		if ( test->guardSet )
 			{
 			test->guardSet->generate(output);
@@ -144,9 +154,24 @@ char 			*saved = 0;
 		state->revertInput();
 	if ( guardSet && state->cursor < state->eof && !guardSet->contains(*state->cursor) )
 		{
+		if ( state->debugRulePLG || debug )
+			{
+			::printf("PLGrule: %s GUARD-REJECTED at offset %s\n",name,::headToCount(state->cursor,10));
+			;
+			guardSet->toString();
+			}
 		return 0;
 		}
 parseAttempt:
+	if ( state->debugRulePLG || debug )
+		{
+		if ( StringRoutines::debugIndent < 0 )
+			StringRoutines::debugIndent = 0;
+		::indent(StringRoutines::debugIndent,"  ",0);
+		::printf("Match %s on text: %s\n",name,::headToCount(state->cursor,20));
+		StringRoutines::debugIndent++;
+		succeeded = 0;
+		}
 	for ( link = alternatives->first; link; link = link->next )
 		{
 		alt = (Alternative*)link->value;
@@ -176,12 +201,29 @@ parseAttempt:
 							result->deferred->add(dlink->value);
 					}
 matchSucceeded:
+				if ( state->debugRulePLG || debug )
+					{
+					StringRoutines::debugIndent--;
+					::indent(StringRoutines::debugIndent,"  ",0);
+					::printf("%s succeeded at: %s\n",name,::headToCount(state->cursor,10));
+					succeeded = 1;
+					}
 				return result;
 				}
 			}
 		state->cursor = saved;
 		}
 matchFailed:
+	if ( state->debugRulePLG || debug )
+		{
+		StringRoutines::debugIndent--;
+		::indent(StringRoutines::debugIndent,"  ",0);
+		if ( succeeded )
+			::printf("%s not failure",name);
+		else	::printf("%s match failed\n",name);
+		::printf(" at: %s\n",::headToCount(state->cursor,10));
+		succeeded = 0;
+		}
 	return 0;
 }
 
@@ -298,9 +340,78 @@ int 			noGuard = 0;
 }
 
 /*****************************************************************************
-	This method writes out the actions associated with this rule.
+	This method writes out the action method bodies for this rule. Each
+	action lives INSIDE the generated parser class (so the body reaches
+	parser state directly as members — no parser-pointer injection). The
+	body text was attached to immediateAction/deferAction from the .act
+	file (PLGparse::attachActions). Capture labels come from the grammar
+	rule's elements. Method name is <Name><parserName>Now (immediate) or
+	<Name><parserName>Act (deferred), matching the wiring emitted in
+	generate() and the forward declarations in tok.ext's `external Tawk`.
 *****************************************************************************/
 void PLGrule::writeActions(char *parserName, Buffer *output)
 {
-	// TODO: implement
+	if ( immediateAction )
+		{
+		output->appendString("\n",0,0);
+		output->appendString("int ",0,0);
+		output->appendString(name,0,0);
+		output->appendString(parserName,0,0);
+		output->appendString("Now(PLGitem iTEM)\n{",0,0);
+		output->appendString("\n",0,0);
+		writeCaptures(output);
+		output->appendString(immediateAction->toString(),0,0);
+		output->appendString("\n",0,0);
+		output->appendString("return true;\n}\n",0,0);
+		output->appendString("\n",0,0);
+		}
+	if ( deferAction )
+		{
+		output->appendString("\n",0,0);
+		output->appendString("void ",0,0);
+		output->appendString(name,0,0);
+		output->appendString(parserName,0,0);
+		output->appendString("Act(PLGitem iTEM)\n{",0,0);
+		output->appendString("\n",0,0);
+		writeCaptures(output);
+		output->appendString(deferAction->toString(),0,0);
+		output->appendString("\n",0,0);
+		output->appendString("}\n",0,0);
+		output->appendString("\n",0,0);
+		}
+}
+
+/*****************************************************************************
+	Emit the capture-variable declarations for an action body: one
+	`PLGitem <label> = iTEM.children["<label>"];` per distinct labelled
+	element across all alternatives. Deduped because the same label may
+	appear in more than one alternative (a second decl would not compile).
+*****************************************************************************/
+void PLGrule::writeCaptures(Buffer *output)
+{
+Alternative 	*alt = 0;
+Element 		*elem = 0;
+DoubleLink 		*altLink = 0;
+DoubleLink 		*elemLink = 0;
+BaseHash 		*seen = new BaseHash();
+	for ( altLink = alternatives->first; altLink; altLink = altLink->next )
+		{
+		alt = (Alternative*)altLink->value;
+		if ( !alt->elements )
+			continue;
+		for ( elemLink = alt->elements->first; elemLink; elemLink = elemLink->next )
+			{
+			elem = (Element*)elemLink->value;
+			if ( elem->label && !seen->get(elem->label) )
+				{
+				seen->add(elem->label,(void*)1);
+				output->appendString("PLGitem ",0,0);
+				output->appendString(elem->label,0,0);
+				output->appendString(" = iTEM.children[\"",0,0);
+				output->appendString(elem->label,0,0);
+				output->appendString("\"];",0,0);
+				output->appendString("\n",0,0);
+				}
+			}
+		}
 }

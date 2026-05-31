@@ -16,6 +16,7 @@ BaseHash *children;
 PLGitem *terminator;
 PLGitem *itemNext;
 void *itemValue;
+int amount;
 struct 
 	{
 	unsigned int conditionResult:1;
@@ -28,6 +29,7 @@ PLGitem();
 PLGitem(char *s);
 PLGitem(char *start, long length);
 int compare(PLGitem *item);
+int getAmount();
 PLGitem *getLabel(char *name);
 void runDeferred(PLGparse *state);
 char *string();

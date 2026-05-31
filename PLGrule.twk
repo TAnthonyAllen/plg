@@ -58,9 +58,15 @@ void declareActions(Buffer output)
 /*****************************************************************************
 	Generate the code to implement this rule
 *****************************************************************************/
-void generate(Buffer output)
+void generate(String parserName, Buffer output)
 {
 Alternative test;
+	// parserName is passed in (the grammar's base name, e.g. "Tawk"), not
+	// read from a parentParser field — rules built for the target parser do
+	// not carry a back-pointer, and the owning PLGparse's own parserName is
+	// the meta-parser's ("PLG"). Must match the name writeActions() uses so
+	// the `currentRule.immediate = <Name><parserName>Now;` wiring resolves to
+	// the emitted action method.
 	// Blank-line separator only — `//` lines reset TAWK's field-resolution
 	// context, which strips `use parser` from the next assignment and breaks
 	// compilation when the generated body is pasted into a use-parser block.
@@ -241,10 +247,59 @@ int         noGuard = false;
 }
 
 /*****************************************************************************
-	This method writes out the actions associated with this rule.
+	Emit the capture-variable declarations for an action body: one
+	`PLGitem <label> = iTEM.children["<label>"];` per distinct labelled
+	element across all alternatives. Deduped because the same label may
+	appear in more than one alternative (a second decl would not compile).
+*****************************************************************************/
+void writeCaptures(Buffer output)
+{
+Alternative alt;
+Element     elem;
+DoubleLink  altLink;
+DoubleLink  elemLink;
+BaseHash    seen = new;
+    for altLink = alternatives.first
+        {
+        alt = altLink.value;
+        if !alt.elements continue;
+        for elemLink = alt.elements.first
+            {
+            elem = elemLink.value;
+            if elem.label && !seen[elem.label]
+                {
+                seen[elem.label] = (void*)1;
+                print(output) "PLGitem " elem.label " = iTEM.children[\"" elem.label "\"];":;
+                }
+            }
+        }
+}
+
+/*****************************************************************************
+	This method writes out the action method bodies for this rule. Each
+	action lives INSIDE the generated parser class (so the body reaches
+	parser state directly as members — no parser-pointer injection). The
+	body text was attached to immediateAction/deferAction from the .act
+	file (PLGparse::attachActions). Capture labels come from the grammar
+	rule's elements. Method name is <Name><parserName>Now (immediate) or
+	<Name><parserName>Act (deferred), matching the wiring emitted in
+	generate() and the forward declarations in tok.ext's `external Tawk`.
 *****************************************************************************/
 void writeActions(String parserName,Buffer output)
 {
-    // TODO: implement
+    if immediateAction
+        {
+        print(output) :"int " name parserName "Now(PLGitem iTEM)\n{":;
+        writeCaptures(output);
+        print immediateAction.toString();
+        print :"return true;\n}\n":;
+        }
+    if deferAction
+        {
+        print(output) :"void " name parserName "Act(PLGitem iTEM)\n{":;
+        writeCaptures(output);
+        print deferAction.toString();
+        print :"}\n":;
+        }
 }
 }

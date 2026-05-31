@@ -34,8 +34,9 @@ struct
 PLGrule(char *s);
 void addAlternative(Alternative *alt);
 void declareActions(Buffer *output);
-void generate(Buffer *output);
+void generate(char *parserName, Buffer *output);
 PLGitem *match(PLGparse *state);
 PLGset *setGuard();
 void writeActions(char *parserName, Buffer *output);
+void writeCaptures(Buffer *output);
 };

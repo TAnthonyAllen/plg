@@ -60,6 +60,7 @@ Stak *actionNames;
 PLGparse();
 PLGparse(char *input);
 void addTest(int kind, char *data, char *label, int min, int max, char *skipSet);
+void attachActions(char *content);
 void divertInput(char *s);
 PLGitem *divertInput(char *s, char *ruleName);
 PLGitem *divertInput(char *s, PLGrule *rule);
