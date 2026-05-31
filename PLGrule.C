@@ -5,7 +5,6 @@
 #include "Alternative.h"
 #include "DoubleLink.h"
 #include "Stak.h"
-#include "BaseHash.h"
 #include "Element.h"
 #include "Buffer.h"
 #include "PLGparse.h"
@@ -73,6 +72,10 @@ Alternative 	*test = 0;
 	output->appendString(name,0,0);
 	output->appendString("\");",0,0);
 	output->appendString("\n",0,0);
+	// Balance ops are still rule-level; action wiring is now per-alternative
+	// (each alternative emits its own `currentAlt.immediate/defer = …` in
+	// Alternative::generate), so an action fires only when its own option
+	// matched.
 	if ( balanceRule )
 		{
 		output->appendString("currentRule.immediate = balancE;",0,0);
@@ -90,23 +93,6 @@ Alternative 	*test = 0;
 		output->appendString("currentRule.immediate = balancEbail;",0,0);
 		output->appendString("\n",0,0);
 		}
-	else
-	if ( immediateAction )
-		{
-		output->appendString("currentRule.immediate = ",0,0);
-		output->appendString(name,0,0);
-		output->appendString(parserName,0,0);
-		output->appendString("Now;",0,0);
-		output->appendString("\n",0,0);
-		}
-	if ( deferAction )
-		{
-		output->appendString("currentRule.defer = ",0,0);
-		output->appendString(name,0,0);
-		output->appendString(parserName,0,0);
-		output->appendString("Act;",0,0);
-		output->appendString("\n",0,0);
-		}
 	if ( doNotGuard )
 		{
 		output->appendString("currentRule.doNotGuard = true;",0,0);
@@ -119,7 +105,7 @@ Alternative 	*test = 0;
 	::printf("alternatives count: %d\n",alternatives->length);
 	while ( test = (Alternative*)alternatives->next() )
 		{
-		test->generate(output);
+		test->generate(parserName,output);
 		::printf("generating alternative\n");
 		if ( test->guardSet )
 			{
@@ -183,11 +169,20 @@ parseAttempt:
 				{
 				if ( immediate )
 					immediate(state,result);
-				if ( defer )
+				if ( alt->immediate )
+					alt->immediate(state,result);
+				if ( defer || alt->defer )
 					{
 					DoubleLinkList 	*childEntries = 0;
 					DoubleLink 		*dlink = 0;
-					result->deferRule = this;
+					// Record who provides the deferred callback: the rule
+					// (balance/legacy rule-level defer) and/or the matched
+					// alternative (per-option action). runDeferred fires the
+					// alternative's defer in preference to the rule's.
+					if ( defer )
+						result->deferRule = this;
+					if ( alt->defer )
+						result->deferAlt = alt;
 					// Prepend (this, result) so the rule's defer fires
 					// BEFORE its children's defers — preorder cascade.
 					// AlternativeplgAct must run before its Elements'
@@ -340,78 +335,20 @@ int 			noGuard = 0;
 }
 
 /*****************************************************************************
-	This method writes out the action method bodies for this rule. Each
-	action lives INSIDE the generated parser class (so the body reaches
-	parser state directly as members — no parser-pointer injection). The
-	body text was attached to immediateAction/deferAction from the .act
-	file (PLGparse::attachActions). Capture labels come from the grammar
-	rule's elements. Method name is <Name><parserName>Now (immediate) or
-	<Name><parserName>Act (deferred), matching the wiring emitted in
-	generate() and the forward declarations in tok.ext's `external Tawk`.
+	Emit this rule's action method bodies — one per alternative that carries
+	an action. Each alternative knows its own action body, capture labels, and
+	emitted method name (set by PLGparse::generateRules from the .act-attached
+	numbered-rule shells), so the work lives on Alternative.
 *****************************************************************************/
 void PLGrule::writeActions(char *parserName, Buffer *output)
 {
-	if ( immediateAction )
-		{
-		output->appendString("\n",0,0);
-		output->appendString("int ",0,0);
-		output->appendString(name,0,0);
-		output->appendString(parserName,0,0);
-		output->appendString("Now(PLGitem iTEM)\n{",0,0);
-		output->appendString("\n",0,0);
-		writeCaptures(output);
-		output->appendString(immediateAction->toString(),0,0);
-		output->appendString("\n",0,0);
-		output->appendString("return true;\n}\n",0,0);
-		output->appendString("\n",0,0);
-		}
-	if ( deferAction )
-		{
-		output->appendString("\n",0,0);
-		output->appendString("void ",0,0);
-		output->appendString(name,0,0);
-		output->appendString(parserName,0,0);
-		output->appendString("Act(PLGitem iTEM)\n{",0,0);
-		output->appendString("\n",0,0);
-		writeCaptures(output);
-		output->appendString(deferAction->toString(),0,0);
-		output->appendString("\n",0,0);
-		output->appendString("}\n",0,0);
-		output->appendString("\n",0,0);
-		}
-}
-
-/*****************************************************************************
-	Emit the capture-variable declarations for an action body: one
-	`PLGitem <label> = iTEM.children["<label>"];` per distinct labelled
-	element across all alternatives. Deduped because the same label may
-	appear in more than one alternative (a second decl would not compile).
-*****************************************************************************/
-void PLGrule::writeCaptures(Buffer *output)
-{
 Alternative 	*alt = 0;
-Element 		*elem = 0;
 DoubleLink 		*altLink = 0;
-DoubleLink 		*elemLink = 0;
-BaseHash 		*seen = new BaseHash();
+	if ( !alternatives )
+		return;
 	for ( altLink = alternatives->first; altLink; altLink = altLink->next )
 		{
 		alt = (Alternative*)altLink->value;
-		if ( !alt->elements )
-			continue;
-		for ( elemLink = alt->elements->first; elemLink; elemLink = elemLink->next )
-			{
-			elem = (Element*)elemLink->value;
-			if ( elem->label && !seen->get(elem->label) )
-				{
-				seen->add(elem->label,(void*)1);
-				output->appendString("PLGitem ",0,0);
-				output->appendString(elem->label,0,0);
-				output->appendString(" = iTEM.children[\"",0,0);
-				output->appendString(elem->label,0,0);
-				output->appendString("\"];",0,0);
-				output->appendString("\n",0,0);
-				}
-			}
+		alt->writeActions(parserName,output);
 		}
 }

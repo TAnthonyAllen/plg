@@ -1,6 +1,7 @@
 class BaseHash;
 class DoubleLinkList;
 class PLGrule;
+class Alternative;
 class PLGparse;
 /*******************************************************************************
 	Class that embodies an item (like a PLGitem)
@@ -24,6 +25,7 @@ struct
 char savedChar;
 DoubleLinkList *deferred;
 PLGrule *deferRule;
+Alternative *deferAlt;
 static PLGitem *itemEmpty;
 PLGitem();
 PLGitem(char *s);

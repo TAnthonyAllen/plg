@@ -16,6 +16,7 @@ public:
 Buffer *buffer;
 char *cursor;
 char *eof;
+char *plgStart;
 char *parserName;
 PLGrule *currentRule;
 Alternative *currentAlt;

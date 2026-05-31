@@ -174,6 +174,11 @@ void generateRules(Buffer output, String baseName)
 {
 PLGrule	rule;
 PLGset	set;
+PLGrule     src;
+Alternative alt;
+DoubleLink  altLink;
+int         optN;
+Buffer      keyBuf = new("optkey", 64);
     // Emit the generated parser's include manifest. The grammar's own
     // header (Tawk.g: `include includes`) names a tok include file that
     // pulls in frame/globals plus the `external Tawk` block (tok.ext) —
@@ -198,9 +203,46 @@ PLGset	set;
     // ERROR Inheritance; inside a class they are legal members.
     if spliceAccumulator && spliceAccumulator.length() > 0
         print(output) spliceAccumulator.toString():;
-    // Expanded action-body methods, one per rule with an action attached
-    // from a .act file. Emitted inside the class, before setRules() wires
-    // them. (Step 3: writeActions implementation.)
+    // Per-alternative action distribution. attachActions stored each .act
+    // option's body on a numbered rule shell (Foo, Foo2, Foo3 …). An action
+    // belongs to ONE alternative (option) of its rule, so copy each shell's
+    // body + method name onto the matching alternative of the base rule.
+    // (Done here, not in attachActions, because a rule's alternatives are not
+    // parsed until after the .act include.) Alternative 0 ← the base rule
+    // itself; alternative N ← the numbered shell <name><N+1>.
+    rules.entry = null;
+    while rule = rules.next()
+        {
+        if !rule.alternatives continue;
+        optN = 0;
+        for altLink = rule.alternatives.first
+            {
+            alt = altLink.value;
+            if optN == 0
+                {
+                src = rule;
+                alt.actionName = rule.name;
+                }
+            else
+                {
+                keyBuf.reset();
+                keyBuf.appendString(rule.name, 0, 0);
+                print(keyBuf) (optN + 1);
+                alt.actionName = keyBuf.toString();
+                src = rules[alt.actionName];
+                }
+            if src
+                {
+                alt.immediateAction = src.immediateAction;
+                alt.deferAction     = src.deferAction;
+                }
+            optN++;
+            }
+        }
+    // Expanded action-body methods, one per alternative that carries an
+    // action. Emitted inside the class, before setRules() wires them. A
+    // numbered shell (0 alternatives) emits nothing — its body was distributed
+    // above onto the base rule's alternative.
     rules.entry = null;
     while rule = rules.next()
         rule.writeActions(baseName, output);

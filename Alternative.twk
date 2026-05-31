@@ -9,6 +9,16 @@ class Alternative
 {
 DoubleLinkList  elements;
 PLGset          guardSet;
+// Per-alternative action. An action belongs to one alternative (option) of a
+// rule, not the whole rule. immediateAction/deferAction hold the body (set by
+// generateRules from the .act-attached numbered-rule shells); actionName is the
+// emitted method's base name (Rule, Rule2, …). immediate/defer are the wired
+// function pointers fired by PLGrule::match when this alternative matches.
+PLGitem         immediateAction,
+                deferAction;
+String          actionName;
+int             &immediate(PLGparse state, PLGitem i);
+void            &defer(PLGparse state, PLGitem i);
 
 int match(PLGparse state, PLGitem *out);
 
@@ -26,14 +36,65 @@ Alternative()
 	to currentRule. Matches the hand-written setRules() convention so
 	generated output can be pasted in directly.
 *******************************************************************************/
-void generate(Buffer output)
+void generate(String parserName, Buffer output)
 {
 Element elem;
     print(output) "currentAlt = new Alternative();":;
     elements.resetIterator();
     while elem = elements.next()
         elem.generate(output);
+    if immediateAction
+        print "currentAlt.immediate = " actionName parserName "Now;":;
+    if deferAction
+        print "currentAlt.defer = " actionName parserName "Act;":;
     print "currentRule.alternatives += currentAlt;":;
+}
+
+/*****************************************************************************
+    Emit the capture-variable declarations for this alternative's action:
+    one `PLGitem <label> = iTEM.children["<label>"];` per distinct labelled
+    element of THIS alternative (so each option's action sees exactly its own
+    captures — no cross-alternative bleed).
+*****************************************************************************/
+void writeCaptures(Buffer output)
+{
+Element     elem;
+DoubleLink  elemLink;
+BaseHash    seen = new;
+    if !elements return;
+    for elemLink = elements.first
+        {
+        elem = elemLink.value;
+        if elem.label && !seen[elem.label]
+            {
+            seen[elem.label] = (void*)1;
+            print(output) "PLGitem " elem.label " = iTEM.children[\"" elem.label "\"];":;
+            }
+        }
+}
+
+/*****************************************************************************
+    Emit this alternative's action method body (inside the generated parser
+    class). Method name is <actionName><parserName>Now (immediate) or
+    <actionName><parserName>Act (deferred), matching the wiring in generate()
+    and the forward declarations in tok.ext's `external Tawk`.
+*****************************************************************************/
+void writeActions(String parserName, Buffer output)
+{
+    if immediateAction
+        {
+        print(output) :"int " actionName parserName "Now(PLGitem iTEM)\n{":;
+        writeCaptures(output);
+        print immediateAction.toString();
+        print :"return true;\n}\n":;
+        }
+    if deferAction
+        {
+        print(output) :"void " actionName parserName "Act(PLGitem iTEM)\n{":;
+        writeCaptures(output);
+        print deferAction.toString();
+        print :"}\n":;
+        }
 }
 
 int match(PLGparse state, PLGitem &out)

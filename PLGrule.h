@@ -38,5 +38,4 @@ void generate(char *parserName, Buffer *output);
 PLGitem *match(PLGparse *state);
 PLGset *setGuard();
 void writeActions(char *parserName, Buffer *output);
-void writeCaptures(Buffer *output);
 };

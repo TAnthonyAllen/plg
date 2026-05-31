@@ -20,6 +20,7 @@ int         amount;     // settable numeric value (e.g. array dimension). For
 char        savedChar;
 DoubleLinkList  deferred;
 PLGrule         deferRule;
+Alternative     deferAlt;       // matched alternative for a per-option defer action
 static PLGitem     itemEmpty;
 
 /*****************************************************************************
@@ -130,7 +131,9 @@ PLGitem     item;
     for link = deferred.first
         {
         item = link.value;
-        if item && item.deferRule
+        if item && item.deferAlt
+            item.deferAlt.defer(state, item);
+        or item && item.deferRule
             item.deferRule.defer(state, item);
         }
 }

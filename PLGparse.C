@@ -41,6 +41,7 @@ PLGparse::PLGparse()
 	buffer = 0;
 	cursor = 0;
 	eof = 0;
+	plgStart = 0;
 	parserName = 0;
 	currentRule = 0;
 	currentAlt = 0;
@@ -85,6 +86,7 @@ PLGparse::PLGparse()
 
 PLGparse::PLGparse(char *input)
 {
+	plgStart = 0;
 	parserName = 0;
 	currentRule = 0;
 	currentAlt = 0;
@@ -367,8 +369,13 @@ PLGitem 	*item = 0;
 *****************************************************************************/
 void PLGparse::generateRules(Buffer *output, char *baseName)
 {
-PLGrule 	*rule = 0;
-PLGset 		*set = 0;
+PLGrule 		*rule = 0;
+PLGset 			*set = 0;
+PLGrule 		*src = 0;
+Alternative 	*alt = 0;
+DoubleLink 		*altLink = 0;
+int 			optN = 0;
+Buffer 			*keyBuf = new Buffer("optkey",64);
 	// Emit the generated parser's include manifest. The grammar's own
 	// header (Tawk.g: `include includes`) names a tok include file that
 	// pulls in frame/globals plus the `external Tawk` block (tok.ext) —
@@ -402,9 +409,46 @@ PLGset 		*set = 0;
 		output->appendString(spliceAccumulator->toString(),0,0);
 		output->appendString("\n",0,0);
 		}
-	// Expanded action-body methods, one per rule with an action attached
-	// from a .act file. Emitted inside the class, before setRules() wires
-	// them. (Step 3: writeActions implementation.)
+	// Per-alternative action distribution. attachActions stored each .act
+	// option's body on a numbered rule shell (Foo, Foo2, Foo3 …). An action
+	// belongs to ONE alternative (option) of its rule, so copy each shell's
+	// body + method name onto the matching alternative of the base rule.
+	// (Done here, not in attachActions, because a rule's alternatives are not
+	// parsed until after the .act include.) Alternative 0 ← the base rule
+	// itself; alternative N ← the numbered shell <name><N+1>.
+	rules->hashList->entry = 0;
+	while ( rule = (PLGrule*)rules->hashList->next() )
+		{
+		if ( !rule->alternatives )
+			continue;
+		optN = 0;
+		for ( altLink = rule->alternatives->first; altLink; altLink = altLink->next )
+			{
+			alt = (Alternative*)altLink->value;
+			if ( optN == 0 )
+				{
+				src = rule;
+				alt->actionName = rule->name;
+				}
+			else {
+				keyBuf->reset();
+				keyBuf->appendString(rule->name,0,0);
+				keyBuf->appendInt((optN + 1),0,0);
+				alt->actionName = keyBuf->toString();
+				src = (PLGrule*)rules->get(alt->actionName);
+				}
+			if ( src )
+				{
+				alt->immediateAction = src->immediateAction;
+				alt->deferAction = src->deferAction;
+				}
+			optN++;
+			}
+		}
+	// Expanded action-body methods, one per alternative that carries an
+	// action. Emitted inside the class, before setRules() wires them. A
+	// numbered shell (0 alternatives) emits nothing — its body was distributed
+	// above onto the base rule's alternative.
 	rules->hashList->entry = 0;
 	while ( rule = (PLGrule*)rules->hashList->next() )
 		rule->writeActions(baseName,output);

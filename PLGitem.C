@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include "DoubleLinkList.h"
 #include "PLGrule.h"
+#include "Alternative.h"
 #include "DoubleLink.h"
 #include "BaseHash.h"
 #include "PLGparse.h"
@@ -24,6 +25,7 @@ PLGitem::PLGitem()
 	savedChar = 0;
 	deferred = 0;
 	deferRule = 0;
+	deferAlt = 0;
 	itemStart = 0;
 	itemLength = 0;
 }
@@ -40,6 +42,7 @@ PLGitem::PLGitem(char *s)
 	savedChar = 0;
 	deferred = 0;
 	deferRule = 0;
+	deferAlt = 0;
 	itemStart = s;
 	itemLength = ::strlen(s);
 }
@@ -56,6 +59,7 @@ PLGitem::PLGitem(char *start, long length)
 	savedChar = 0;
 	deferred = 0;
 	deferRule = 0;
+	deferAlt = 0;
 	itemStart = start;
 	itemLength = length;
 }
@@ -114,6 +118,9 @@ PLGitem 	*item = 0;
 	for ( link = deferred->first; link; link = link->next )
 		{
 		item = (PLGitem*)link->value;
+		if ( item && item->deferAlt )
+			item->deferAlt->defer(state,item);
+		else
 		if ( item && item->deferRule )
 			item->deferRule->defer(state,item);
 		}
