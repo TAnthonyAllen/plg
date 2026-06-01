@@ -21,6 +21,8 @@ int amount;
 struct 
 	{
 	unsigned int conditionResult:1;
+	unsigned int flag1:1;
+	unsigned int flag4:1;
 	};
 char savedChar;
 DoubleLinkList *deferred;

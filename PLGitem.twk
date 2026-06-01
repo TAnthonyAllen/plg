@@ -13,6 +13,8 @@ String      label;
 BaseHash    children;
 PLGitem     terminator;
 boolean     conditionResult;
+boolean     flag1;
+boolean     flag4;
 PLGitem     next;
 void*       value;
 int         amount;     // settable numeric value (e.g. array dimension). For

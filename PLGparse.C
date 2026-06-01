@@ -41,7 +41,6 @@ PLGparse::PLGparse()
 	buffer = 0;
 	cursor = 0;
 	eof = 0;
-	plgStart = 0;
 	parserName = 0;
 	currentRule = 0;
 	currentAlt = 0;
@@ -86,7 +85,6 @@ PLGparse::PLGparse()
 
 PLGparse::PLGparse(char *input)
 {
-	plgStart = 0;
 	parserName = 0;
 	currentRule = 0;
 	currentAlt = 0;
@@ -374,7 +372,11 @@ PLGset 			*set = 0;
 PLGrule 		*src = 0;
 Alternative 	*alt = 0;
 DoubleLink 		*altLink = 0;
-int 			optN = 0;
+int 			actionN = 0;
+int 			labeled = 0;
+char 			*candName = 0;
+Element 		*elem = 0;
+DoubleLink 		*elemLink = 0;
 Buffer 			*keyBuf = new Buffer("optkey",64);
 	// Emit the generated parser's include manifest. The grammar's own
 	// header (Tawk.g: `include includes`) names a tok include file that
@@ -421,28 +423,56 @@ Buffer 			*keyBuf = new Buffer("optkey",64);
 		{
 		if ( !rule->alternatives )
 			continue;
-		optN = 0;
+		actionN = 0;
 		for ( altLink = rule->alternatives->first; altLink; altLink = altLink->next )
 			{
 			alt = (Alternative*)altLink->value;
-			if ( optN == 0 )
+			// Action-bearing discriminator: an alternative consumes a numbered
+			// shell only if it captures something (>=1 labelled element). A
+			// bare/action-less alternative (e.g. `Commands`) is skipped WITHOUT
+			// advancing actionN, so the .act's sequential-over-capturing-
+			// alternatives numbering stays aligned with grammar position.
+			// Otherwise an action-less alternative steals the next shell and
+			// shifts every following body by one (the StatementBody14 bug).
+			labeled = 0;
+			if ( alt->elements )
 				{
+				for ( elemLink = alt->elements->first; elemLink; elemLink = elemLink->next )
+					{
+					elem = (Element*)elemLink->value;
+					if ( elem->label )
+						{
+						labeled = 1;
+						break;
+						}
+					}
+				}
+			if ( !labeled )
+				continue;
+			// Candidate shell for the actionN-th capturing alternative:
+			// actionN 0 -> the base rule itself; N -> the numbered shell <name><N+1>.
+			if ( actionN == 0 )
+				{
+				candName = rule->name;
 				src = rule;
-				alt->actionName = rule->name;
 				}
 			else {
 				keyBuf->reset();
 				keyBuf->appendString(rule->name,0,0);
-				keyBuf->appendInt((optN + 1),0,0);
-				alt->actionName = keyBuf->toString();
-				src = (PLGrule*)rules->get(alt->actionName);
+				keyBuf->appendInt((actionN + 1),0,0);
+				candName = keyBuf->toString();
+				src = (PLGrule*)rules->get(candName);
 				}
-			if ( src )
+			// Bind + advance only when the shell actually carries an action,
+			// so a labelled alternative the author wrote no action for leaves
+			// actionN untouched and doesn't shift the rest.
+			if ( src && (src->immediateAction || src->deferAction) )
 				{
+				alt->actionName = candName;
 				alt->immediateAction = src->immediateAction;
 				alt->deferAction = src->deferAction;
+				actionN++;
 				}
-			optN++;
 			}
 		}
 	// Expanded action-body methods, one per alternative that carries an
@@ -537,7 +567,6 @@ PLGrule 	*rule = 0;
 PLGitem *PLGparse::parse(PLGrule *rule)
 {
 	if ( rule )
-		debugRulePLG = 1;
 		return rule->match(this);
 	return 0;
 }

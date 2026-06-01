@@ -22,6 +22,8 @@ PLGitem::PLGitem()
 	itemValue = (void*)0;
 	amount = 0;
 	conditionResult = 0;
+	flag1 = 0;
+	flag4 = 0;
 	savedChar = 0;
 	deferred = 0;
 	deferRule = 0;
@@ -39,6 +41,8 @@ PLGitem::PLGitem(char *s)
 	itemValue = (void*)0;
 	amount = 0;
 	conditionResult = 0;
+	flag1 = 0;
+	flag4 = 0;
 	savedChar = 0;
 	deferred = 0;
 	deferRule = 0;
@@ -56,6 +60,8 @@ PLGitem::PLGitem(char *start, long length)
 	itemValue = (void*)0;
 	amount = 0;
 	conditionResult = 0;
+	flag1 = 0;
+	flag4 = 0;
 	savedChar = 0;
 	deferred = 0;
 	deferRule = 0;
