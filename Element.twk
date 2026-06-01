@@ -113,23 +113,23 @@ int     kindNum;
         case kKeyTable:
         case kCondition:
             // Fall back to raw form against currentAlt
-            print(output) "{\nElement *elem = new Element();":;
-            print "elem->minimum = " minimum ";":;
-            print "elem->maximum = " maximum ";":;
+            print(output) "{\nElement elem = new Element();":;
+            print "elem.minimum = " minimum ";":;
+            print "elem.maximum = " maximum ";":;
             if kind == kKeyTable
                 {
-                print "elem->kind = 7;":;     // kKeyTable
-                print "elem->tableRef = getTable(\"" tableRef.name "\");":;
+                print "elem.kind = 7;":;     // kKeyTable
+                print "elem.tableRef = getTable(\"" tableRef.name "\");":;
                 }
             else
                 {
-                print "elem->kind = 8;":;     // kCondition stub
+                print "elem.kind = 8;":;     // kCondition stub
                 }
-            if label        print "elem->label = \"" label "\";":;
-            if banged       print "elem->banged = true;":;
-            if isIgnored    print "elem->isIgnored = true;":;
-            if noSkip       print "elem->noSkip = true;":;
-            print "currentAlt->elements.add((void*)elem);\n}":;
+            if label        print "elem.label = \"" label "\";":;
+            if banged       print "elem.banged = true;":;
+            if isIgnored    print "elem.isIgnored = true;":;
+            if noSkip       print "elem.noSkip = true;":;
+            print "currentAlt.elements.add((void*)elem);\n}":;
             return;
         default:
             cerr "Element.generate: unknown kind " kind:;

@@ -155,54 +155,54 @@ int 	kindNum = 0;
 		case 7:
 		case 8:
 			// Fall back to raw form against currentAlt
-			output->appendString("{\nElement *elem = new Element();",0,0);
+			output->appendString("{\nElement elem = new Element();",0,0);
 			output->appendString("\n",0,0);
-			output->appendString("elem->minimum = ",0,0);
+			output->appendString("elem.minimum = ",0,0);
 			output->appendInt(minimum,0,0);
 			output->appendString(";",0,0);
 			output->appendString("\n",0,0);
-			output->appendString("elem->maximum = ",0,0);
+			output->appendString("elem.maximum = ",0,0);
 			output->appendInt(maximum,0,0);
 			output->appendString(";",0,0);
 			output->appendString("\n",0,0);
 			if ( kind == kKeyTable(kind) )
 				{
-				output->appendString("elem->kind = 7;",0,0);
+				output->appendString("elem.kind = 7;",0,0);
 				output->appendString("\n",0,0);
 				// kKeyTable
-				output->appendString("elem->tableRef = getTable(\"",0,0);
+				output->appendString("elem.tableRef = getTable(\"",0,0);
 				output->appendString(tableRef->name,0,0);
 				output->appendString("\");",0,0);
 				output->appendString("\n",0,0);
 				}
 			else {
-				output->appendString("elem->kind = 8;",0,0);
+				output->appendString("elem.kind = 8;",0,0);
 				output->appendString("\n",0,0);
 				// kCondition stub
 				}
 			if ( label )
 				{
-				output->appendString("elem->label = \"",0,0);
+				output->appendString("elem.label = \"",0,0);
 				output->appendString(label,0,0);
 				output->appendString("\";",0,0);
 				output->appendString("\n",0,0);
 				}
 			if ( banged )
 				{
-				output->appendString("elem->banged = true;",0,0);
+				output->appendString("elem.banged = true;",0,0);
 				output->appendString("\n",0,0);
 				}
 			if ( isIgnored )
 				{
-				output->appendString("elem->isIgnored = true;",0,0);
+				output->appendString("elem.isIgnored = true;",0,0);
 				output->appendString("\n",0,0);
 				}
 			if ( noSkip )
 				{
-				output->appendString("elem->noSkip = true;",0,0);
+				output->appendString("elem.noSkip = true;",0,0);
 				output->appendString("\n",0,0);
 				}
-			output->appendString("currentAlt->elements.add((void*)elem);\n}",0,0);
+			output->appendString("currentAlt.elements.add((void*)elem);\n}",0,0);
 			output->appendString("\n",0,0);
 			return;
 		default:
